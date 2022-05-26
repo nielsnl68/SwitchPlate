@@ -1,0 +1,40 @@
+esphome:
+  name: switchplate
+
+esp32:
+  board: nodemcu-32s
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: "kiekeboe"
+
+ota:
+  password: "kiekeboe"
+
+wifi:
+  ssid: "LumenIOT24"
+  password: "Lum3nS0fT"
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Switchplate Fallback Hotspot"
+    password: "70ydNiJZ44Ib"
+
+captive_portal:
+    
+
+external_components:
+    # use rtttl and dfplayer from ESPHome's dev branch in GitHub
+    # equivalent shorthand for GitHub
+    #- source: github://nielsnl68/SwitchPlate
+    - source: 
+       type: local
+       path: C:\mos\NAS\development\PlatformIO\Projects\esphome-openhasp\components
+
+
+switchplate:
