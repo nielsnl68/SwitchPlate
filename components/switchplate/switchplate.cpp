@@ -14,22 +14,24 @@ namespace esphome
 
         void SwitchPlate::dump_config()
         {
-            /*
-            for (auto *sensor : this->sensors_)
-            {
-                LOG_SENSOR("  ", "Sensor", sensor);
-            }
-
-            for (auto *text_sensor : this->text_sensors_)
-            {
-                LOG_TEXT_SENSOR("  ", "Text sensor", text_sensor);
-            }
-
-            for (auto *binary_sensor : this->binary_sensors_)
-            {
-                LOG_BINARY_SENSOR("  ", "Binary sensor", binary_sensor);
-            }
-            */
+            #ifdef USE_SENSOR
+                for (auto *sensor : this->sensors_)
+                {
+                    LOG_SENSOR("  ", "Sensor", sensor);
+                }
+            #endif
+            #ifdef USE_BINARY_SENSOR
+                for (auto *text_sensor : this->text_sensors_)
+                {
+                    LOG_TEXT_SENSOR("  ", "Text sensor", text_sensor);
+                }
+            #endif
+            #ifdef USE_TEXT_SENSOR
+                for (auto *binary_sensor : this->binary_sensors_)
+                {
+                    LOG_BINARY_SENSOR("  ", "Binary sensor", binary_sensor);
+                }
+            #endif
         }
 
         int SwitchPlate::get_width()
@@ -61,17 +63,18 @@ namespace esphome
 
         void SwitchPlate::set_pages(std::vector<SwitchPlatePage *> pages)
         {
-            for (auto *page : pages)
-                page->set_parent(this);
-
             for (uint32_t i = 0; i < pages.size() - 1; i++)
             {
+                pages[i]->set_parent(this);
                 pages[i]->set_next(pages[i + 1]);
                 pages[i + 1]->set_prev(pages[i]);
+                if ((this->first_ == nullptr ) && pages[i]->is_Selectable()) {
+                    this->first_ = pages[i];
+                } 
             }
             pages[0]->set_prev(pages[pages.size() - 1]);
             pages[pages.size() - 1]->set_next(pages[0]);
-            this->show_page(pages[0]);
+            this->show_page(this->first_);
         }
 
         void SwitchPlate::show_page(SwitchPlatePage *page)
@@ -84,13 +87,15 @@ namespace esphome
                     t->process(this->previous_page_, this->page_);
                 this->show();
             }
-
         }
-        
+
+        void SwitchPlate::show() {
+            if (this->page_ == nullptr) return;
+            this->page_->show();
+        }
+
         void SwitchPlate::show_next_page() { this->show_page( this->page_->next()); }
         void SwitchPlate::show_prev_page() { this->show_page( this->page_->prev()); }
-
-        void SwitchPlateBase::set_parent(SwitchPlateBase *parent) { this->parent_ = parent; }
 
         void SwitchPlatePage::show() {((SwitchPlate *) this->parent_)->show_page(this); }
         void SwitchPlatePage::set_prev(SwitchPlatePage *prev) { this->prev_ = prev; }

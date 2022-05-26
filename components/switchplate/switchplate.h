@@ -3,9 +3,16 @@
 #include "esphome/core/component.h"
 #include "esphome/core/defines.h"
 #include "esphome/core/automation.h"
-// #include "esphome/components/sensor/sensor.h"
-// #include "esphome/components/binary_sensor/binary_sensor.h"
-// #include "esphome/components/text_sensor/text_sensor.h"
+
+#ifdef USE_SENSOR
+#include "esphome/components/sensor/sensor.h"
+#endif
+#ifdef USE_BINARY_SENSOR
+#include "esphome/components/binary_sensor/binary_sensor.h"
+#endif
+#ifdef USE_TEXT_SENSOR
+#include "esphome/components/text_sensor/text_sensor.h"
+#endif
 
 namespace esphome
 {
@@ -18,13 +25,13 @@ namespace esphome
       DISPLAY_ROTATION_180_DEGREES = 180,
       DISPLAY_ROTATION_270_DEGREES = 270,
     };
-    enum Align 
+    enum Align
     {
       CONF_ALIGN_LEFT = -1,
       CONF_ALIGN_CENTER = 0,
       CONF_ALIGN_RIGHT = 1
     };
-    enum Mode 
+    enum Mode
     {
       CONF_MODE_EXPAND = 0,
       CONF_MODE_BREAK = 1,
@@ -34,17 +41,52 @@ namespace esphome
       CONF_MODE_CROP = 5
     };
 
-    class SwitchPlateBase;
+    class SwitchPlateGroup;
     class SwitchPlatePage;
 
     class DisplayOnPageChangeTrigger;
 
+
+    class SwitchPlateBase
+    {
+    public:
+      SwitchPlateBase(){};
+      virtual void show(){};
+
+      void set_parent(SwitchPlateBase *parent) { this->parent_ = parent; }
+      SwitchPlateBase *get_parent() { return this->parent_; }
+
+    protected:
+      SwitchPlateBase *parent_{nullptr};
+    };
+
+    // ==============================================================================
+
     class SwitchPlate : public Component, public SwitchPlateBase
     {
     public:
-     // void register_sensor(sensor::Sensor *obj) { this->sensors_.push_back(obj); }
-     // void register_text_sensor(text_sensor::TextSensor *obj) { this->text_sensors_.push_back(obj); }
-     // void register_binary_sensor(binary_sensor::BinarySensor *obj) { this->binary_sensors_.push_back(obj); }
+#ifdef USE_SENSOR
+      void register_sensor(sensor::Sensor *obj)
+      {
+        this->sensors_.push_back(obj);
+      }
+#endif
+#ifdef USE_BINARY_SENSOR
+      void register_text_sensor(text_sensor::TextSensor *obj)
+      {
+        this->text_sensors_.push_back(obj);
+      }
+#endif
+#ifdef USE_TEXT_SENSOR
+      void register_binary_sensor(binary_sensor::BinarySensor *obj)
+      {
+        this->binary_sensors_.push_back(obj);
+      }
+#endif
+      void set_pages(std::vector<SwitchPlatePage *> pages);
+
+      //
+      //
 
       void set_rotation(Rotation rotation) { this->rotation_ = rotation; }
       Rotation get_rotation() const { return this->rotation_; }
@@ -55,8 +97,6 @@ namespace esphome
       int get_width();
       /// Get the height of the image in pixels with rotation applied.
       int get_height();
-
-      void set_pages(std::vector<SwitchPlatePage *> pages);
 
       void show_page(SwitchPlatePage *page);
       const SwitchPlatePage *get_active_page() const { return this->page_; }
@@ -69,45 +109,43 @@ namespace esphome
 
       void setup() override;
       void dump_config() override;
+      void show() override;
 
-
-      virtual int get_height_internal() {return 0;};
-      virtual int get_width_internal() { return 0;}
+      virtual int get_height_internal() { return 0; };
+      virtual int get_width_internal() { return 0; }
 
     protected:
-     // std::vector<sensor::Sensor *> sensors_;
-     // std::vector<text_sensor::TextSensor *> text_sensors_;
-     // std::vector<binary_sensor::BinarySensor *> binary_sensors_;
+#ifdef USE_SENSOR
+      std::vector<sensor::Sensor *> sensors_;
+#endif
+#ifdef USE_BINARY_SENSOR
+      std::vector<text_sensor::TextSensor *> text_sensors_;
+#endif
+#ifdef USE_TEXT_SENSOR
+      std::vector<binary_sensor::BinarySensor *> binary_sensors_;
+#endif
 
-      Rotation rotation_{DISPLAY_ROTATION_0_DEGREES} ;
+      Rotation rotation_{DISPLAY_ROTATION_0_DEGREES};
+
+      SwitchPlatePage *first_{nullptr};
       SwitchPlatePage *page_{nullptr};
       SwitchPlatePage *previous_page_{nullptr};
       std::vector<DisplayOnPageChangeTrigger *> on_page_change_triggers_;
     };
 
-    class SwitchPlateBase
-    {
-    public:
-      SwitchPlateBase();
-      virtual void show() {};
+    // ==============================================================================
 
-      void set_parent(SwitchPlateBase *parent) {this->parent_ = parent;}
-      SwitchPlateBase *get_parent() {return this->parent_;}
-    protected:
-      SwitchPlateBase *parent_{nullptr};
-    };
-
-
-    class SwitchPlateItem: public SwitchPlateBase
+    class SwitchPlateItem : public SwitchPlateBase
     {
     public:
       SwitchPlateItem(){};
-      void set_top(int top) {this->top_ = top;}
-      void set_left(int left) {this->left_ = left;}
-      void set_height(int height) {this->height_ = height;}
-      void set_width(int width) {this->width_ = width;}
+      void set_top(int top) { this->top_ = top; }
+      void set_left(int left) { this->left_ = left; }
+      void set_height(int height) { this->height_ = height; }
+      void set_width(int width) { this->width_ = width; }
 
-      template<typename V> void set_text(V val) { this->text_ = val; }
+      template <typename V>
+      void set_text(V val) { this->text_ = val; }
       std::string get_text() const { return const_cast<SwitchPlateItem *>(this)->text_.value(this); }
 
     protected:
@@ -116,46 +154,51 @@ namespace esphome
       int height_ = 0;
       int width_ = 0;
       TemplatableValue<std::string, const SwitchPlateItem *> text_;
-
     };
 
-    class SwitchPlateGroup: public SwitchPlateBase
+    // ==============================================================================
+
+    class SwitchPlateGroup : public SwitchPlateBase
     {
     public:
       void set_objects(std::vector<SwitchPlateBase *> childs);
 
-      void show() {
+      void show()
+      {
         for (auto *childs : this->childs_)
-            {
-              childs->show();
-            }
+        {
+          childs->show();
+        }
       }
 
     protected:
       std::vector<SwitchPlateBase *> childs_;
     };
 
+    // ==============================================================================
 
-    class SwitchPlatePage: public SwitchPlateGroup
+    class SwitchPlatePage : public SwitchPlateGroup
     {
     public:
       SwitchPlatePage(){};
       void show() override;
-      SwitchPlatePage *next() {return this->next_;}
-      SwitchPlatePage *prev() {return this->prev_;} 
+      SwitchPlatePage *next() { return this->next_; }
+      SwitchPlatePage *prev() { return this->prev_; }
       void set_prev(SwitchPlatePage *prev);
       void set_next(SwitchPlatePage *next);
-
+      void set_selectable(bool selectable) { this->selectable_ = selectable; }
+      bool is_Selectable () {return this->selectable_ ;}
+      void set_name(std::string name) { this->name_ = name; }
+      std::string get_name() {return this->name_; }
 
     protected:
       SwitchPlatePage *prev_{nullptr};
       SwitchPlatePage *next_{nullptr};
+      bool selectable_ = true;
+      std::string name_ = "";
     };
 
-
-
-// ==============================================================================
-
+    // ==============================================================================
 
     template <typename... Ts>
     class SwitchPlateShowAction : public Action<Ts...>
@@ -183,7 +226,6 @@ namespace esphome
 
       SwitchPlate *display_;
     };
-
 
     template <typename... Ts>
     class SwitchPlateShowHomeAction : public Action<Ts...>

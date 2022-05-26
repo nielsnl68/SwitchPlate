@@ -42,9 +42,8 @@ switchplate:
     id: abcname # Opt.
     pages:
       - id: myMainPage # Opt.
-        #name: myName
-        #firstpage: true;
-        #selectable: true    # can be opened with next and previous page selectors
+        name: myName
+        selectable: true    # can be opened with next and previous page selectors
         objects:
           - type: button
             id: btnHello

@@ -298,7 +298,10 @@ CONFIG_SCHEMA = cv.Schema({
                 cv.GenerateID(): cv.declare_id(SwitchPlatePage),
                 cv.Required(CONF_OBJECTS): cv.All(
                     cv.ensure_list(switchplate_item_schema), cv.Length(min=1)
-                ),            
+                ),
+                cv.Optional(CONF_NAME) : cv.string,
+                cv.Optional(CONF_SELECTABLE): cv.boolean,
+                      
             }
         ),
         cv.Length(min=1),
