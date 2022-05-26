@@ -38,3 +38,22 @@ external_components:
 
 
 switchplate:
+    display: my display # Req
+    id: abcname # Opt.
+    pages:
+      - id: myMainPage # Opt.
+        #name: myName
+        #firstpage: true;
+        #selectable: true    # can be opened with next and previous page selectors
+        objects:
+          - type: button
+            id: btnHello
+            left: 10          # Opt. Horizontal position on the page
+            top: 10           # Opt. Vertical position on the page
+            width: 60         # Opt. Width of the object
+            height: 20        # Opt. Height of the object
+            toggle: false    # True: creates a toggle-on/toggle-off button. False: creates a normal button
+            #state: 0         # 0 = untoggled, 1 = toggled
+            text: "Hello "         # The text of the label
+            align: left      # Text alignment: left, center, right
+            text_mode: expand     # The wrapping mode of long text labels

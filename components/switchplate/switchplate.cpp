@@ -6,7 +6,7 @@ namespace esphome
     namespace switch_plate
     {
 
-        static const char *TAG = "empty_sensor_hub.component";
+        static const char *TAG = "SwitchPlate.component";
 
         void SwitchPlate::setup()
         {
@@ -14,6 +14,7 @@ namespace esphome
 
         void SwitchPlate::dump_config()
         {
+            /*
             for (auto *sensor : this->sensors_)
             {
                 LOG_SENSOR("  ", "Sensor", sensor);
@@ -28,6 +29,7 @@ namespace esphome
             {
                 LOG_BINARY_SENSOR("  ", "Binary sensor", binary_sensor);
             }
+            */
         }
 
         int SwitchPlate::get_width()
@@ -69,10 +71,10 @@ namespace esphome
             }
             pages[0]->set_prev(pages[pages.size() - 1]);
             pages[pages.size() - 1]->set_next(pages[0]);
-            this->show(pages[0]);
+            this->show_page(pages[0]);
         }
 
-        void SwitchPlate::show(SwitchPlatePage *page)
+        void SwitchPlate::show_page(SwitchPlatePage *page)
         {
             this->previous_page_ = this->page_;
             this->page_ = page;
@@ -80,15 +82,17 @@ namespace esphome
             {
                 for (auto *t : on_page_change_triggers_)
                     t->process(this->previous_page_, this->page_);
+                this->show();
             }
+
         }
         
-        void SwitchPlate::show_next_page() { this->show( this->page_->next()); }
-        void SwitchPlate::show_prev_page() { this->show( this->page_->prev()); }
+        void SwitchPlate::show_next_page() { this->show_page( this->page_->next()); }
+        void SwitchPlate::show_prev_page() { this->show_page( this->page_->prev()); }
 
         void SwitchPlateBase::set_parent(SwitchPlateBase *parent) { this->parent_ = parent; }
 
-        void SwitchPlatePage::show() { this->parent_->show(this); }
+        void SwitchPlatePage::show() {((SwitchPlate *) this->parent_)->show_page(this); }
         void SwitchPlatePage::set_prev(SwitchPlatePage *prev) { this->prev_ = prev; }
         void SwitchPlatePage::set_next(SwitchPlatePage *next) { this->next_ = next; }
 

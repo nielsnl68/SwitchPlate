@@ -77,7 +77,7 @@ CONF_ALIGN_LEFT = "left"
 CONF_ALIGN_CENTER = "center"
 CONF_ALIGN_RIGHT = "right"
 
-CONF_MODE = "mode"
+CONF_MODE = "text_mode"
 CONF_MODE_EXPAND = "expand"
 CONF_MODE_BREAK = "break"
 CONF_MODE_DOTS = "dots"
@@ -173,7 +173,8 @@ def switchplate_item_schema(value):
     return SWITCHPLATE_ITEM_SCHEMA(value)
 
 
-SWITCHPLATE_ITEM_COMMON_SCHEMA = cv.Schema({
+SWITCHPLATE_ITEM_COMMON_SCHEMA = cv.Schema(
+    {
         cv.GenerateID(CONF_ID): cv.declare_id(SwitchPlateItem),
         cv.Optional(CONF_LEFT, default=0):cv.int_range(0,512),
         cv.Optional(CONF_TOP, default=0):cv.int_range(0,512),
@@ -181,19 +182,25 @@ SWITCHPLATE_ITEM_COMMON_SCHEMA = cv.Schema({
         cv.Optional(CONF_HEIGHT, default=0):cv.int_range(0,512),
         cv.Optional(CONF_VISIBLE, default= True):cv.boolean,
         cv.Optional(CONF_ENABLED, default= True):cv.boolean,
-})
+    }
+)
 
-SWITCHPLATE_ITEM_MINMAX_SCHEMA = SWITCHPLATE_ITEM_COMMON_SCHEMA.extend({
+SWITCHPLATE_ITEM_MINMAX_SCHEMA = SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
+    {
         cv.Optional(CONF_MIN_VALUE, default=0):cv.uint16_t,
         cv.Optional(CONF_MAX_VALUE, default=100):cv.uint16_t,
         cv.Optional(CONF_VALUE, default=0):cv.uint16_t,
-}) #,validate_min_max
+    }
+   #,validate_min_max
+) 
 
-SWITCHPLATE_ITEM_TEXT_SCHEMA = SWITCHPLATE_ITEM_COMMON_SCHEMA.extend({
+SWITCHPLATE_ITEM_TEXT_SCHEMA = SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
+    {
         cv.Optional(CONF_TEXT,"Text"): cv.templatable(cv.string),
         cv.Optional(CONF_MODE,default="crop"): cv.enum(CONF_MODES),
         cv.Optional(CONF_ALIGN,default="left"):cv.enum(CONF_ALIGNS)
-})
+    }
+)
 
 
 
@@ -202,14 +209,16 @@ SWITCHPLATE_ITEM_SCHEMA = cv.All(
         {
             WIDGET_FRAME: SWITCHPLATE_ITEM_COMMON_SCHEMA,
             WIDGET_LINE: SWITCHPLATE_ITEM_COMMON_SCHEMA,
-            WIDGET_GROUPED: cv.Schema({
-                cv.GenerateID(CONF_ID): cv.declare_id(SwitchPlateGroup),
-                cv.Optional(CONF_VISIBLE, default= True):cv.boolean,
-                cv.Optional(CONF_ENABLED, default= True):cv.boolean,
-                cv.Required(CONF_OBJECTS): cv.All(
+            WIDGET_GROUPED: cv.Schema(
+                {
+                    cv.GenerateID(CONF_ID): cv.declare_id(SwitchPlateGroup),
+                    cv.Optional(CONF_VISIBLE, default= True):cv.boolean,
+                    cv.Optional(CONF_ENABLED, default= True):cv.boolean,
+                    cv.Required(CONF_OBJECTS): cv.All(
                         cv.ensure_list(switchplate_item_schema), cv.Length(min=1)
                     ),            
-            }),
+                }
+            ),
             WIDGET_LED: SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
                 {
                     cv.Optional(CONF_VALUE, default=False): cv.boolean,
@@ -242,6 +251,20 @@ SWITCHPLATE_ITEM_SCHEMA = cv.All(
             ),
 
             WIDGET_SPINNER: SWITCHPLATE_ITEM_COMMON_SCHEMA,
+
+            WIDGET_PROGRESSBAR: SWITCHPLATE_ITEM_COMMON_SCHEMA,
+            WIDGET_SLIDER: SWITCHPLATE_ITEM_COMMON_SCHEMA,
+            WIDGET_LINEMETER: SWITCHPLATE_ITEM_COMMON_SCHEMA,
+            WIDGET_ARC: SWITCHPLATE_ITEM_COMMON_SCHEMA,
+            WIDGET_GUAUGE: SWITCHPLATE_ITEM_COMMON_SCHEMA,
+
+        },
+        default_type="label",
+        lower=True,
+    ),
+    #validate_menu_item,
+)
+
             #.extend({
                     
                     #cv.Optional(CONF_IMMEDIATE_EDIT, default=False): cv.boolean,
@@ -262,19 +285,6 @@ SWITCHPLATE_ITEM_SCHEMA = cv.All(
                     #),
              #   },
             #),
-            WIDGET_PROGRESSBAR: SWITCHPLATE_ITEM_COMMON_SCHEMA,
-            WIDGET_SLIDER: SWITCHPLATE_ITEM_COMMON_SCHEMA,
-            WIDGET_LINEMETER: SWITCHPLATE_ITEM_COMMON_SCHEMA,
-            WIDGET_ARC: SWITCHPLATE_ITEM_COMMON_SCHEMA,
-            WIDGET_GUAUGE: SWITCHPLATE_ITEM_COMMON_SCHEMA,
-
-        },
-        default_type="label",
-        lower=True,
-    ),
-    #validate_menu_item,
-)
-
 
 
 
@@ -286,6 +296,9 @@ CONFIG_SCHEMA = cv.Schema({
         cv.ensure_list(
             {
                 cv.GenerateID(): cv.declare_id(SwitchPlatePage),
+                cv.Required(CONF_OBJECTS): cv.All(
+                    cv.ensure_list(switchplate_item_schema), cv.Length(min=1)
+                ),            
             }
         ),
         cv.Length(min=1),
@@ -304,11 +317,10 @@ CONFIG_SCHEMA = cv.Schema({
 
 def to_code(config):
     if CONF_DISPLAY_DEFINE in config:
-        cg.add_define("config[CONF_NAME]", config[CONF_DISPLAY_DEFINE])
+        cg.add_define("DISPLAY_CONF_NAME", config[CONF_DISPLAY_DEFINE])
     # else:
 
     var = cg.new_Pvariable(config[CONF_ID])
     yield cg.register_component(var, config)
 
 
-# Qu8VsatQPQ5jQrizx39

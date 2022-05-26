@@ -3,9 +3,9 @@
 #include "esphome/core/component.h"
 #include "esphome/core/defines.h"
 #include "esphome/core/automation.h"
-#include "esphome/components/sensor/sensor.h"
-#include "esphome/components/binary_sensor/binary_sensor.h"
-#include "esphome/components/text_sensor/text_sensor.h"
+// #include "esphome/components/sensor/sensor.h"
+// #include "esphome/components/binary_sensor/binary_sensor.h"
+// #include "esphome/components/text_sensor/text_sensor.h"
 
 namespace esphome
 {
@@ -42,9 +42,9 @@ namespace esphome
     class SwitchPlate : public Component, public SwitchPlateBase
     {
     public:
-      void register_sensor(sensor::Sensor *obj) { this->sensors_.push_back(obj); }
-      void register_text_sensor(text_sensor::TextSensor *obj) { this->text_sensors_.push_back(obj); }
-      void register_binary_sensor(binary_sensor::BinarySensor *obj) { this->binary_sensors_.push_back(obj); }
+     // void register_sensor(sensor::Sensor *obj) { this->sensors_.push_back(obj); }
+     // void register_text_sensor(text_sensor::TextSensor *obj) { this->text_sensors_.push_back(obj); }
+     // void register_binary_sensor(binary_sensor::BinarySensor *obj) { this->binary_sensors_.push_back(obj); }
 
       void set_rotation(Rotation rotation) { this->rotation_ = rotation; }
       Rotation get_rotation() const { return this->rotation_; }
@@ -58,7 +58,7 @@ namespace esphome
 
       void set_pages(std::vector<SwitchPlatePage *> pages);
 
-      void show(SwitchPlatePage *page) override;
+      void show_page(SwitchPlatePage *page);
       const SwitchPlatePage *get_active_page() const { return this->page_; }
 
       void show_next_page();
@@ -75,9 +75,9 @@ namespace esphome
       virtual int get_width_internal() { return 0;}
 
     protected:
-      std::vector<sensor::Sensor *> sensors_;
-      std::vector<text_sensor::TextSensor *> text_sensors_;
-      std::vector<binary_sensor::BinarySensor *> binary_sensors_;
+     // std::vector<sensor::Sensor *> sensors_;
+     // std::vector<text_sensor::TextSensor *> text_sensors_;
+     // std::vector<binary_sensor::BinarySensor *> binary_sensors_;
 
       Rotation rotation_{DISPLAY_ROTATION_0_DEGREES} ;
       SwitchPlatePage *page_{nullptr};
@@ -90,7 +90,7 @@ namespace esphome
     public:
       SwitchPlateBase();
       virtual void show() {};
-      virtual void show(SwitchPlatePage *page) {};
+
       void set_parent(SwitchPlateBase *parent) {this->parent_ = parent;}
       SwitchPlateBase *get_parent() {return this->parent_;}
     protected:
@@ -124,7 +124,13 @@ namespace esphome
     public:
       void set_objects(std::vector<SwitchPlateBase *> childs);
 
-      void show() override;
+      void show() {
+        for (auto *childs : this->childs_)
+            {
+              childs->show();
+            }
+      }
+
     protected:
       std::vector<SwitchPlateBase *> childs_;
     };
@@ -135,8 +141,8 @@ namespace esphome
     public:
       SwitchPlatePage(){};
       void show() override;
-      SwitchPlatePage *next() {this->next_;}
-      SwitchPlatePage *prev(){this->prev_;}; 
+      SwitchPlatePage *next() {return this->next_;}
+      SwitchPlatePage *prev() {return this->prev_;} 
       void set_prev(SwitchPlatePage *prev);
       void set_next(SwitchPlatePage *next);
 
