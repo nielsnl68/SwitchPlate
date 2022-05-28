@@ -61,41 +61,89 @@ namespace esphome
             }
         }
 
-        void SwitchPlate::set_pages(std::vector<SwitchPlatePage *> pages)
+        void SwitchPlate::add_page(SwitchPlatePage * page)
         {
-            for (uint32_t i = 0; i < pages.size() - 1; i++)
-            {
-                pages[i]->set_parent(this);
-                pages[i]->set_next(pages[i + 1]);
-                pages[i + 1]->set_prev(pages[i]);
-                if ((this->first_ == nullptr ) && pages[i]->is_Selectable()) {
-                    this->first_ = pages[i];
-                } 
+            page->set_parent(this);
+            page->set_prev(this->previous_page_);
+            if (this->previous_page_ != nullptr) {
+                this->previous_page_->set_next(page);
+            }  
+            this->previous_page_ = page;
+            if ((this->first_page_ == nullptr ) && page->is_Selectable()) {
+                this->first_page_ = page;
             }
-            pages[0]->set_prev(pages[pages.size() - 1]);
-            pages[pages.size() - 1]->set_next(pages[0]);
-            this->show_page(this->first_);
+        }
+
+        void SwitchPlate::add_headerItem(SwitchPlateBase * item)
+        {
+                item->set_parent(this);
+                this->header_.push_back(item);
+        }
+
+        void SwitchPlate::add_footerItem(SwitchPlateBase * item)
+        {
+                item->set_parent(this);
+                this->footer_.push_back(item);
         }
 
         void SwitchPlate::show_page(SwitchPlatePage *page)
         {
-            this->previous_page_ = this->page_;
-            this->page_ = page;
-            if (this->previous_page_ != this->page_)
+            if (page == nullptr) return;
+
+            if (this->current_page_ != page)
             {
-                for (auto *t : on_page_change_triggers_)
-                    t->process(this->previous_page_, this->page_);
-                this->show();
+                this->previous_page_ = this->current_page_;
+                this->current_page_ = page;
+                if (this->previous_page_ != this->current_page_)
+                { 
+                    //for (auto *t : this->on_page_change_triggers_)
+                    //    t->process(this->previous_page_, this->current_page_);
+                    this->show();
+                }
             }
         }
 
         void SwitchPlate::show() {
-            if (this->page_ == nullptr) return;
-            this->page_->show();
+            if (this->current_page_ == nullptr) {
+                this->current_page_ = this->first_page_;
+                this->previous_page_ = nullptr;
+            }
+            this->current_page_->show();
         }
 
-        void SwitchPlate::show_next_page() { this->show_page( this->page_->next()); }
-        void SwitchPlate::show_prev_page() { this->show_page( this->page_->prev()); }
+        SwitchPlatePage * SwitchPlate::get_next() {
+            SwitchPlatePage * page;
+            if (this->current_page_ == nullptr) {
+                page = this->first_page_;
+            } else {
+                page = this->current_page_->next(); 
+                while ((page != nullptr) && !page->is_Selectable()) {
+                    page = page->next();
+                }
+            }
+            return page;
+        }
+
+        void SwitchPlate::show_next() { this->show_page( this->get_next()); }
+        bool SwitchPlate::can_next() { return this-> get_next() != nullptr; }
+
+
+        SwitchPlatePage * SwitchPlate::get_prev() {
+            SwitchPlatePage * page;
+            if (this->current_page_ == nullptr) {
+                page = this->first_page_;
+            } else {
+                page = this->current_page_->prev(); 
+                while ((page != nullptr) && !page->is_Selectable()) {
+                    page = page->prev();
+                }
+            }
+            return page;
+        }
+
+
+        void SwitchPlate::show_prev() { this->show_page( this->get_prev()); }
+        bool SwitchPlate::can_prev() { return this-> get_prev() != nullptr; }
 
         void SwitchPlatePage::show() {((SwitchPlate *) this->parent_)->show_page(this); }
         void SwitchPlatePage::set_prev(SwitchPlatePage *prev) { this->prev_ = prev; }

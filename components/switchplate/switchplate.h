@@ -83,13 +83,24 @@ namespace esphome
         this->binary_sensors_.push_back(obj);
       }
 #endif
-      void set_pages(std::vector<SwitchPlatePage *> pages);
+      void add_page(SwitchPlatePage * page);
 
+      void add_headerItem(SwitchPlateBase * header);
+      size_t items_size() const { return this->header_.size(); }
+      SwitchPlateBase *get_headerItem(size_t i) { return this->header_[i]; }
+      
+      void add_footerItem(SwitchPlateBase * footer);
+      size_t footer_size() const { return this->footer_.size(); }
+      SwitchPlateBase *get_footerItem(size_t i) { return this->footer_[i]; }
       //
       //
 
       void set_rotation(Rotation rotation) { this->rotation_ = rotation; }
       Rotation get_rotation() const { return this->rotation_; }
+
+      void set_tabview(bool tabview) {this->tabview_ = tabview; }
+      bool is_tabview() const { return this-tabview_; }
+
 
       void clear();
 
@@ -99,11 +110,18 @@ namespace esphome
       int get_height();
 
       void show_page(SwitchPlatePage *page);
-      const SwitchPlatePage *get_active_page() const { return this->page_; }
 
-      void show_next_page();
-      void show_prev_page();
-      void show_home_page();
+      const SwitchPlatePage *current_page() const { return this->current_page_; }
+      
+      void show_next();
+      SwitchPlatePage * get_next();
+      bool can_next();
+
+      void show_prev();
+      SwitchPlatePage * get_prev();
+      bool can_prev();
+
+      void show_home() { this->show_page(this->first_page_);}
 
       void add_on_page_change_trigger(DisplayOnPageChangeTrigger *t) { this->on_page_change_triggers_.push_back(t); }
 
@@ -115,6 +133,15 @@ namespace esphome
       virtual int get_width_internal() { return 0; }
 
     protected:
+      std::vector<SwitchPlateBase *> header_;
+      std::vector<SwitchPlateBase *> footer_;
+
+      bool tabview_ = false;
+      Rotation rotation_{DISPLAY_ROTATION_0_DEGREES};
+      SwitchPlatePage * first_page_ {nullptr};
+      SwitchPlatePage * current_page_ {nullptr};
+      SwitchPlatePage * previous_page_{nullptr};
+
 #ifdef USE_SENSOR
       std::vector<sensor::Sensor *> sensors_;
 #endif
@@ -125,11 +152,6 @@ namespace esphome
       std::vector<binary_sensor::BinarySensor *> binary_sensors_;
 #endif
 
-      Rotation rotation_{DISPLAY_ROTATION_0_DEGREES};
-
-      SwitchPlatePage *first_{nullptr};
-      SwitchPlatePage *page_{nullptr};
-      SwitchPlatePage *previous_page_{nullptr};
       std::vector<DisplayOnPageChangeTrigger *> on_page_change_triggers_;
     };
 
@@ -139,21 +161,51 @@ namespace esphome
     {
     public:
       SwitchPlateItem(){};
-      void set_top(int top) { this->top_ = top; }
-      void set_left(int left) { this->left_ = left; }
+      void set_x(int x) { this->top_ = x; }
+      void set_y(int y) { this->left_ = y; }
       void set_height(int height) { this->height_ = height; }
       void set_width(int width) { this->width_ = width; }
 
-      template <typename V>
-      void set_text(V val) { this->text_ = val; }
-      std::string get_text() const { return const_cast<SwitchPlateItem *>(this)->text_.value(this); }
+
+      void set_visible(bool VISIBLE) { this->VISIBLE_ =  VISIBLE;}
+      void set_enabled(bool ENABLED)  { this->ENABLED_ =  ENABLED;}
+
+      void set_min_value(int MIN_VALUE) { this->MIN_VALUE_ =  MIN_VALUE;}
+      void set_max_value(int MAX_VALUE) { this->MAX_VALUE_ =  MAX_VALUE;}
+      
+      void set_value(int32_t val) { this->VALUE_ = val; }
+
+      //template<typename V> void set_value(V val) { this->VALUE_ = val; }
+      // int32_t get_value() const { return const_cast<SwitchPlateItem *>(this)->VALUE_.value(this); }
+
+      void set_mode(Mode MODE) { this->MODE_ =  MODE;}
+      void set_align(Align ALIGN) { this->ALIGN_ =  ALIGN;}
+
+      void set_toggle(bool TOGGLE) { this->TOGGLE_ =  TOGGLE;}
+
+      template <typename V> void set_text(V val) { this->text_ = val; }
+      //void set_text(std::string val) { this->text_ = val; }
+      // std::string get_text() const { return const_cast<SwitchPlateItem *>(this)->text_.value(this); }
 
     protected:
       int top_ = 0;
       int left_ = 0;
       int height_ = 0;
       int width_ = 0;
-      TemplatableValue<std::string, const SwitchPlateItem *> text_;
+
+      bool VISIBLE_ = true;
+      bool ENABLED_ = true;
+
+      int MIN_VALUE_ = 0;
+      int MAX_VALUE_ = 100;
+      //TemplatableValue<int32_t, const SwitchPlateItem *> VALUE_;
+      int32_t VALUE_ = 0;      
+
+      Mode MODE_ = CONF_MODE_CROP;
+      Align ALIGN_ = CONF_ALIGN_LEFT;
+      TemplatableValue<std::string, const SwitchPlateItem *> text_;      
+      //std::string  text_;
+      bool TOGGLE_ = false;
     };
 
     // ==============================================================================
@@ -161,7 +213,11 @@ namespace esphome
     class SwitchPlateGroup : public SwitchPlateBase
     {
     public:
-      void set_objects(std::vector<SwitchPlateBase *> childs);
+      void add_object(SwitchPlateBase * object)
+      {
+          object->set_parent(this);
+          this->childs_.push_back (object);
+      }
 
       void show()
       {
@@ -170,6 +226,9 @@ namespace esphome
           childs->show();
         }
       }
+      
+      size_t items_size() const { return this->childs_.size(); }
+      SwitchPlateBase *get_item(size_t i) { return this->childs_[i]; }
 
     protected:
       std::vector<SwitchPlateBase *> childs_;
@@ -182,10 +241,13 @@ namespace esphome
     public:
       SwitchPlatePage(){};
       void show() override;
-      SwitchPlatePage *next() { return this->next_; }
-      SwitchPlatePage *prev() { return this->prev_; }
-      void set_prev(SwitchPlatePage *prev);
+
       void set_next(SwitchPlatePage *next);
+      SwitchPlatePage *next() { return this->next_; }
+
+      void set_prev(SwitchPlatePage *prev);
+      SwitchPlatePage *prev() { return this->prev_; }
+
       void set_selectable(bool selectable) { this->selectable_ = selectable; }
       bool is_Selectable () {return this->selectable_ ;}
       void set_name(std::string name) { this->name_ = name; }
@@ -194,6 +256,7 @@ namespace esphome
     protected:
       SwitchPlatePage *prev_{nullptr};
       SwitchPlatePage *next_{nullptr};
+      
       bool selectable_ = true;
       std::string name_ = "";
     };

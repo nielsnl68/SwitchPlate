@@ -6,53 +6,44 @@ esp32:
   framework:
     type: arduino
 
-# Enable logging
-logger:
-
-# Enable Home Assistant API
-api:
-  password: "kiekeboe"
-
-ota:
-  password: "kiekeboe"
-
-wifi:
-  ssid: "LumenIOT24"
-  password: "Lum3nS0fT"
-
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "Switchplate Fallback Hotspot"
-    password: "70ydNiJZ44Ib"
-
-captive_portal:
-    
-
 external_components:
-    # use rtttl and dfplayer from ESPHome's dev branch in GitHub
-    # equivalent shorthand for GitHub
-    #- source: github://nielsnl68/SwitchPlate
-    - source: 
-       type: local
-       path: C:\mos\NAS\development\PlatformIO\Projects\esphome-openhasp\components
-
+  # use rtttl and dfplayer from ESPHome's dev branch in GitHub
+  # equivalent shorthand for GitHub
+  #- source: github://nielsnl68/SwitchPlate
+  - source:
+      type: local
+      path: C:\development\projects\switchplate\components
 
 switchplate:
-    display: my display # Req
-    id: abcname # Opt.
-    pages:
-      - id: myMainPage # Opt.
-        name: myName
-        selectable: true    # can be opened with next and previous page selectors
-        objects:
-          - type: button
-            id: btnHello
-            left: 10          # Opt. Horizontal position on the page
-            top: 10           # Opt. Vertical position on the page
-            width: 60         # Opt. Width of the object
-            height: 20        # Opt. Height of the object
-            toggle: false    # True: creates a toggle-on/toggle-off button. False: creates a normal button
-            #state: 0         # 0 = untoggled, 1 = toggled
-            text: "Hello "         # The text of the label
-            align: left      # Text alignment: left, center, right
-            text_mode: expand     # The wrapping mode of long text labels
+  display: my display # Req
+  id: abcname # Opt.
+  header:
+    - type: label
+      id: header_title
+      text: SwitchPlate test
+    - type: label
+      id: header_time
+      text: !lambda return "test";
+  pages:
+    - id: myMainPage # Opt.
+      name: myName
+      selectable: true # can be opened with next and previous page selectors
+      objects:
+        - type: button
+          id: btnHello
+          x: 10 # Opt. Horizontal position on the page
+          y: 10 # Opt. Vertical position on the page
+          width: 60 # Opt. Width of the object
+          height: 20 # Opt. Height of the object
+          toggle: false # True: creates a toggle-on/toggle-off button. False: creates a normal button
+          state: false # 0 = untoggled, 1 = toggled
+          text: "Hello " # The text of the label
+          align: left # Text alignment: left, center, right
+          text_mode: expand # The wrapping mode of long text labels
+        - type: slider
+          max_value: 10
+          min_value: 00
+          value: 5
+    - id: otherPage
+      objects:
+        - type: spinner
