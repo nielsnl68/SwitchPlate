@@ -34,7 +34,7 @@ namespace esphome
             #endif
         }
 
-        int SwitchPlate::get_width()
+        int SwitchPlate::maxWidth()
         {
             switch (this->rotation_)
             {
@@ -47,7 +47,7 @@ namespace esphome
                 return this->get_width_internal();
             }
         }
-        int SwitchPlate::get_height()
+        int SwitchPlate::maxHeight()
         {
             switch (this->rotation_)
             {
@@ -63,30 +63,30 @@ namespace esphome
 
         void SwitchPlate::add_page(SwitchPlatePage * page)
         {
-            page->set_parent(this);
-            page->set_prev(this->previous_page_);
+            page->parent(this);
+            page->prev(this->previous_page_);
             if (this->previous_page_ != nullptr) {
-                this->previous_page_->set_next(page);
+                this->previous_page_->next(page);
             }  
             this->previous_page_ = page;
-            if ((this->first_page_ == nullptr ) && page->is_Selectable()) {
+            if ((this->first_page_ == nullptr ) && page->selectable()) {
                 this->first_page_ = page;
             }
         }
 
         void SwitchPlate::add_headerItem(SwitchPlateBase * item)
         {
-                item->set_parent(this);
+                item->parent(this);
                 this->header_.push_back(item);
         }
 
         void SwitchPlate::add_footerItem(SwitchPlateBase * item)
         {
-                item->set_parent(this);
+                item->parent(this);
                 this->footer_.push_back(item);
         }
 
-        void SwitchPlate::show_page(SwitchPlatePage *page)
+        void SwitchPlate::select_page(SwitchPlatePage *page)
         {
             if (page == nullptr) return;
 
@@ -108,33 +108,37 @@ namespace esphome
                 this->current_page_ = this->first_page_;
                 this->previous_page_ = nullptr;
             }
+            for (auto *header : this->header_)
+            {
+                header->show();
+            }            
             this->current_page_->show();
         }
 
-        SwitchPlatePage * SwitchPlate::get_next() {
+        SwitchPlatePage * SwitchPlate::next() {
             SwitchPlatePage * page;
             if (this->current_page_ == nullptr) {
                 page = this->first_page_;
             } else {
                 page = this->current_page_->next(); 
-                while ((page != nullptr) && !page->is_Selectable()) {
+                while ((page != nullptr) && !page->selectable()) {
                     page = page->next();
                 }
             }
             return page;
         }
 
-        void SwitchPlate::show_next() { this->show_page( this->get_next()); }
-        bool SwitchPlate::can_next() { return this-> get_next() != nullptr; }
+        void SwitchPlate::select_next() { this->select_page( this->next()); }
+        bool SwitchPlate::can_next() { return this->next() != nullptr; }
 
 
-        SwitchPlatePage * SwitchPlate::get_prev() {
+        SwitchPlatePage * SwitchPlate::prev() {
             SwitchPlatePage * page;
             if (this->current_page_ == nullptr) {
                 page = this->first_page_;
             } else {
                 page = this->current_page_->prev(); 
-                while ((page != nullptr) && !page->is_Selectable()) {
+                while ((page != nullptr) && !page->selectable()) {
                     page = page->prev();
                 }
             }
@@ -142,12 +146,11 @@ namespace esphome
         }
 
 
-        void SwitchPlate::show_prev() { this->show_page( this->get_prev()); }
-        bool SwitchPlate::can_prev() { return this-> get_prev() != nullptr; }
+        void SwitchPlate::select_prev() { this->select_page( this->prev()); }
+        bool SwitchPlate::can_prev() { return this->prev() != nullptr; }
 
-        void SwitchPlatePage::show() {((SwitchPlate *) this->parent_)->show_page(this); }
-        void SwitchPlatePage::set_prev(SwitchPlatePage *prev) { this->prev_ = prev; }
-        void SwitchPlatePage::set_next(SwitchPlatePage *next) { this->next_ = next; }
+        void SwitchPlatePage::prev(SwitchPlatePage *prev) { this->prev_ = prev; }
+        void SwitchPlatePage::next(SwitchPlatePage *next) { this->next_ = next; }
 
     } // namespace empty_sensor_hub
 } // namespace esphome

@@ -37,3 +37,15 @@ esphome
 .esphome
 components/switchplate/__pycache__/__init__.cpython-310.pyc
 .vscode
+secrets.yaml
+components/display_menu_base/__init__.py
+components/display_menu_base/automation.h
+components/display_menu_base/display_menu_base.cpp
+components/display_menu_base/display_menu_base.h
+components/display_menu_base/__pycache__/__init__.cpython-310.pyc
+components/lcd_menu/__init__.py
+components/lcd_menu/lcd_menu.cpp
+components/lcd_menu/lcd_menu.h
+components/lcd_menu/__pycache__/__init__.cpython-310.pyc
+lcd_menu.yaml
+components/switchplate/__pycache__/rgb_color.cpython-310.pyc

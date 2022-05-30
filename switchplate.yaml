@@ -6,6 +6,17 @@ esp32:
   framework:
     type: arduino
 
+wifi: 
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+
+api: 
+
+color:
+  - id: my_light_red
+    red: 100%
+
 external_components:
   # use rtttl and dfplayer from ESPHome's dev branch in GitHub
   # equivalent shorthand for GitHub
@@ -15,7 +26,7 @@ external_components:
       path: C:\development\projects\switchplate\components
 
 switchplate:
-  display: my display # Req
+  display: my display # Req 
   id: abcname # Opt.
   header:
     - type: label
@@ -39,11 +50,19 @@ switchplate:
           state: false # 0 = untoggled, 1 = toggled
           text: "Hello " # The text of the label
           align: left # Text alignment: left, center, right
-          text_mode: expand # The wrapping mode of long text labels
+          mode: expand # The wrapping mode of long text labels
         - type: slider
-          max_value: 10
+          max_value: 100
           min_value: 00
-          value: 5
+          value: !lambda return 10;
     - id: otherPage
       objects:
-        - type: spinner
+        - type: label
+          text:  !lambda return "Hello World";
+        = type: spinner
+          x: -10
+          t: 20
+          width: 60
+          heigth: 60
+          circle_color: #704020
+          segment_color: red
