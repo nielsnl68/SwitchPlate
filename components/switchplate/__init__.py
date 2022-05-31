@@ -32,7 +32,9 @@ CODEOWNERS = ["@fvanroie","@nielsnl68"]
 
 #AUTO_LOAD = ['sensor', 'text_sensor', 'binary_sensor']
 
-CONFLICTS_WITH = ['display']
+#CONFLICTS_WITH = ['display']
+
+
 MULTI_CONF = True
 
 
