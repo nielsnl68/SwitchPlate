@@ -25,6 +25,8 @@ try:
 except:
      import rgb_color as rc
 
+import sys; print(sys.version)
+
 
 CODEOWNERS = ["@fvanroie","@nielsnl68"]
 
