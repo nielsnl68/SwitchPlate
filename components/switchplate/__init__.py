@@ -405,29 +405,27 @@ CONFIG_SCHEMA = cv.Schema({
 async def item_to_code(config):
     item = cg.new_Pvariable(config[CONF_ID], config[CONF_TYPE])
     
-    for k, v in config.items():
-        
-        match k:
-            case 'id': pass
-            case 'text':
-                if isinstance(v, core.Lambda):
-                    template_ = await cg.templatable( v, [(SwitchPlateItemConstPtr, "it")], cg.std_string )
-                    cg.add(item.text(template_))
-                else:
-                    cg.add(item.text(config[CONF_TEXT]))
-            case 'value':
-                if isinstance(v, core.Lambda):
-                    template_ = await cg.templatable( v, [(SwitchPlateItemConstPtr, "it")], cg.int32)
-                    cg.add(item.value(template_))
-                else:
-                    cg.add(item.value(config[CONF_VALUE]))
-            case 'state':
-                cg.add(item.value(1 if config[CONF_STATE] else 0))
+    for key, value in config.items():
+        if (key == 'id'): pass
+        elif (key == 'text'):
+            if isinstance(value, core.Lambda):
+                template_ = await cg.templatable( value, [(SwitchPlateItemConstPtr, "it")], cg.std_string )
+                cg.add(item.text(template_))
+            else:
+                cg.add(item.text(config[CONF_TEXT]))
+        elif (key == 'value'):
+            if isinstance(value, core.Lambda):
+                template_ = await cg.templatable( value, [(SwitchPlateItemConstPtr, "it")], cg.int32)
+                cg.add(item.value(template_))
+            else:
+                cg.add(item.value(config[CONF_VALUE]))
+        elif (key == 'state'):
+            cg.add(item.value(1 if config[CONF_STATE] else 0))
 
-            case 'visible':
-                cg.add(item.visible(v))
-            case _:
-                cg.add(item.var(k, v))
+        elif (key == 'visible'):
+            cg.add(item.visible(value))
+        else:
+            cg.add(item.var(key, value))
 
     return item
 
