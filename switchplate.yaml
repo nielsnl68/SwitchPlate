@@ -59,10 +59,10 @@ switchplate:
       objects:
         - type: label
           text:  !lambda return "Hello World";
-        = type: spinner
+        - type: spinner
           x: -10
-          t: 20
+          y: 20
           width: 60
-          heigth: 60
-          circle_color: #704020
+          height: 60
+          circle_color: "#704020"
           segment_color: red
