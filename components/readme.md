@@ -1,6 +1,63 @@
 some test sources and work in progress.
 
-## Cheatsheet
+# Implementation
+
+## prototype
+
+```yaml
+  external_components:
+    # use rtttl and dfplayer from ESPHome's dev branch in GitHub
+    # equivalent shorthand for GitHub
+    - source: github://nielsnl68/SwitchPlate
+  spi:
+  
+  display:
+    - platform: ili9341
+      id: mydisplay
+      model: TFT 2.4
+      cs_pin: 14
+      dc_pin: 27
+      led_pin: 32
+      reset_pin: 33
+  
+  switchplate:
+    display_id: mydisplay # Req
+    id: ... # Opt.
+    header:
+      objects:
+        ...
+    footer:
+      objects:
+        ...  
+    pages:
+      - id: ... # Opt.
+        name: myName
+        firstpage: false;
+        selectable: true    # can be opened with next and previous page selectors
+        objects:
+          - type: button
+            id: btnHello
+            left: 0          # Opt. Horizontal position on the page
+            top: 0           # Opt. Vertical position on the page
+            width: 0         # Opt. Width of the object
+            height: 0        # Opt. Height of the object
+            toggle: false    # True: creates a toggle-on/toggle-off button. False: creates a normal button
+            state: 0         # 0 = untoggled, 1 = toggled
+            text: ""         # The text of the label
+            align: left      # Text alignment: left, center, right
+            text_mode: expand     # The wrapping mode of long text labels
+
+           - type: button
+              ...
+ 
+  binary_sensor:
+    - platform: switchplate
+      object_id: btnHello
+      id: key4
+      name:  Hello screen button            
+```
+
+# List of Display options
 
 | widgets       | Type   | Description
 |:----------|:-------|:-----------
@@ -32,6 +89,7 @@ some test sources and work in progress.
 | btnmatrix | Selector | [Button Matrix](#button-matrix)
 | msgbox | Selector | [Messagebox](#messagebox)
 ---
+
 ## Common fields
 
 | Property | Value        | Required | Default | Description
@@ -152,7 +210,6 @@ _Note:_ up and down are superseeded by the screen size.
 |----------|------------|---------|--------------
 | `toggle`   | bool     | false   | When enabled, creates a toggle-on/toggle-off button. If false, creates a normal button
 | `state`    | bool      | false  | The value: `0` = untoggled, `1` = toggled
-
 | `text`     | string     | ""      | The text of the label
 | `mode`     | Modes      | `expand`| The wrapping mode of long text
 | `align`    | string     | `left`  | Text alignment
@@ -171,7 +228,6 @@ _Note:_ up and down are superseeded by the screen size.
 | Property | Value      | Default    | Description
 |----------|------------|------------|--------------
 | `value`  | bool       | false      | `1` = checked, `0` = unchecked
-
 | `text`   | string     | "Checkbox" | The label of the checkbox
 | `mode`   | Modes      | `expand`| The wrapping mode of long text
 | `align`  | string     | `left`  | Text alignment
@@ -232,18 +288,12 @@ _Note:_ up and down are superseeded by the screen size.
 | `min`          | int16      | 0       | minimum value of the indicator
 | `max`          | int16      | 100     | maximum value of the indicator
 | `value`        | int16      | 0       | current value of the indicator
-
 | `critical_value` | int16      | 80      | scale color will be changed to scale_end_color after this value
 | `label_count`    | uint8      |         | number of labels (and major ticks) of the scale
 | `line_count`     | uint16     | 31      | number of minor ticks of the entire scale
 | `angle`          | 0-360      | 240     | angle between start and end of the scale
 | `rotation`       | 0-360      | 0       | offset for the gauge's angles to rotate it
-| `format`         | uint16     | 0       | divider for major tick values
-  `0` : print the major tick value as is
-  `1` : strip 1 zero, i.e. divide tick value by 10 before printing the major tick label
-  `2` : strip 2 zeros, i.e. divide tick value by 100 before printing the major tick label
-  `3` : strip 3 zeros, i.e. divide tick value by 1000 before printing the major tick label
-  `4` : strip 4 zeros, i.e. divide tick value by 10000 before printing the major tick label
+| `format`         | uint16     | 0       | divider for major tick values<br>`0` : print the major tick value as is <br>`1` : strip 1 zero, i.e. divide tick value by 10 before printing the major tick label<br>`2` : strip 2 zeros, i.e. divide tick value by 100 before printing the major tick label<br>`3` : strip 3 zeros, i.e. divide tick value by 1000 before printing the major tick label<br>`4` : strip 4 zeros, i.e. divide tick value by 10000 before printing the major tick label
 
 ## Arc
 
@@ -252,7 +302,6 @@ _Note:_ up and down are superseeded by the screen size.
 | `min`       | int16 | 0       | minimum value of the indicator
 | `max`       | int16 | 100     | maximum value of the indicator
 | `value`     | int16 | 0       | current value of the indicator
-
 | `rotation`  | int16 | 0       | offset to the 0 degree position
 | `mode`      | 0-2        | 0       | `0` = normal, `1` = symmetrical, `2` = reverse
 | `adjustable`   | bool  | false   | Add knob that the user can operate to change the value
@@ -271,9 +320,7 @@ _Note:_ up and down are superseeded by the screen size.
 | `angle`          | 0-360      | 240     | angle between start and end of the scale
 | `line_count`     | uint16     | 31      | tick count of the scale
 | `rotation`       | 0-360      | 0       | offset for the scale angles to rotate it
-| `mode`           | 0-1        | 0       | 
-`0` = indicator lines are activated clock-wise<br>
-`1` = indicator lines are activated counter-clock-wise
+| `mode`           | 0-1        | 0       | `0` = indicator lines are activated clock-wise<br>`1` = indicator lines are activated counter-clock-wise
 
 # popup dialogs
 
@@ -293,7 +340,6 @@ _Note:_ up and down are superseeded by the screen size.
 |------------|-----------------|---------|--------------------------
 | text       | string    | ""       | The text of the message to be displayed.
 | options    | json array ["OK"]    | Json array of [string] where each element is the label of a button
-| ~~modal~~  | bool       | false   | Make the messagebox a modal dialog requiring user input
 | auto_close | int16      | 0       | Close the pop-up message automatically after this number of milliseconds have passed
 
 # obsolite
@@ -304,7 +350,7 @@ _Note:_ up and down are superseeded by the screen size.
 |----------|--------------|---------|--------------------------
 | val      | int8    | 0       | The number of the active tab, starting at 0
 | text     | string | ""      | The name of the active tab
-| btn_pos  | 0..4         | 1       | Position of the tab buttons:</br>`0` = none</br>`1` = top</br>`2` = bottom</br>`3` = left</br>`4` = right
+| btn_pos  | 0..4         | 1       | Position of the tab buttons:<br>`0` = none<br>`1` = top<br>`2` = bottom<br>`3` = left<br>`4` = right
 | count    | uint16  | 0       | **RO** The number of tabs of the tabview
 
 ## Tab  
@@ -313,51 +359,3 @@ _Note:_ up and down are superseeded by the screen size.
 |----------|--------------|---------|--------------------------
 | parentid | int8    | 0       | The `id` of the tabview object to which this tab is added
 | text     | string | "Tab"   | The name of tab button
-
-# Implementation
-
-## prototype
-
-```yaml
-  external_components:
-    # use rtttl and dfplayer from ESPHome's dev branch in GitHub
-    # equivalent shorthand for GitHub
-    - source: github://nielsnl68/SwitchPlate
-
-  switchplate:
-    display: [name of display] # Req
-    id: ... # Opt.
-    header:
-      objects:
-        ...
-    footer:
-      objects:
-        ...  
-    pages:
-      - id: ... # Opt.
-        name: myName
-        firstpage: false;
-        selectable: true    # can be opened with next and previous page selectors
-        objects:
-          - type: button
-            id: btnHello
-            left: 0          # Opt. Horizontal position on the page
-            top: 0           # Opt. Vertical position on the page
-            width: 0         # Opt. Width of the object
-            height: 0        # Opt. Height of the object
-            toggle: false    # True: creates a toggle-on/toggle-off button. False: creates a normal button
-            state: 0         # 0 = untoggled, 1 = toggled
-            text: ""         # The text of the label
-            align: left      # Text alignment: left, center, right
-            text_mode: expand     # The wrapping mode of long text labels
-
-           - type: button
-              ...
- 
-  binary_sensor:
-    - platform: openHASP
-      object_id: btnHello
-      id: key4
-      name:  Hello screen button            
-      
-```
