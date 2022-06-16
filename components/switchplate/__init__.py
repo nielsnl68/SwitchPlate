@@ -19,6 +19,8 @@ from esphome.const import (
     CONF_STATE
     )
 from esphome.core import coroutine_with_priority
+from esphome.components import display, touchscreen
+
 #from rgb_color import color
 try:
      from . import rgb_color as rc    # "myapp" case
@@ -30,9 +32,9 @@ import sys; print(sys.version)
 
 CODEOWNERS = ["@fvanroie","@nielsnl68"]
 
-#AUTO_LOAD = ['sensor', 'text_sensor', 'binary_sensor']
+AUTO_LOAD = ['sensor', 'text_sensor', 'binary_sensor', 'touchscreen', 'display']
 
-#CONFLICTS_WITH = ['display']
+DEPENDENCIES = ['display']
 
 
 MULTI_CONF = True
@@ -372,7 +374,7 @@ SWITCHPLATE_ITEM_SCHEMA = cv.All(
 
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(SwitchPlate),
-    cv.Required(CONF_DISPLAY_DEFINE): cv.string_strict,
+    cv.Required(CONF_DISPLAY_DEFINE): cv.use_id(display.DisplayBuffer) ,
     cv.Optional(CONF_ROTATION): validate_rotation,
     cv.Optional(CONF_TABVIEW):cv.boolean,
     cv.Optional(CONF_HEADER):  cv.All(
@@ -412,22 +414,22 @@ async def item_to_code(config):
         elif (key == 'text'):
             if isinstance(value, core.Lambda):
                 template_ = await cg.templatable( value, [(SwitchPlateItemConstPtr, "it")], cg.std_string )
-                cg.add(item.text(template_))
+                cg.add(item.set_text(template_))
             else:
-                cg.add(item.text(config[CONF_TEXT]))
+                cg.add(item.set_text(config[CONF_TEXT]))
         elif (key == 'value'):
             if isinstance(value, core.Lambda):
                 template_ = await cg.templatable( value, [(SwitchPlateItemConstPtr, "it")], cg.int32)
-                cg.add(item.value(template_))
+                cg.add(item.set_value(template_))
             else:
-                cg.add(item.value(config[CONF_VALUE]))
+                cg.add(item.set_value(config[CONF_VALUE]))
         elif (key == 'state'):
-            cg.add(item.value(1 if config[CONF_STATE] else 0))
+            cg.add(item.set_value(1 if config[CONF_STATE] else 0))
 
         elif (key == 'visible'):
             cg.add(item.visible(value))
         else:
-            cg.add(item.var(key, value))
+            cg.add(item.set_variable(key, value))
 
     return item
 
@@ -453,11 +455,11 @@ async def page_to_code(parent, config):
     cg.add(parent.add_page(page))
 
     if CONF_NAME in config:
-        cg.add(page.name(config[CONF_NAME]))
+        cg.add(page.set_name(config[CONF_NAME]))
     if CONF_SELECTABLE in config:
-        cg.add(page.selectable(config[CONF_SELECTABLE]))
+        cg.add(page.set_selectable(config[CONF_SELECTABLE]))
     if CONF_ENABLED in config:
-        cg.add(page.enabled(config[CONF_ENABLED]))
+        cg.add(page.set_enabled(config[CONF_ENABLED]))
     
     for c in config[CONF_OBJECTS]:
         if (c[CONF_TYPE] == CONF_GROUP):
@@ -468,12 +470,15 @@ async def page_to_code(parent, config):
 
 
 async def to_code(config):
-    if CONF_DISPLAY_DEFINE in config:
-        cg.add_define("DISPLAY_CONF_NAME", config[CONF_DISPLAY_DEFINE])
-    # else:
+    cg.add_library("lvgl",'8')
+    cg.add_build_flag("-D LV_CONF_INCLUDE_SIMPLE")
+
 
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
+    parent = await cg.get_variable(config[CONF_DISPLAY_DEFINE])
+    cg.add(var.set_display( parent))
+
     if CONF_ROTATION in config:
         cg.add(var.rotation(config[CONF_ROTATION]))
     if CONF_TABVIEW in config:

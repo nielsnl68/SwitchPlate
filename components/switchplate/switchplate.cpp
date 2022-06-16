@@ -25,7 +25,7 @@ namespace esphome
             lv_disp_drv_init(&disp_drv);
             disp_drv.hor_res = this->display_->get_width();
             disp_drv.ver_res = this->display_->get_height();
-            disp_drv.flush_cb = switchplate_flush_cb;
+            disp_drv.flush_cb = &switchplate_flush_cb;
             disp_drv.draw_buf = &disp_buf;
             disp_drv.user_data = this;
             lv_disp_drv_register(&disp_drv);

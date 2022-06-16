@@ -212,8 +212,8 @@ namespace esphome
         display::DisplayBuffer *display_{nullptr};
         touchscreen::Touchscreen *touchscreen_{nullptr};
 
-        static lv_disp_draw_buf_t disp_buf{nullptr};
-        static lv_color_t buf[buf_pix_count]{nullptr};
+        lv_disp_draw_buf_t disp_buf;
+        lv_color_t buf[buf_pix_count] ;
 
         std::vector<SwitchPlateBase *> header_;
         std::vector<SwitchPlateBase *> footer_;
@@ -255,7 +255,7 @@ namespace esphome
 
 
 /* Update the TFT - Needs to be accessible from C library */
-void IRAM_ATTR switchplate_flush_cb(lv_disp_drv_t *disp, const lv_area_t *area, lv_color16_t *color_p)
+void switchplate_flush_cb(lv_disp_drv_t *disp, const lv_area_t *area, lv_color16_t *color_p)
 {
   size_t len = lv_area_get_size(area);
   SwitchPlate * switchplate = (SwitchPlate *) disp->user_data;
