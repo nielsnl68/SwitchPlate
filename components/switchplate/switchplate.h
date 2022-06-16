@@ -1,9 +1,18 @@
 #pragma once
+//#include "./hasp/lv_conf.h"
+
+#include "esphome/components/display/display_buffer.h"
+#include "esphome/components/touchscreen/touchscreen.h"
 
 #include "esphome/core/component.h"
 #include "esphome/core/defines.h"
 #include "esphome/core/automation.h"
 #include <map>
+
+//#include "lv_conf.h"
+
+#include "bootlogo.h"
+#include "lvgl.h"
 
 #ifdef USE_SENSOR
 #include "esphome/components/sensor/sensor.h"
@@ -19,6 +28,9 @@ namespace esphome
 {
   namespace switch_plate
   {
+
+    const size_t buf_pix_count = 480 * 320 / 5; ///TODO: NEED to find a better way to do this
+
     enum Rotation
     {
       DISPLAY_ROTATION_0_DEGREES = 0,
@@ -100,7 +112,7 @@ namespace esphome
           return 0;
         }
 
-        void visible(bool visible) { this->visible_ = visible; }
+        void set_visible(bool visible) { this->visible_ = visible; }
         virtual bool visible()
         {
           if ((this->parent_ != nullptr) && !this->parent_->visible())
@@ -138,6 +150,12 @@ namespace esphome
           this->binary_sensors_.push_back(obj);
         }
 #endif
+        void set_display(display::DisplayBuffer *display) {
+          this->display_ = display;
+        }        
+        void set_touchscreen(touchscreen::Touchscreen *touchscreen) {
+          this->touchscreen_ = touchscreen;
+        }        
         void add_page(SwitchPlatePage *page);
 
         void add_headerItem(SwitchPlateBase *header);
@@ -148,19 +166,14 @@ namespace esphome
         size_t footer_size() const { return this->footer_.size(); }
         SwitchPlateBase *footerItem(size_t i) { return this->footer_[i]; }
 
-        void rotation(Rotation rotation) { this->rotation_ = rotation; }
-        Rotation rotation() const { return this->rotation_; }
-
-        void tabview(bool tabview) { this->tabview_ = tabview; }
-        bool tabview() const { return this - tabview_; }
+        void set_tabview(bool tabview) { this->tabview_ = tabview; }
+        bool set_tabview() const { return this - tabview_; }
 
         /// Get the width of the image in pixels with rotation applied.
-        int maxWidth() override;
-        virtual int get_width_internal() { return 0; }
+        int maxWidth() { return this->display_->get_width(); }
 
         /// Get the height of the image in pixels with rotation applied.
-        int maxHeight() override;
-        virtual int get_height_internal() { return 0; };
+        int maxHeight() { return this->display_->get_height(); };
 
         void select_page(SwitchPlatePage *page);
 
@@ -181,8 +194,27 @@ namespace esphome
         void setup() override;
         void dump_config() override;
         void show() override;
+        
+        void fill(int x1, int y1, int x2, int y2, uint16_t * pixels) {
+          this->display_->fill(x1, y1, x2, y2, pixels);    
+        }
 
-      protected:
+        void IRAM_ATTR loop() override
+        {
+          lv_timer_handler(); // called by dispatch_loop
+        }
+        float get_setup_priority() const override { return esphome::setup_priority::DATA; }
+
+      private:
+        /// High Frequency loop() requester used during sampling phase.
+        HighFrequencyLoopRequester high_freq_;
+
+        display::DisplayBuffer *display_{nullptr};
+        touchscreen::Touchscreen *touchscreen_{nullptr};
+
+        static lv_disp_draw_buf_t disp_buf{nullptr};
+        static lv_color_t buf[buf_pix_count]{nullptr};
+
         std::vector<SwitchPlateBase *> header_;
         std::vector<SwitchPlateBase *> footer_;
 
@@ -203,7 +235,70 @@ namespace esphome
 #endif
 
         std::vector<DisplayOnPageChangeTrigger *> on_page_change_triggers_;
+
+
+        void tft_splashscreen()
+        {
+          uint8_t fg[] = logoFgColor;
+          uint8_t bg[] = logoBgColor;
+          Color fgColor = Color(fg[0], fg[1], fg[2]);
+          Color bgColor = Color(bg[0], bg[1], bg[2]);
+
+          this->display_->fill(bgColor);
+
+          int x = (maxWidth() - logoWidth) / 2;
+          int y = (maxHeight() - logoHeight) / 2;
+         // this->display_->image(x, y, logoImage, fgColor, bgColor);
+        }
+
       };
+
+
+/* Update the TFT - Needs to be accessible from C library */
+void IRAM_ATTR switchplate_flush_cb(lv_disp_drv_t *disp, const lv_area_t *area, lv_color16_t *color_p)
+{
+  size_t len = lv_area_get_size(area);
+  SwitchPlate * switchplate = (SwitchPlate *) disp->user_data;
+  // tft.setWindow(area->x1, area->y1, area->x2, area->y2);
+
+  switchplate->fill(area->x1, area->x2, area->y1, area->y2, (uint16_t *)color_p); /* Write words at once */
+
+
+  /* Tell lvgl that flushing is done */
+  lv_disp_flush_ready(disp);
+}
+
+/*Read the touchpad - Needs to be accessible from C library * /
+void IRAM_ATTR my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
+{
+    data->state = LV_INDEV_STATE_REL;
+
+ 
+  uint16_t touchX, touchY;
+
+  bool touched = tft.getTouch(&touchX, &touchY, 600);
+
+  if (!touched)
+  {
+    data->state = LV_INDEV_STATE_REL;
+  }
+  else
+  {
+    data->state = LV_INDEV_STATE_PR;
+
+    / * Set the coordinates* /
+    data->point.x = touchX;
+    data->point.y = touchY;
+
+    // Serial.print("Data x");
+    // Serial.print(touchX);
+
+    // Serial.print(" - y");
+    // Serial.println(touchY);
+  }
+
+}
+  */
 
       // ==============================================================================
 
@@ -212,9 +307,9 @@ namespace esphome
       public:
         SwitchPlateItem(std::string type) { this->type_ = type; };
 
-        void var(std::string key, uint32_t var) {this->vars_[key].u = var;} 
-        void var(std::string key, int32_t var) {this->vars_[key].i = var;} 
-        void var(std::string key, bool var) {this->vars_[key].b = var;} 
+        void set_variable(std::string key, uint32_t var) {this->vars_[key].u = var;} 
+        void set_variable(std::string key, int32_t var) {this->vars_[key].i = var;} 
+        void set_variable(std::string key, bool var) {this->vars_[key].b = var;} 
 
         uint32_t varu(std::string key) {return this->vars_[key].u;}
         int32_t  vari(std::string key) {return this->vars_[key].i;}
@@ -235,10 +330,10 @@ namespace esphome
         Align align() { return this->vars_["align"].a; }
         Direction direction() { return this->vars_["direction"].d; }
 
-        template <typename V> void text(V val) { this->text_ = val; }
+        template <typename V> void set_text(V val) { this->text_ = val; }
         std::string text() const { return const_cast<SwitchPlateItem *>(this)->text_.value(this); }
         
-        template <typename V> void value(V val) { this->VALUE_ = val; }
+        template <typename V> void set_value(V val) { this->VALUE_ = val; }
         int value() const { return const_cast<SwitchPlateItem *>(this)->VALUE_.value(this); }
 
       protected:
@@ -304,11 +399,11 @@ namespace esphome
           ((SwitchPlate *)this->parent())->select_page(this);
         }
 
-        void selectable(bool selectable) { this->selectable_ = selectable; }
-        bool selectable() { return this->selectable_; }
+        void set_selectable(bool selectable) { this->selectable_ = selectable; }
+        bool get_selectable() { return this->selectable_; }
 
-        void name(std::string name) { this->name_ = name; }
-        std::string name() { return this->name_; }
+        void set_name(std::string name) { this->name_ = name; }
+        std::string get_name() { return this->name_; }
 
       protected:
         SwitchPlatePage *prev_{nullptr};

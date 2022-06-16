@@ -9,7 +9,7 @@ def color(value):
     """Validate that the value is a hex RGB color.
         value can be a color name, a Hex value like #RRGGBB, a RGB(10,10,10), HSL(350deg,50%,100%)
         or just a positive integer value """
-    if isinstance(value, str):
+    if isinstance(value, int):
         if value.startswith("#"):
             value = value[1:]
             if len(value) == 3:
