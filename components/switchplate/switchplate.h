@@ -199,7 +199,7 @@ namespace esphome
           this->display_->fill(x1, y1, x2, y2, pixels);    
         }
 
-        void IRAM_ATTR loop() override
+        void loop() override
         {
           lv_timer_handler(); // called by dispatch_loop
         }
@@ -254,19 +254,7 @@ namespace esphome
       };
 
 
-/* Update the TFT - Needs to be accessible from C library */
-void switchplate_flush_cb(lv_disp_drv_t *disp, const lv_area_t *area, lv_color16_t *color_p)
-{
-  size_t len = lv_area_get_size(area);
-  SwitchPlate * switchplate = (SwitchPlate *) disp->user_data;
-  // tft.setWindow(area->x1, area->y1, area->x2, area->y2);
 
-  switchplate->fill(area->x1, area->x2, area->y1, area->y2, (uint16_t *)color_p); /* Write words at once */
-
-
-  /* Tell lvgl that flushing is done */
-  lv_disp_flush_ready(disp);
-}
 
 /*Read the touchpad - Needs to be accessible from C library * /
 void IRAM_ATTR my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)

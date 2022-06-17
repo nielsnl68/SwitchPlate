@@ -9,6 +9,24 @@ namespace esphome
 
         static const char *TAG = "SwitchPlate.component";
 
+
+/* Update the TFT - Needs to be accessible from C library */
+void switchplate_flush_cb(lv_disp_drv_t *disp, const lv_area_t *area, lv_color16_t *color_p)
+{
+  size_t len = lv_area_get_size(area);
+  SwitchPlate * switchplate = (SwitchPlate *) disp->user_data;
+  // tft.setWindow(area->x1, area->y1, area->x2, area->y2);
+
+  switchplate->fill(area->x1, area->x2, area->y1, area->y2, (uint16_t *)color_p); /* Write words at once */
+
+
+  /* Tell lvgl that flushing is done */
+  lv_disp_flush_ready(disp);
+}
+
+
+
+
         void SwitchPlate::setup()
         {
 
@@ -25,7 +43,7 @@ namespace esphome
             lv_disp_drv_init(&disp_drv);
             disp_drv.hor_res = this->display_->get_width();
             disp_drv.ver_res = this->display_->get_height();
-            disp_drv.flush_cb = &switchplate_flush_cb;
+            disp_drv.flush_cb = switchplate_flush_cb;
             disp_drv.draw_buf = &disp_buf;
             disp_drv.user_data = this;
             lv_disp_drv_register(&disp_drv);
