@@ -4,6 +4,7 @@ This component allows a similar method of creating complex displays for espHome,
 # Discussions
  * [ESPHome-Switchplate channel](https://discord.com/channels/538814618106331137/981129448394993664) in the openHASP Discord
  * [Display architecture Changes needed? Thread](https://discord.com/channels/429907082951524364/960438726067114024) in the ESPHome Discord
+
 # Example Relevant YAML
 
 ```yaml
@@ -80,3 +81,6 @@ switchplate:
           #circle_color: "#704020"
           #segment_color: red
 ```
+# More Examples
+
+For further examples of what this component can do, check out the [documentation here](https://github.com/nielsnl68/SwitchPlate/blob/main/components/readme.md)
