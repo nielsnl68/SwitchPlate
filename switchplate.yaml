@@ -1,22 +1,50 @@
 esphome:
-  name: switchplate
+  name: lum-iot34
+  comment: switchplate test yaml
 
 esp32:
-  board: nodemcu-32s
-  framework:
-    type: arduino
+  board: firebeetle32
+
+time:
+  - platform: homeassistant
+    id: the_time
 
 wifi: 
   networks:
     - ssid: !secret wifi_ssid
       password: !secret wifi_password
-
+  
 api: 
+
+
+ota:
+  password: !secret ota_password
+
+logger:
 
 color:
   - id: my_light_red
     red: 100%
-
+  - id: my_black
+    blue: 0%
+    green: 0%  
+    red: 0%
+  - id: my_red
+    red: 100%
+  - id: color_blue 
+    blue: 86%
+  - id: my_white
+    red: 100%
+    blue: 100%
+    green: 100%
+  - id: my_blue
+    red: 0%
+    blue: 100%
+    green: 0%    
+  - id: my_green
+    red: 0%
+    blue: 0%
+    green: 100%    
 external_components:
   # use rtttl and dfplayer from ESPHome's dev branch in GitHub
   # equivalent shorthand for GitHub
@@ -25,19 +53,51 @@ external_components:
       type: local
       path: C:\development\projects\switchplate\components
 
-spi:
-  clk_pin: 14
-  miso_pin: 15
-  mosi_pin: 16
 
+
+spi:
+  mosi_pin: 23
+  miso_pin: 19
+  clk_pin: 18
+
+  
+font:
+  - file: "gfonts://Roboto"
+    id: my_font
+    size: 20
+    
 
 display:
   - id: my_display
     platform: ili9341
-    model: tft 2.4
-    dc_pin: 10
+    model: TFT 2.4
+    cs_pin: 5
+    dc_pin: 16
+    rotation: 90
 
-switchplate:
+    lambda: |-
+      it.fill(id(my_green));
+      it.print(2, 2, id(my_font), id(my_white), TextAlign::TOP_LEFT, "Woonkamer lampen");
+      //it.strftime(210, 2, id(my_font), "%d/%m %H:%M", id(the_time).now() );
+      //it.rectangle(    50, 50 ,228, 150, id(my_green));
+      
+      it.set_clipping( 50, 50 ,228, 150);
+      it.filled_rectangle(0, 0, 320, 240,  id(my_black));
+
+      it.rectangle(3, 28, 99, 99, id(my_blue));
+      it.rectangle(3,136, 99, 99, 8, id(my_red));
+
+      it.filled_rectangle(110, 28, 99, 99, id(my_blue));
+      it.filled_rectangle(110,136, 99, 99, 7,  id(my_red));
+      
+      //  it.circle(218+50,28+50,50, id(my_blue));
+      //  it.filled_circle(218+50,136+50,50, id(my_red));
+
+      it.triangle(       268,  28,  218, 128, 318, 128, id(my_blue));
+  
+      it.filled_triangle(268, 136,  218, 236, 318, 236, id(my_red));
+  
+witchplate:
   display: my_display # Req 
   id: abcname # Opt.
   header:
