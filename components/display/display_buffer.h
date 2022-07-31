@@ -250,6 +250,8 @@ class DisplayBuffer {
   ///
   Rect union_rect(Rect rect, Rect add_rect);
 
+  Rect intersect_rect(Rect rect, Rect add_rect);
+
   ///
   /// Determine if a coordinate is inside of a rectangular region.
   /// - This routine is useful in determining if a touch
@@ -278,11 +280,14 @@ class DisplayBuffer {
   bool is_inside(int16_t x, int16_t y, uint16_t width, uint16_t height);
 
   ///
-  /// Reset the invalidation region
+  /// Set the clipping rectangle for further drawing
   ///
-  /// \return none
+  /// \param[in]  rect:       Pointer to Rect for clipping (or NULL for entire screen)
   ///
-  void clear_clipping();
+  /// \return true if success, false if error
+  ///
+  void set_clipping(Rect rect);
+  void set_clipping(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) { set_clipping(Rect(left, top, right, bottom)); };
 
   ///
   /// Add a rectangular region to the invalidation region
@@ -293,17 +298,27 @@ class DisplayBuffer {
   /// \return none
   ///
   void add_clipping(Rect rect);
-  void add_clipping(int16_t x, int16_t y, uint16_t width, uint16_t height) { add_clipping(Rect(x, y, width, height)); };
+  void add_clipping(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) { this->add_clipping(Rect(left, top, right, bottom)); };
+  
+  ///
+  /// intersect a rectangular region to the invalidation region
+  /// - This is usually called when an element has been modified
+  ///
+  /// \param[in]  rect: Rectangle to add to the invalidation region
+  ///
+  /// \return none
+  ///
+  void sub_clipping(Rect rect);
+  void sub_clipping(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) { this->sub_clipping(Rect(left, top, right, bottom)); };
+
 
   ///
-  /// Set the clipping rectangle for further drawing
+  /// Reset the invalidation region
   ///
-  /// \param[in]  rect:       Pointer to Rect for clipping (or NULL for entire screen)
+  /// \return none
   ///
-  /// \return true if success, false if error
-  ///
-  void set_clipping(Rect rect);
-  void set_clipping(int16_t x, int16_t y, uint16_t width, uint16_t height) { set_clipping(Rect(x, y, width, height)); };
+  void clear_clipping();
+
 
   ///
   /// Get the current the clipping rectangle
@@ -322,6 +337,7 @@ class DisplayBuffer {
   /// \return true if point is visible, false if it should be discarded
   ///
   bool is_clipped(int16_t x, int16_t y);
+  bool is_clipped(Rect rect);
 
   /// Draw the outline of a rectangle with the top left point at [x1,y1] and the bottom right point at
   /// [x1+width,y1+height].
@@ -657,7 +673,7 @@ class DisplayBuffer {
                       Color color_end, int16_t angle_start, int16_t angle_end, bool gradient = false,
                       int16_t gradient_angle_start = 0, int16_t gradient_angle_range = 0);
 
-  Rect clipping_rectangle_{1, 1, 0, 0};
+  std:vector <Rect> clipping_rectangle_;
   Color transparant_color_{COLOR_OFF};
 #endif
 

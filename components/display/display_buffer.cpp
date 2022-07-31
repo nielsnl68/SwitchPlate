@@ -451,6 +451,11 @@ Rect DisplayBuffer::expand_rect(Rect rect, uint16_t width, uint16_t height) {
     return new_rect;
   }
 
+  // Adjust the rectangle coordinate to allow for new dimensions
+  // Note that this moves the coordinate in the opposite
+  // direction of the expansion/contraction.
+  new_rect.x = rect.x - width;
+  new_rect.y = rect.y - height;
   // Adjust the new width/height
   // Note that the overall width/height changes by a factor of
   // two since we are applying the adjustment on both sides (ie.
@@ -458,20 +463,12 @@ Rect DisplayBuffer::expand_rect(Rect rect, uint16_t width, uint16_t height) {
   new_rect.w = rect.w + (2 * width);
   new_rect.h = rect.h + (2 * height);
 
-  // Adjust the rectangle coordinate to allow for new dimensions
-  // Note that this moves the coordinate in the opposite
-  // direction of the expansion/contraction.
-  new_rect.x = rect.x - width;
-  new_rect.y = rect.y - height;
 
   return new_rect;
 }
 
 // Expand the current rect (pRect) to enclose the additional rect region (radd_rect)
 Rect DisplayBuffer::union_rect(Rect rect, Rect add_rect) {
-  int16_t source_x0, source_y0, source_x1, source_y1;
-  int16_t add_x0, add_y0, add_x1, add_y1;
-
   // If the source rect has zero dimensions, then treat as empty
   if ((rect.w == 0) || (rect.h == 0)) {
     // No source region defined, simply copy add region
@@ -480,59 +477,83 @@ Rect DisplayBuffer::union_rect(Rect rect, Rect add_rect) {
 
   // Source region valid, so increase dimensions
 
-  // Calculate the rect boundary coordinates
-  source_x0 = rect.x;
-  source_y0 = rect.y;
-  source_x1 = rect.x + rect.w - 1;
-  source_y1 = rect.y + rect.h - 1;
-  add_x0 = add_rect.x;
-  add_y0 = add_rect.y;
-  add_x1 = add_rect.x + add_rect.w - 1;
-  add_y1 = add_rect.y + add_rect.h - 1;
-
   // Find the new maximal dimensions
-  source_x0 = (add_x0 < source_x0) ? add_x0 : source_x0;
-  source_y0 = (add_y0 < source_y0) ? add_y0 : source_y0;
-  source_x1 = (add_x1 > source_x1) ? add_x1 : source_x1;
-  source_y1 = (add_y1 > source_y1) ? add_y1 : source_y1;
+  uint_16_t source_x0 = (rect.x < add_rect.x) ? rect.x : add_rect.x;
+  uint_16_t source_y0 = (rect.y < add_rect.y) ? rect.x : add_rect.y;
+  uint_16_t source_x1 = (rect.w > add_rect.w) ? rect.x : add_rect.w;
+  uint_16_t source_y1 = (rect.h > add_rect.h) ? rect.x : add_rect.h;
 
   // Update the original rect region
-  return Rect(source_x0, source_y0, (uint16_t)(source_x1 - source_x0 + 1), (uint16_t)(source_y1 - source_y0 + 1));
+  return Rect(source_x0, source_y0, source_x1, source_y1);
 }
 
+Rect DisplayBuffer::intersect_rect(Rect rect, Rect add_rect){
+  // If the source rect has zero dimensions, then treat as empty
+  if ((rect.w == 0) || (rect.h == 0)) {
+    // No source region defined, simply copy add region
+    return add_rect;
+  }
+  // Find the new minimum dimensions
+  uint_16_t source_x0 = (rect.x > add_rect.x) ? rect.x : add_rect.x;
+  uint_16_t source_y0 = (rect.y > add_rect.y) ? rect.x : add_rect.y;
+  uint_16_t source_x1 = (rect.w < add_rect.w) ? rect.x : add_rect.w;
+  uint_16_t source_y1 = (rect.h < add_rect.h) ? rect.x : add_rect.h;
+
+  // Update the original rect region
+  return Rect(source_x0, source_y0, source_x1, source_y1);
+}
+
+
+
 bool DisplayBuffer::in_rect(int16_t x, int16_t y, Rect rect) {
-  return ((x >= rect.x) && (x <= rect.x + (int16_t) rect.w) && (y >= rect.y) && (y <= rect.y + (int16_t) rect.h));
+  return ((x >= rect.x) && (x <= rect.w) && (y >= rect.y) && (y <= rect.h));
 }
 
 bool DisplayBuffer::is_inside(int16_t x, int16_t y, uint16_t width, uint16_t height) {
   return ((x >= 0) && (x <= (int16_t)(width) -1) && (y >= 0) && (y <= (int16_t)(height) -1));
 }
 
-void DisplayBuffer::clear_clipping() { this->clipping_rectangle_ = (Rect){0, 0, 0, 0}; }
+void DisplayBuffer::clear_clipping() { 
+  if (this->clipping_rectangle_.size == 0) {
+    ESP_LOGW("Clipping is not set.");
+  } else {    
+    this->clipping_rectangle_.pop_back();
+  }
 
 void DisplayBuffer::add_clipping(Rect add_rect) {
-  this->clipping_rectangle_ = this->union_rect(this->clipping_rectangle_, add_rect);
+  if (this->clipping_rectangle_.size == 0) {
+    ESP_LOGW("Clipping is not set.");
+  } else {    
+    Rect rect = this->get_clipping();
+    rect = this->union_rect(rect, add_rect);
+    this->clipping_rectangle_.back() = rect;
 }
 
-void DisplayBuffer::set_clipping(Rect rect) { this->clipping_rectangle_ = rect; }
+void DisplayBuffer::set_clipping(Rect rect) { 
+  this->clipping_rectangle_.push_back( rect); }
 
-Rect DisplayBuffer::get_clipping() { return this->clipping_rectangle_; }
+Rect DisplayBuffer::get_clipping() { 
+  if (this->clipping_rectangle_.size == 0) {
+    return Rect(1,1,0,0);
+  } else {
+    return this->clipping_rectangle_.back();
+  }
+}
 
 bool DisplayBuffer::is_clipped(int16_t x, int16_t y) {
-  if ((this->clipping_rectangle_.w == 0) || (this->clipping_rectangle_.h == 0))
+  Rect clip = this->get_clipping(); 
+  if ((clip.w == 0) || (clip.h == 0))
     return false;
-
-  int16_t clip_x0 = this->clipping_rectangle_.x;
-  int16_t clip_y0 = this->clipping_rectangle_.y;
-  int16_t clip_x1 = this->clipping_rectangle_.x + this->clipping_rectangle_.w - 1;
-  int16_t clip_y1 = this->clipping_rectangle_.y + this->clipping_rectangle_.h - 1;
-
-  if ((x < clip_x0) || (x > clip_x1))
-    return true;
-  if ((y < clip_y0) || (y > clip_y1))
-    return true;
-  return false;
+  return if ((x < clip.x) || (x > clip.w)) || ((y < clip.y) || (y > clip.h));
 }
+
+bool DisplayBuffer::is_clipped(Rect rect) {
+  Rect clip = this->get_clipping(); 
+  if ((clip.w == 0) || (clip.h == 0))
+    return true;
+  return if ((rect.w < clip.x) || (rect.x > clip.w)) || ((rect.h < clip.y) || (rect.y > clip.h));
+}
+
 
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 // Graphics General Functions
