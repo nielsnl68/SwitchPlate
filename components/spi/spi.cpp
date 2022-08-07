@@ -1,3 +1,4 @@
+
 #include "spi.h"
 #include "esphome/core/log.h"
 #include "esphome/core/helpers.h"
@@ -76,7 +77,7 @@ void SPIComponent::setup() {
     if (spi_bus_num == 0) {
       this->hw_spi_ = &SPI;
     } else {
-      this->hw_spi_ = new SPIClass(3);  // NOLINT(cppcoreguidelines-owning-memory)
+      this->hw_spi_ = new SPIClass(VSPI);  // NOLINT(cppcoreguidelines-owning-memory)
     }
     spi_bus_num++;
     this->hw_spi_->begin(clk_pin, miso_pin, mosi_pin);
