@@ -16,7 +16,7 @@
   #if !defined(VSPI)
     #ifdef VSPI_HOST
       #define VSPI VSPI_HOST
-    #elif defined(SPI2_HOST)
+    #elif defined(SPI3_HOST)
       #define VSPI SPI3_HOST
     #else 
       #define VSPI 3
