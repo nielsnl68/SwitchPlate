@@ -3,23 +3,25 @@ import esphome.config_validation as cv
 from esphome import core, automation
 from esphome.automation import maybe_simple_id
 from esphome.const import (
+    CONF_BACKLIGHT_PIN,
     CONF_GROUP,
-    CONF_ID, 
-    CONF_PAGES, 
-    CONF_PAGE_ID,  
-    CONF_ROTATION, 
-    CONF_FROM, 
-    CONF_TO,  
+    CONF_ID,
+    CONF_PAGES,
+    CONF_PAGE_ID,
+    CONF_ROTATION,
+    CONF_FROM,
+    CONF_TO,
     CONF_TRIGGER_ID,
-    CONF_TYPE, 
-    CONF_VISIBLE, 
-    CONF_NAME, 
-    CONF_MIN_VALUE, 
+    CONF_TYPE,
+    CONF_VISIBLE,
+    CONF_NAME,
+    CONF_MIN_VALUE,
     CONF_MAX_VALUE,
     CONF_STATE
     )
 from esphome.core import coroutine_with_priority
-from esphome.components import display, touchscreen
+from esphome.components import display, touchscreen, font
+
 
 #from rgb_color import color
 try:
@@ -27,14 +29,18 @@ try:
 except:
      import rgb_color as rc
 
-import sys; print(sys.version)
+from .styles import *
 
 
-CODEOWNERS = ["@fvanroie","@nielsnl68"]
 
-AUTO_LOAD = ['sensor', 'text_sensor', 'binary_sensor', 'touchscreen', 'display']
 
-DEPENDENCIES = ['display']
+
+
+CODEOWNERS = ["@nielsnl68"]
+
+AUTO_LOAD = ['sensor', 'text_sensor', 'binary_sensor', 'touchscreen', 'display', 'font', 'color']
+
+DEPENDENCIES = ['display', 'touchscreen', 'font', 'color' ]
 
 
 MULTI_CONF = True
@@ -122,7 +128,7 @@ CONF_MODE_LOOP = "loop"
 CONF_MODE_CROP = "crop"
 CONF_MODE_CONSTANT = "constant"
 CONF_MODE_SLOWDOWN = "slowdown"
-CONF_MODE_SLOWSTRATCH = "slowdown-stratch"
+CONF_MODE_SLOWSTRATCH = "slowdown_stratch"
 
 CONF_DIRECTION = "direction"
 CONF_DIRECTION_DOWN = "down"
@@ -132,6 +138,9 @@ CONF_DIRECTION_RIGHT = "right"
 CONF_DIRECTION_CW = "cw"
 CONF_DIRECTION_CCW = "ccw"
 
+CONF_DEFAULT_FONT = "default_font"
+CONF_BACKGROUND_COLOR = "background_color"
+CONF_BACKGROUND_IMAGE = "background_image"
 
 openHASP_ns = cg.esphome_ns.namespace('switch_plate')
 
@@ -162,9 +171,9 @@ CONF_ROTATIONS = {
 
 
 CONF_ALIGNS = {
-    CONF_ALIGN_LEFT : openHASP_ns.TEXT_ALIGN_LEFT,
-    CONF_ALIGN_CENTER : openHASP_ns.TEXT_ALIGN_CENTER,
-    CONF_ALIGN_RIGHT : openHASP_ns.TEXT_ALIGN_RIGHT
+    CONF_ALIGN_LEFT : openHASP_ns.LEFT,
+    CONF_ALIGN_CENTER : openHASP_ns.CENTER,
+    CONF_ALIGN_RIGHT : openHASP_ns.RIGHT
 }
 
 CONF_TEXT_MODES = {
@@ -195,28 +204,28 @@ CONF_SPINNER_DIRECTIONS = {
 }
 
 CONF_WIDGETS = {
-    WIDGET_FRAME,
-    WIDGET_LINE ,
-    WIDGET_IMG ,
-    WIDGET_SPINNER,
+    WIDGET_FRAME : openHASP_ns.class_('SwitchPlateFrame',SwitchPlateItem),
+    WIDGET_LINE : openHASP_ns.class_('SwitchPlateLine',SwitchPlateItem) ,
+    WIDGET_IMG  : openHASP_ns.class_('SwitchPlateImg',SwitchPlateItem),
+    WIDGET_SPINNER : openHASP_ns.class_('SwitchPlateSpinner',SwitchPlateItem),
 
-    WIDGET_GROUPED,
+    WIDGET_GROUPED : openHASP_ns.class_('SwitchPlateGroup', SwitchPlateItem),
 
-    WIDGET_LED,
-    WIDGET_LABEL,
-    WIDGET_BUTTON, 
-    WIDGET_SWITCH,
-    WIDGET_CHECKBOX,
+    WIDGET_LED : openHASP_ns.class_('SwitchPlateLed',SwitchPlateItem),
+    WIDGET_LABEL : openHASP_ns.class_('SwitchPlateLabel',SwitchPlateItem),
+    WIDGET_BUTTON : openHASP_ns.class_('SwitchPlateButton',SwitchPlateItem), 
+    WIDGET_SWITCH : openHASP_ns.class_('SwitchPlateSwitch',SwitchPlateItem),
+    WIDGET_CHECKBOX : openHASP_ns.class_('SwitchPlateCheckbox',SwitchPlateItem),
 
-    WIDGET_DROPDOWN,
-    WIDGET_ROLLER,
-    WIDGET_CPICKER,
+    WIDGET_DROPDOWN : openHASP_ns.class_('SwitchPlateDropdown',SwitchPlateItem),
+    WIDGET_ROLLER : openHASP_ns.class_('SwitchPlateRoller',SwitchPlateItem),
+    WIDGET_CPICKER : openHASP_ns.class_('SwitchPlateColorPicker',SwitchPlateItem),
 
-    WIDGET_PROGRESSBAR,
-    WIDGET_SLIDER,
-    WIDGET_ARC,
-    WIDGET_LINEMETER,
-    WIDGET_GUAUGE,
+    WIDGET_PROGRESSBAR : openHASP_ns.class_('SwitchPlateProgressBar',SwitchPlateItem),
+    WIDGET_SLIDER : openHASP_ns.class_('SwitchPlateSlider',SwitchPlateItem),
+    WIDGET_ARC : openHASP_ns.class_('SwitchPlateArc',SwitchPlateItem),
+    WIDGET_LINEMETER : openHASP_ns.class_('SwitchPlateLineMeter',SwitchPlateItem),
+    WIDGET_GUAUGE : openHASP_ns.class_('SwitchPlateGauge',SwitchPlateItem),
 }
 
 
@@ -242,14 +251,15 @@ def validate_min_max(config):
 def switchplate_item_schema(value):
     return SWITCHPLATE_ITEM_SCHEMA(value)
 
+def switchplate_style_schema(value):
+    return SWITCHPLATE_STYLE_SCHEMA(value)
 
 SWITCHPLATE_ITEM_COMMON_SCHEMA = cv.Schema(
     {
-        cv.GenerateID(CONF_ID): cv.declare_id(SwitchPlateItem),
         cv.Optional(CONF_X):cv.int_range(-512,512),
         cv.Optional(CONF_Y):cv.int_range(-512,512),
-        cv.Optional(CONF_WIDTH):cv.int_range(0,512),
-        cv.Optional(CONF_HEIGHT):cv.int_range(0,512),
+        cv.Optional(CONF_WIDTH):cv.positive_not_null_int,
+        cv.Optional(CONF_HEIGHT):cv.positive_not_null_int,
         cv.Optional(CONF_VISIBLE):cv.boolean,
         cv.Optional(CONF_ENABLED):cv.boolean,
     }
@@ -259,7 +269,7 @@ SWITCHPLATE_ITEM_MINMAX_SCHEMA = SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
     {
         cv.Optional(CONF_MIN_VALUE):cv.int_,
         cv.Optional(CONF_MAX_VALUE):cv.int_,
-        cv.Optional(CONF_VALUE): cv.templatable(cv.int_),        
+        cv.Optional(CONF_VALUE): cv.templatable(cv.int_),
     }
 ).add_extra(validate_min_max)
 
@@ -276,25 +286,26 @@ SWITCHPLATE_ITEM_TEXT_SCHEMA = SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
 SWITCHPLATE_ITEM_SCHEMA = cv.All(
     cv.typed_schema(
         {
-            WIDGET_FRAME: SWITCHPLATE_ITEM_COMMON_SCHEMA,
+            WIDGET_FRAME: SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
+                {
+                    cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGETS[WIDGET_FRAME]),
+                }
+            ),
             WIDGET_LINE: SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
                 {
-
+                    cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGETS[WIDGET_LINE]),
                 }
             ),
             WIDGET_SPINNER: SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
                 {
+                    cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGETS[WIDGET_SPINNER]),
                     cv.Optional(CONF_SPEED, default=1000): cv.int_, 
                     cv.Optional(CONF_DIRECTION): cv.enum(CONF_SPINNER_DIRECTIONS),
-                    cv.Optional(CONF_CIRCLE_WIDTH): cv.int_, 
-                    cv.Optional(CONF_CIRCLE_COLOR): rc.color, 
-                    cv.Optional(CONF_SEGMENT_WIDTH): cv.int_, 
-                    cv.Optional(CONF_SEGMENT_COLOR): rc.color, 
                 }
             ),
             WIDGET_GROUPED: cv.Schema(
                 {
-                    cv.GenerateID(CONF_ID): cv.declare_id(SwitchPlateGroup),
+                    cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGETS[WIDGET_GROUPED]),
                     cv.Optional(CONF_VISIBLE):cv.boolean,
                     cv.Optional(CONF_ENABLED):cv.boolean,
                     cv.Required(CONF_OBJECTS): cv.All(
@@ -304,32 +315,35 @@ SWITCHPLATE_ITEM_SCHEMA = cv.All(
             ),
             WIDGET_LED: SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
                 {
+                    cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGETS[WIDGET_LED]),
                     cv.Optional(CONF_VALUE): cv.templatable(cv.uint8_t),
                 }
             ),
             WIDGET_LABEL: SWITCHPLATE_ITEM_TEXT_SCHEMA.extend(
                 {
+                    cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGETS[WIDGET_LABEL]),
 
                 }
             ),
             WIDGET_BUTTON: SWITCHPLATE_ITEM_TEXT_SCHEMA.extend(
                 {
+                    cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGETS[WIDGET_BUTTON]),
                     cv.Optional(CONF_TOGGLE, default=False): cv.boolean,
                     cv.Optional(CONF_STATE, default=False): cv.boolean,
                 }
             ),
             WIDGET_SWITCH: SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
                 {
+                    cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGETS[WIDGET_SWITCH]),
                     cv.Optional(CONF_STATE, default=False): cv.boolean,
                     cv.Optional(CONF_RADIUS): cv.boolean,
-                    cv.Optional(CONF_INDICATPOR_COLOR): rc.color,
-                    cv.Optional(CONF_KNOP_COLOR): rc.color 
                     #cv.Optional(CONF_ON_TEXT, default="On"): cv.string_strict,
                     #cv.Optional(CONF_OFF_TEXT, default="Off"): cv.string_strict,
                 }
             ),
             WIDGET_CHECKBOX: SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
                 {
+                    cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGETS[WIDGET_CHECKBOX]),
                     cv.Optional(CONF_TEXT, default="Checkbox"): cv.templatable(cv.string),
                     cv.Optional(CONF_STATE, default=False): cv.boolean,
                     #cv.Optional(CONF_FORMAT, default="%.1f"): cv.string_strict,
@@ -341,26 +355,31 @@ SWITCHPLATE_ITEM_SCHEMA = cv.All(
 
             WIDGET_PROGRESSBAR: SWITCHPLATE_ITEM_MINMAX_SCHEMA.extend(
                 {
+                    cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGETS[WIDGET_PROGRESSBAR]),
 
                 }
             ),
             WIDGET_SLIDER: SWITCHPLATE_ITEM_MINMAX_SCHEMA.extend(
                 {
+                    cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGETS[WIDGET_SLIDER]),
 
                 }
             ),
             WIDGET_LINEMETER: SWITCHPLATE_ITEM_MINMAX_SCHEMA.extend(
                 {
+                    cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGETS[WIDGET_LINEMETER]),
 
                 }
             ),
             WIDGET_ARC: SWITCHPLATE_ITEM_MINMAX_SCHEMA.extend(
                 {
+                    cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGETS[WIDGET_ARC]),
 
                 }
             ),
             WIDGET_GUAUGE: SWITCHPLATE_ITEM_MINMAX_SCHEMA.extend(
                 {
+                    cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGETS[WIDGET_GUAUGE]),
 
                 }
             ),
@@ -375,12 +394,13 @@ SWITCHPLATE_ITEM_SCHEMA = cv.All(
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(SwitchPlate),
     cv.Required(CONF_DISPLAY_DEFINE): cv.use_id(display.DisplayBuffer) ,
+    cv.Required(CONF_DEFAULT_FONT): cv.use_id(font.Font) ,
     cv.Optional(CONF_ROTATION): validate_rotation,
-    cv.Optional(CONF_TABVIEW):cv.boolean,
-    cv.Optional(CONF_HEADER):  cv.All(
+    cv.Optional(CONF_TABVIEW): cv.boolean,
+    cv.Optional(CONF_HEADER): cv.All(
         cv.ensure_list(switchplate_item_schema), cv.Length(min=1)
     ),
-    cv.Optional(CONF_FOOTER):  cv.All(
+    cv.Optional(CONF_FOOTER): cv.All(
         cv.ensure_list(switchplate_item_schema), cv.Length(min=1)
     ),
     cv.Required(CONF_PAGES): cv.All(
@@ -407,7 +427,7 @@ CONFIG_SCHEMA = cv.Schema({
 
 
 async def item_to_code(config):
-    item = cg.new_Pvariable(config[CONF_ID], config[CONF_TYPE])
+    item = cg.new_Pvariable(config[CONF_ID])
     
     for key, value in config.items():
         if (key == 'id'): pass
@@ -420,11 +440,11 @@ async def item_to_code(config):
         elif (key == 'value'):
             if isinstance(value, core.Lambda):
                 template_ = await cg.templatable( value, [(SwitchPlateItemConstPtr, "it")], cg.int32)
-                cg.add(item.set_value(template_))
+                cg.add(item.set_state(template_))
             else:
-                cg.add(item.set_value(config[CONF_VALUE]))
+                cg.add(item.set_state(config[CONF_VALUE]))
         elif (key == 'state'):
-            cg.add(item.set_value(1 if config[CONF_STATE] else 0))
+            cg.add(item.set_state(1 if config[CONF_STATE] else 0))
 
         elif (key == 'visible'):
             cg.add(item.visible(value))
@@ -447,7 +467,7 @@ async def group_to_code(parent, config):
             item = await group_to_code(c)
         else:
             item = await item_to_code(c)
-        cg.add(group.add_object(item))
+        cg.add(group.add_widget(item))
     return group
 
 async def page_to_code(parent, config):
@@ -466,14 +486,11 @@ async def page_to_code(parent, config):
             item = await group_to_code(c)
         else:
             item = await item_to_code(c)
-        cg.add(page.add_object(item))
+        cg.add(page.add_widget(item))
 
 
 async def to_code(config):
-    cg.add_library("lvgl",'8')
-    cg.add_build_flag("-D LV_CONF_INCLUDE_SIMPLE")
-
-
+   
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
     parent = await cg.get_variable(config[CONF_DISPLAY_DEFINE])

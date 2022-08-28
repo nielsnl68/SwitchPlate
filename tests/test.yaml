@@ -45,6 +45,8 @@ color:
     red: 0%
     blue: 0%
     green: 100%    
+
+
 external_components:
   # use rtttl and dfplayer from ESPHome's dev branch in GitHub
   # equivalent shorthand for GitHub
@@ -52,8 +54,6 @@ external_components:
   - source:
       type: local
       path: C:\development\projects\switchplate\components
-
-
 
 spi:
   mosi_pin: 23
@@ -74,32 +74,42 @@ display:
     cs_pin: 5
     dc_pin: 16
     rotation: 90
+    pages:
+      - id: page2
+        lambda: |-
+          it.fill(my_black);
+          for(uint8_t i = 0; i<255; i++) {
+             it.horizontal_line(5,i,100, my_red.fade_to_white(i));
+             it.horizontal_line(110,i,100, my_red.fade_to_black(i));
+             it.horizontal_line(215,i,100, my_red.gradient(my_blue, i));
+          }
+      - id: page1
+        lambda: |-
+          it.fill(id(my_green));
+          it.print(2, 2, id(my_font), id(my_white), TextAlign::TOP_LEFT, "Woonkamer lampen");
+          //it.strftime(210, 2, id(my_font), "%d/%m %H:%M", id(the_time).now() );
+          //it.rectangle(    50, 50 ,228, 150, id(my_green));
 
-    lambda: |-
-      it.fill(id(my_green));
-      it.print(2, 2, id(my_font), id(my_white), TextAlign::TOP_LEFT, "Woonkamer lampen");
-      //it.strftime(210, 2, id(my_font), "%d/%m %H:%M", id(the_time).now() );
-      //it.rectangle(    50, 50 ,228, 150, id(my_green));
-      
-      it.set_clipping( 50, 50 ,228, 150);
-      it.filled_rectangle(0, 0, 320, 240,  id(my_black));
+          it.set_clipping( 50, 50 ,228, 150);
+          it.filled_rectangle(0, 0, 320, 240,  id(my_black));
 
-      it.rectangle(3, 28, 99, 99, id(my_blue));
-      it.rectangle(3,136, 99, 99, 8, id(my_red));
+          it.rectangle(3, 28, 99, 99, id(my_blue));
+          it.rectangle(3,136, 99, 99, 8, id(my_red));
 
-      it.filled_rectangle(110, 28, 99, 99, id(my_blue));
-      it.filled_rectangle(110,136, 99, 99, 7,  id(my_red));
-      
-      //  it.circle(218+50,28+50,50, id(my_blue));
-      //  it.filled_circle(218+50,136+50,50, id(my_red));
+          it.filled_rectangle(110, 28, 99, 99, id(my_blue));
+          it.filled_rectangle(110,136, 99, 99, 7,  id(my_red));
 
-      it.triangle(       268,  28,  218, 128, 318, 128, id(my_blue));
-  
-      it.filled_triangle(268, 136,  218, 236, 318, 236, id(my_red));
-  
-witchplate:
+          //  it.circle(218+50,28+50,50, id(my_blue));
+          //  it.filled_circle(218+50,136+50,50, id(my_red));
+
+          it.triangle(       268,  28,  218, 128, 318, 128, id(my_blue));
+
+          it.filled_triangle(268, 136,  218, 236, 318, 236, id(my_red));
+
+switchplate:
   display: my_display # Req 
   id: abcname # Opt.
+  default_font: my_font
   header:
     - type: label
       id: header_title

@@ -1,0 +1,76 @@
+esphome:
+  name: lum-iot34
+  comment: switchplate test yaml
+
+esp32:
+  board: firebeetle32
+
+time:
+  - platform: homeassistant
+    id: the_time
+
+wifi: 
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+  
+api: 
+
+
+ota:
+  password: !secret ota_password
+
+logger:
+
+color:
+  - id: my_light_red
+    red: 100%
+    green: 100%
+external_components:
+  # use rtttl and dfplayer from ESPHome's dev branch in GitHub
+  # equivalent shorthand for GitHub
+  #- source: github://nielsnl68/SwitchPlate
+  - source:
+      type: local
+      path: C:\development\projects\switchplate\components
+
+
+
+spi:
+  mosi_pin: 23
+  miso_pin: 19
+  clk_pin: 18
+
+  
+font:
+  - file: "gfonts://Roboto"
+    id: my_font
+    size: 20
+    
+
+display:
+  - id: my_display
+    platform: ili9341
+    model: TFT 2.4
+    cs_pin: 5
+    dc_pin: 16
+    rotation: 90
+
+switchplate:
+  display: my_display # Req 
+  id: abcname # Opt.
+  default_font: my_font
+  pages:
+    - id: myMainPage # Opt.
+      name: myName
+      selectable: true # can be opened with next and previous page selectors
+      objects:
+        - type: label
+          id: txtHello
+          x: 10 # Opt. Horizontal position on the page
+          y: 10 # Opt. Vertical position on the page
+          width: 60 # Opt. Width of the object
+          height: 20 # Opt. Height of the object
+          text: "Hello " # The text of the label
+          align: left # Text alignment: left, center, right
+          mode: expand # The wrapping mode of long text labels

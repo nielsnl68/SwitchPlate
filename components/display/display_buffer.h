@@ -103,23 +103,67 @@ enum DisplayRotation {
   DISPLAY_ROTATION_270_DEGREES = 270,
 };
 
-/// Define point coordinates
-struct Point {
-  int16_t x;  ///< X coordinate
-  int16_t y;  ///< Y coordinate
-
-  inline Point() ALWAYS_INLINE : x(0), y(0) {}  // NOLINT
-  inline Point(int16_t x, int16_t y) ALWAYS_INLINE : x(x), y(y) {}
+enum GradientDirection {
+  GRADIENT_NONE = 0,
+  GRADIENT_HORIZONTAL = 1,
+  GRADIENT_VERTICAL = 2,
+  GRADIENT_BOTH = 3,
 };
 
 struct Rect {
-  int16_t x;   ///< X coordinate of corner
-  int16_t y;   ///< Y coordinate of corner
-  uint16_t w;  ///< Width of region
-  uint16_t h;  ///< Height of region
+  int16_t x;  ///< X coordinate of corner
+  int16_t y;  ///< Y coordinate of corner
+  int16_t w;  ///< Width of region
+  int16_t h;  ///< Height of region
 
-  inline Rect() ALWAYS_INLINE : x(1), y(1), w(0), h(0) {}  // NOLINT
-  inline Rect(int16_t xx, int16_t yy, uint16_t ww, uint16_t hh) ALWAYS_INLINE : x(xx), y(yy), w(ww), h(hh) {}
+  inline Rect() ALWAYS_INLINE : x(32766), y(32766), w(32766), h(32766) {}  // NOLINT
+  inline Rect(int16_t x, int16_t y, int16_t w, int16_t h) ALWAYS_INLINE : x(x), y(y), w(w), h(h) {}
+  inline bool is_set() ALWAYS_INLINE { return (this->h != 32766) && (this->w != 32766); }
+
+  void expand(int16_t width, int16_t height){
+    if ((*this).is_set() && ((*this).w >= (-2 * width)) && ( (*this).h >= (-2 * height))) { 
+      (*this).x = (*this).x - width;
+      (*this).y = (*this).y - height;
+      (*this).w = (*this).w + (2 * width);
+      (*this).h = (*this).h + (2 * height);
+    }
+  }
+
+  void join(Rect rect) {
+    if (!this->is_set()) {
+      this->x = rect.x;
+      this->y = rect.y;
+      this->w = rect.w;
+      this->h = rect.h;
+    } else {
+      if (this->x > rect.x) { this->x = rect.x; }
+      if (this->y > rect.y) { this->y = rect.y; }
+      if (this->w < rect.w) { this->w = rect.w; }
+      if (this->h < rect.h) { this->h = rect.h; }
+    }
+  }
+  void intersect(Rect rect) {
+    if (!this->is_set()) {
+      this->x = rect.x;
+      this->y = rect.y;
+      this->w = rect.w;
+      this->h = rect.h;
+    } else {
+      if (this->x < rect.x) { this->x = rect.x; }
+      if (this->y < rect.y) { this->y = rect.y; }
+      if (this->w > rect.w) { this->w = rect.w; }
+      if (this->h > rect.h) { this->h = rect.h; }
+    }
+  }
+
+  bool inside(int16_t x, int16_t y, bool absolute ) {
+    if (!this->is_set()) return true;
+    if (absolute) {
+      return ((x >= this->x) && (x <= this->w) && (y >= this->y) && (y <= this->h));
+    } else {
+      return ((x >= 0) && (x <= this->w - this->x) && (y >= 0) && (y <= this->h - this->y));
+    }
+  }
 };
 
 class Font;
@@ -148,82 +192,121 @@ class DisplayBuffer {
   int get_width();
   /// Get the height of the image in pixels with rotation applied.
   int get_height();
+
   /// Set a single pixel at the specified coordinates to the given color.
   void draw_pixel_at(int x, int y, Color color = COLOR_ON);
 
   /// Draw a straight line from the point [x1,y1] to [x2,y2] with the given color.
-  void line(int x1, int y1, int x2, int y2, Color color = COLOR_ON);
+  void line(int x1, int y1, int x2, int y2, Color color = COLOR_ON){
+    line(x1, y1, x2, y2, color, color, GRADIENT_NONE);
+  }
+  void line(int x1, int y1, int x2, int y2, Color color, Color grandient_to, GradientDirection direction = GRADIENT_HORIZONTAL);
 
   /// Draw a horizontal line from the point [x,y] to [x+width,y] with the given color.
-  void horizontal_line(int x, int y, int width, Color color = COLOR_ON);
+  void horizontal_line(int x, int y, int width, Color color = COLOR_ON) {
+    horizontal_line(x, y, width, color, color, GRADIENT_NONE);
+  }
+  void horizontal_line(int x, int y, int width, Color color , Color grandient_to, GradientDirection direction = GRADIENT_HORIZONTAL);
 
   /// Draw a vertical line from the point [x,y] to [x,y+width] with the given color.
-  void vertical_line(int x, int y, int height, Color color = COLOR_ON);
+  void vertical_line(int x, int y, int height, Color color = COLOR_ON){
+    vertical_line(x, y, height, color, color, GRADIENT_NONE);
+  }
+  /// Draw a vertical line from the point [x,y] to [x,y+width] with the given color.
+  void vertical_line(int x, int y, int height, Color color, Color grandient_to, GradientDirection direction = GRADIENT_HORIZONTAL);
 
   /// Draw the outline of a rectangle with the top left point at [x1,y1] and the bottom right point at
   /// [x1+width,y1+height].
-  void rectangle(int x1, int y1, int width, int height, Color color = COLOR_ON);
+  void rectangle(int x1, int y1, int width, int height, Color color = COLOR_ON) {
+    rectangle(x1, y1, width, height, 0, color, color, GRADIENT_NONE);
+  }
+  void rectangle(int x, int y, int width, int height, int16_t radius, Color color = COLOR_ON) {
+    rectangle(x, y, width, height, radius, color, color, GRADIENT_NONE);
+  };
+  void rectangle(int x1, int y1, int width, int height, Color color, Color grandient_to, GradientDirection direction = GRADIENT_HORIZONTAL){
+    rectangle(x1, y1, width, height, 0, color, grandient_to, direction);
+  }
+  void rectangle(int x, int y, int width, int height, int16_t radius, Color color , Color grandient_to, GradientDirection direction = GRADIENT_HORIZONTAL);
 
   /// Fill a rectangle with the top left point at [x1,y1] and the bottom right point at [x1+width,y1+height].
-  void filled_rectangle(int x1, int y1, int width, int height, Color color = COLOR_ON);
+  void filled_rectangle(int x1, int y1, int width, int height, Color color = COLOR_ON) {
+    filled_rectangle(x1, y1, width, height, 0, color, color, GRADIENT_NONE);
+  }
+  void filled_rectangle(int x, int y, int width, int height, int16_t radius, Color color = COLOR_ON) {
+    filled_rectangle(x, y, width, height, radius, color, color, GRADIENT_NONE);
+  }
+  void filled_rectangle(int x1, int y1, int width, int height, Color color, Color grandient_to, GradientDirection direction = GRADIENT_HORIZONTAL){
+    filled_rectangle(x1, y1, width, height, 0, color, grandient_to, direction);
+  }
+  void filled_rectangle(int x, int y, int width, int height, int16_t radius, Color color, Color grandient_to, GradientDirection direction = GRADIENT_HORIZONTAL);
 
   /// Draw the outline of a circle centered around [center_x,center_y] with the radius radius with the given color.
-  void circle(int center_x, int center_xy, int radius, Color color = COLOR_ON);
+  void circle(int center_x, int center_xy, int radius, Color color = COLOR_ON){
+    circle(center_x, center_xy, radius, color, color, GRADIENT_NONE);
+ }
+  void circle(int center_x, int center_xy, int radius, Color color, Color grandient_to, GradientDirection direction = GRADIENT_HORIZONTAL);
 
   /// Fill a circle centered around [center_x,center_y] with the radius radius with the given color.
-  void filled_circle(int center_x, int center_y, int radius, Color color = COLOR_ON);
+  void filled_circle(int center_x, int center_y, int radius, Color color = COLOR_ON){
+    filled_circle(center_x, center_y, radius, color, color, GRADIENT_NONE);
+  }
+  void filled_circle(int center_x, int center_y, int radius, Color color, Color grandient_to, GradientDirection direction = GRADIENT_HORIZONTAL);
+
+  void triangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, Color color = COLOR_ON)
+  {
+    triangle(x0, y0, x1, y1, x2, y2, color, color, GRADIENT_NONE);
+  }
+  void triangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, Color color,
+                Color grandient_to, GradientDirection direction = GRADIENT_HORIZONTAL);
+
+  // Draw a filled triangle
+  void filled_triangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, Color color = COLOR_ON){
+    filled_triangle(x0, y0, x1, y1, x2, y2, color, color, GRADIENT_NONE);
+  }
+  void filled_triangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2,
+                      Color color, Color grandient_to, GradientDirection direction = GRADIENT_HORIZONTAL);
+
+ ///
+  /// Draw a framed quadrilateral
+  ///
+  /// \param[in]  points:        Pointer to array of 4 points
+  /// \param[in]  color:        Color RGB value for the frame
+  ///
+  /// \return true if success, false if error
+  ///
+  void quad(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3,
+            Color color = COLOR_ON) {
+    quad(x0, y0, x1, y1, x2, y2, x3, y3, color, color, GRADIENT_NONE);
+  }
+
+  void quad(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3,
+            Color color, Color grandient_to, GradientDirection direction = GRADIENT_HORIZONTAL);
+
+
+  ///
+  /// Draw a filled quadrilateral
+  ///
+  /// \param[in]  points:        Pointer to array of 4 points
+  /// \param[in]  color:        Color RGB value for the frame
+  ///
+  /// \return true if success, false if error
+  ///
+  void filled_quad(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3,
+                   Color color = COLOR_ON) {
+    filled_quad(x0, y0, x1, y1, x2, y2, x3, y3, color, color, GRADIENT_NONE);
+  }
+
+  void filled_quad(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t x3, int16_t y3,
+                   Color color, Color grandient_to, GradientDirection direction = GRADIENT_HORIZONTAL);
+
+  void filled_arc(int16_t x, int16_t y, int16_t radius1, int16_t radius2,
+                  int16_t angle_start, int16_t angle_end, Color color = COLOR_ON, int16_t quality = 255) {
+    filled_arc(x, y, radius1, radius2,  angle_start, angle_end, color, color, 0, 0, quality);
+  }
+  void filled_arc(int16_t x, int16_t y, int16_t radius1, int16_t radius2, int16_t angle_start, int16_t angle_end,
+                  Color color, Color grandient_to, int16_t gradient_angle_start, int16_t gradient_angle_range, int16_t quality = 255);
 
 #ifdef USE_EXTENDEDDRAW
-
-  ///
-  /// Configure the color to use for image transparency
-  /// - Drawing a BMP with transparency enabled will cause
-  ///   regions in this specific color to appear transparent
-  ///
-  /// @param color:        RGB Color to use
-  ///
-  ///
-  void set_transparent_color(Color color);
-
-  ///
-  /// Create a color based on a blend between two colors
-  ///
-  /// \param[in]  colStart:    Starting color
-  /// \param[in]  colEnd:      Ending color
-  /// \param[in]  nMidAmt:     Position (0..1000) between start and end color at which the
-  ///                          midpoint between colors should appear. Normally set to 500 (half-way).
-  /// \param[in]  nBlendAmt:   The position (0..1000) between start and end at which we
-  ///                          want to calculate the resulting blended color.
-  ///
-  /// \return Blended color
-  ///
-  Color blend_color(Color color_start, Color color_end, uint16_t mid_amt, uint16_t blend_amt);
-
-  ///
-  /// Create a color based on a blend between three colors
-  ///
-  /// \param[in]  colStart:    Starting color
-  /// \param[in]  colMid:      Intermediate color
-  /// \param[in]  colEnd:      Ending color
-  /// \param[in]  nMidAmt:     Position (0..1000) between start and end color at which the
-  ///                          intermediate color should appear.
-  /// \param[in]  nBlendAmt:   The position (0..1000) between start and end at which we
-  ///                          want to calculate the resulting blended color.
-  ///
-  /// \return Blended color
-  ///
-  Color blend_color(Color color_start, Color color_mid, Color color_end, uint16_t mid_amt, uint16_t blend_amt);
-
-  ///
-  /// Check whether two colors are equal
-  ///
-  /// \param[in]  a:    First color
-  /// \param[in]  b:    Second color
-  ///
-  /// \return True iff a and b are the same color.
-  ///
-  bool is_color_equal(Color a, Color b);
-
   ///
   /// Expand or contract a rectangle in width and/or height (equal
   /// amounts on both side), based on the centerpoint of the rectangle.
@@ -236,48 +319,6 @@ class DisplayBuffer {
   ///
   /// \return new rect with resized dimensions
   ///
-  Rect expand_rect(Rect rect, uint16_t width, uint16_t height);
-
-  ///
-  /// Expand a rect to include another rect
-  /// - This routine can be useful to modify an invalidation region to
-  ///   include another modified element
-  ///
-  /// \param[in]  pRect:    Initial rect region
-  /// \param[in]  rAddRect: Rectangle to add to the rect region
-  ///
-  /// \return none
-  ///
-  Rect union_rect(Rect rect, Rect add_rect);
-
-  Rect intersect_rect(Rect rect, Rect add_rect);
-
-  ///
-  /// Determine if a coordinate is inside of a rectangular region.
-  /// - This routine is useful in determining if a touch
-  ///   coordinate is inside of a button.
-  ///
-  /// \param[in]  X:       X coordinate to test
-  /// \param[in]  Y:       X coordinate to test
-  /// \param[in]  rect:       Rectangular region to compare against
-  ///
-  /// \return true if inside region, false otherwise
-  ///
-  bool in_rect(int16_t x, int16_t y, Rect rect);  //*//
-
-  ///
-  /// Determine if a coordinate is inside of a width x height region.
-  /// - This routine is useful in determining if a relative coordinate
-  ///   is within a given W x H dimension
-  ///
-  /// \param[in]  nSelX:       X coordinate to test
-  /// \param[in]  nSelY:       X coordinate to test
-  /// \param[in]  nWidth:      Width to test against
-  /// \param[in]  nHeight:     Height to test against
-  ///
-  /// \return true if inside region, false otherwise
-  ///
-  bool is_inside(int16_t x, int16_t y, uint16_t width, uint16_t height);
 
   ///
   /// Set the clipping rectangle for further drawing
@@ -287,7 +328,9 @@ class DisplayBuffer {
   /// \return true if success, false if error
   ///
   void set_clipping(Rect rect);
-  void set_clipping(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) { set_clipping(Rect(left, top, right, bottom)); };
+  void set_clipping(int16_t left, int16_t top, int16_t right, int16_t bottom) {
+    set_clipping(Rect(left, top, right, bottom));
+  };
 
   ///
   /// Add a rectangular region to the invalidation region
@@ -298,8 +341,10 @@ class DisplayBuffer {
   /// \return none
   ///
   void add_clipping(Rect rect);
-  void add_clipping(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) { this->add_clipping(Rect(left, top, right, bottom)); };
-  
+  void add_clipping(int16_t left, int16_t top, int16_t right, int16_t bottom) {
+    this->add_clipping(Rect(left, top, right, bottom));
+  };
+
   ///
   /// intersect a rectangular region to the invalidation region
   /// - This is usually called when an element has been modified
@@ -309,8 +354,9 @@ class DisplayBuffer {
   /// \return none
   ///
   void sub_clipping(Rect rect);
-  void sub_clipping(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) { this->sub_clipping(Rect(left, top, right, bottom)); };
-
+  void sub_clipping(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) {
+    this->sub_clipping(Rect(left, top, right, bottom));
+  };
 
   ///
   /// Reset the invalidation region
@@ -318,7 +364,6 @@ class DisplayBuffer {
   /// \return none
   ///
   void clear_clipping();
-
 
   ///
   /// Get the current the clipping rectangle
@@ -339,18 +384,7 @@ class DisplayBuffer {
   bool is_clipped(int16_t x, int16_t y);
   bool is_clipped(Rect rect);
 
-  /// Draw the outline of a rectangle with the top left point at [x1,y1] and the bottom right point at
-  /// [x1+width,y1+height].
-  void HOT rectangle(int x, int y, int width, int height, int16_t radius, Color color = COLOR_ON);
-
-  /// Fill a rectangle with the top left point at [x1,y1] and the bottom right point at [x1+width,y1+height].
-  void filled_rectangle(int x, int y, int width, int height, int16_t radius, Color color = COLOR_ON);
-
-  void triangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, Color color = COLOR_ON);
-
-  // Draw a filled triangle
-  void filled_triangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, Color color = COLOR_ON);
-
+ 
   ///
   /// Convert polar coordinate to cartesian
   ///
@@ -361,7 +395,7 @@ class DisplayBuffer {
   ///
   /// \return none
   ///
-  void polar_to_point(uint16_t rad, int16_t angle, int16_t *x, int16_t *y);
+  void calc_polar(uint16_t rad, int16_t angle, int16_t *x, int16_t *y);
 
   ///
   /// Calculate fixed-point sine function from fractional degrees
@@ -406,32 +440,7 @@ class DisplayBuffer {
   void polar_line(int16_t x, int16_t y, uint16_t radius_start, uint16_t radius_end, int16_t angle,
                   Color color = COLOR_ON);
 
-  ///
-  /// Draw a framed quadrilateral
-  ///
-  /// \param[in]  points:        Pointer to array of 4 points
-  /// \param[in]  color:        Color RGB value for the frame
-  ///
-  /// \return true if success, false if error
-  ///
-  void quad(Point *points, Color color = COLOR_ON);
-
-  ///
-  /// Draw a filled quadrilateral
-  ///
-  /// \param[in]  points:        Pointer to array of 4 points
-  /// \param[in]  color:        Color RGB value for the frame
-  ///
-  /// \return true if success, false if error
-  ///
-  void filled_quad(Point *points, Color color = COLOR_ON);
-
-  void gradient_sector(int16_t quality, int16_t x, int16_t y, int16_t radius1, int16_t radius2, Color color_start,
-                       Color color_end, int16_t angle_start, int16_t angle_end, int16_t gradient_angle_start,
-                       int16_t gradient_angle_range);
-  void filled_sector(int16_t quality, int16_t x, int16_t y, int16_t radius1, int16_t radius2, Color arc_color,
-                     int16_t angle_start, int16_t angle_end);
-
+ 
 #endif
 
   /** Print `text` with the anchor point at [x,y] with `font`.
@@ -668,13 +677,7 @@ class DisplayBuffer {
 
 #ifdef USE_EXTENDEDDRAW
   void swap_coords_(int16_t *x0, int16_t *y0, int16_t *x1, int16_t *y1);
-
-  void filled_sector_(int16_t quality, int16_t x, int16_t y, int16_t radius1, int16_t radius2, Color color_start,
-                      Color color_end, int16_t angle_start, int16_t angle_end, bool gradient = false,
-                      int16_t gradient_angle_start = 0, int16_t gradient_angle_range = 0);
-
-  std:vector <Rect> clipping_rectangle_;
-  Color transparant_color_{COLOR_OFF};
+  std::vector<Rect> clipping_rectangle_;
 #endif
 
   uint8_t *buffer_{nullptr};
