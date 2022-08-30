@@ -74,10 +74,10 @@ namespace esphome
         }
 
         /// Get the width of the image in pixels with rotation applied.
-        int SwitchPlate::max_Width() { return SwitchPlate::display_->get_width(); }
+        int16_t SwitchPlate::max_width() { return SwitchPlate::display_->get_width(); }
 
         /// Get the height of the image in pixels with rotation applied.
-        int SwitchPlate::max_Height() { return SwitchPlate::display_->get_height(); };
+        int16_t SwitchPlate::max_height() { return SwitchPlate::display_->get_height(); };
 
 
         void SwitchPlate::show_page(SwitchPlatePage *page)
@@ -106,8 +106,7 @@ namespace esphome
                 ESP_LOGW(TAG, "no page found");
                 return;
             }
-
-            disp_buf.set_clipping(Rect(0,0,this->max_Width(), this->max_Height()));
+            disp_buf.set_clipping(Rect(0,0,this->max_width(), this->max_height()));
 
             if (!this->header_.empty()) {
                 for (auto *header : this->header_)
@@ -129,7 +128,7 @@ namespace esphome
 
         void SwitchPlate::add_page(SwitchPlatePage *page)
         {
-            page->parent(this);
+            page->set_parent(this);
             page->set_prev(this->previous_page_);
             if (this->previous_page_ != nullptr)
             {
@@ -144,13 +143,13 @@ namespace esphome
 
         void SwitchPlate::add_headerItem(SwitchPlateItem *item)
         {
-            item->parent(this);
+            item->set_parent(this);
             this->header_.push_back(item);
         }
 
         void SwitchPlate::add_footerItem(SwitchPlateItem *item)
         {
-            item->parent(this);
+            item->set_parent(this);
             this->footer_.push_back(item);
         }
 
@@ -200,19 +199,18 @@ namespace esphome
         void SwitchPlatePage::set_prev(SwitchPlatePage *prev) { this->prev_ = prev; }
         void SwitchPlatePage::set_next(SwitchPlatePage *next) { this->next_ = next; }
 
-        uvar SwitchPlateVars::get_variable(std::string key, bool is_missing) {
-          uvar result;
-          result.u = 0;
-          result.t = '-';
-          if (has_variable(key)) {
-            if (is_missing && (this->parent_!= nullptr)){
-              result = this->parent_->get_variable(key, is_missing);
+        TaggedVariable SwitchPlateVars::get_variable(std::string key, bool search_parent) {
+          TaggedVariable var_;
+          var_.uint32_ = 0;
+
+          if (!has_variable(key)) {
+            if (search_parent && (this->parent_!= nullptr)){
+              var_ = this->parent_->get_variable(key, search_parent);
             }
           } else {
-            result = this->vars_[key];
+            var_ = this->vars_[key];
           }
-          return result;
+          return var_;
         }
-
     } // namespace switchplate
 } // namespace esphome

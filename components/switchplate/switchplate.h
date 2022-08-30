@@ -31,16 +31,7 @@ namespace esphome
 
   namespace switch_plate
   {
- 
-    enum Rotation
-    {
-      DISPLAY_ROTATION_0_DEGREES = 0,
-      DISPLAY_ROTATION_90_DEGREES = 90,
-      DISPLAY_ROTATION_180_DEGREES = 180,
-      DISPLAY_ROTATION_270_DEGREES = 270,
-    };
-    enum Align
-    {
+    enum class Align: uint8_t {
       TOP = 0x00,
       CENTER_VERTICAL = 0x01,
       BASELINE = 0x02,
@@ -67,12 +58,12 @@ namespace esphome
       BOTTOM_RIGHT = BOTTOM | RIGHT,
 
       GROUP_ALIGN_RELATIVE  = 0x80,
-      GROUP_ALIGN_HORZONTAL = 0x81,
-      GROUP_ALIGN_VERTICAL  = 0x82,
+      GROUP_ALIGN_ABSOLUTE  = 0x81,
+      GROUP_ALIGN_HORZONTAL = 0x82,
+      GROUP_ALIGN_VERTICAL  = 0x83,
     };
 
-    enum Mode
-    {
+    enum class Mode: uint8_t {
       TEXT_MODE_EXPAND = 0,
       TEXT_MODE_BREAK = 1,
       TEXT_MODE_DOTS = 2,
@@ -84,8 +75,7 @@ namespace esphome
       SPINNER_MODE_SLOWSTRATCH = 12,
     };
 
-    enum Direction
-    {
+    enum class Direction: uint8_t {
       DIRECTION_DOWN = 0,
       DIRECTION_UP = 1,
       DIRECTION_LEFT = 2,
@@ -109,22 +99,19 @@ namespace esphome
 
     class DisplayOnPageChangeTrigger;
 
-    struct uvar
-    {
-      union 
-      {
-          uint32_t u;
-          int32_t i;
-          bool b;
-          Align a;
-          float f;
-          Mode m;
-          Direction d;
-          SwitchPlateStyle *sps;
-          Font *fnt;
-          Image *img;
+    struct TaggedVariable {    
+      union  {
+        uint32_t uint32_;
+        int32_t int32_;
+        bool bool_;
+        Align align_;
+        float fload_;
+        Mode mode_;
+        Direction direction_;
+        SwitchPlateStyle *style_;
+        Font *font_;
+        Image *image_;
       };
-      char t;
     };
 
     // ============================================================================== SwitchPlateVars
@@ -134,19 +121,18 @@ namespace esphome
       public:
         SwitchPlateVars(){};
 
-        uvar get_variable(std::string key, bool is_missing);
+        TaggedVariable get_variable(std::string key, bool search_parent = false);
 
         void set_variable(std::string key, uint32_t var, bool is_missing = false  ) {
           if (is_missing && has_variable(key)) {
             return;
           }
           ESP_LOGW("", "- Set uint %s to %d ", key.c_str(), var);
-          this->vars_[key].u = var;
-          this->vars_[key].t = 'u';
+          this->vars_[key].uint32_ = var;
           this->set_redraw();
         }
         uint32_t get_uint(std::string key, bool is_missing = false) {
-          return this->get_variable(key, is_missing).u;
+          return this->get_variable(key, is_missing).uint32_;
         }
 
         void set_variable(std::string key, int32_t var, bool is_missing = false) {
@@ -154,12 +140,11 @@ namespace esphome
             return;
           }
           ESP_LOGW("", "- Set int %s to %d", key.c_str(), var);
-          this->vars_[key].i = var;
-          this->vars_[key].t = 'i';
+          this->vars_[key].int32_ = var;
           this->set_redraw();
         }
         int32_t get_int(std::string key, bool is_missing = false) {
-          return this->get_variable(key, is_missing).i;
+          return this->get_variable(key, is_missing).int32_;
         }
 
         void set_variable(std::string key, float var, bool is_missing = false) {
@@ -167,12 +152,11 @@ namespace esphome
             return;
           }
           ESP_LOGW("", "- Set float %s to %f", key.c_str(), var);
-          this->vars_[key].f = var;
-          this->vars_[key].t = 'f';
+          this->vars_[key].fload_ = var;
           this->set_redraw();
         }
         float get_float(std::string key, bool is_missing = false) {
-          return this->get_variable(key, is_missing).f;
+          return this->get_variable(key, is_missing).fload_;
         }
 
 
@@ -182,12 +166,11 @@ namespace esphome
           }
           ESP_LOGW("", "- Set mode %s to %d", key.c_str(), var);
 
-          this->vars_[key].m = var;
-          this->vars_[key].t = 'm';
+          this->vars_[key].mode_ = var;
           this->set_redraw();
         }
         Mode  get_mode(std::string key, bool is_missing = false) {
-          return this->get_variable(key, is_missing).m;
+          return this->get_variable(key, is_missing).mode_;
         }
 
         void set_variable(std::string key, Align var, bool is_missing = false) {
@@ -196,12 +179,11 @@ namespace esphome
           }
           ESP_LOGW("", "- Set align %s to %d", key.c_str(), var);
 
-          this->vars_[key].a =  var;
-          this->vars_[key].t = 'a';
+          this->vars_[key].align_ =  var;
           this->set_redraw();
         }
         Align get_align(std::string key, bool is_missing = false) {
-          return this->get_variable(key, is_missing).a;
+          return this->get_variable(key, is_missing).align_;
         }
 
         void set_variable(std::string key, Direction var, bool is_missing = false) {
@@ -210,99 +192,84 @@ namespace esphome
           }
           ESP_LOGW("", "- Set direction %s to %d", key.c_str(), var);
 
-          this->vars_[key].d=  var;
-          this->vars_[key].t = 'd';
+          this->vars_[key].direction_=  var;
           this->set_redraw();
         }
         Direction get_direction(std::string key, bool is_missing = false) {
-          return this->get_variable(key, is_missing).d;
+          return this->get_variable(key, is_missing).direction_;
         }
 
         void set_variable(std::string key, SwitchPlateStyle * var, bool is_missing = false) {
           if (is_missing && has_variable(key)) {
             return;
           }
-          this->vars_[key].sps =  var;
-          this->vars_[key].t = 'S';
+          this->vars_[key].style_ =  var;
           this->set_redraw();
         }
         SwitchPlateStyle * get_style(std::string key, bool is_missing = false) {
-          return this->get_variable(key, is_missing).sps; 
+          return this->get_variable(key, is_missing).style_;
         }
 
         void set_variable(std::string key, Color var, bool is_missing = false) {
           if (is_missing && has_variable(key)) {
             return;
           }
-          ESP_LOGW("", "- Set Color %s to %d", key.c_str(), var.raw_32);
+          ESP_LOGW("", "- Set Color %s to #%08x", key.c_str(), var.raw_32);
 
-          this->vars_[key].u =  var.raw_32;
-          this->vars_[key].t = 'C';
+          this->vars_[key].uint32_ = var.raw_32;
           this->set_redraw();
         }
         Color get_color(std::string key, bool is_missing = false) {
-          return Color(this->get_variable(key, is_missing).u);
+          return Color(this->get_variable(key, is_missing).uint32_);
         }
 
         void set_variable(std::string key, Font * var, bool is_missing = false) {
           if (is_missing && has_variable(key)) {
             return;
           }
-          ESP_LOGW("", "- Set Font %s to %d", key.c_str(), -1);
-          this->vars_[key].fnt =  var;
-          this->vars_[key].t = 'F';
+          ESP_LOGW("", "- Set Font %s to %p", key.c_str(), var);
+          this->vars_[key].font_ =  var;
           this->set_redraw();
         }
         Font * get_font(std::string key, bool is_missing = false) {
-          return this->get_variable(key, is_missing).fnt;
+          return this->get_variable(key, is_missing).font_;
         }
 
         void set_variable(std::string key, Image * var, bool is_missing = false) {
           if (is_missing && has_variable(key)) {
             return;
           }
-          ESP_LOGW("", "- Set Image %s to %d", key.c_str(), -1);
-          this->vars_[key].img =  var;
-          this->vars_[key].t = 'I';
+          ESP_LOGW("", "- Set Image %s to %p", key.c_str(), var);
+          this->vars_[key].image_ =  var;
           this->set_redraw();
         }
         Image * get_image(std::string key, bool is_missing = false) {
-          return this->get_variable(key, is_missing).img; 
+          return this->get_variable(key, is_missing).image_;
         }
 
-        void explicit set_variable(std::string key, bool var, bool is_missing = false) {
+        void set_variable(std::string key, bool var, bool is_missing = false) {
           if (is_missing && has_variable(key)) {
             return;
           }
           ESP_LOGW("", "- Set bool %s to %s", key.c_str(), var?"true":"false");
 
-          this->vars_[key].b = var;
-          this->vars_[key].t = 'b';
+          this->vars_[key].bool_ = var;
           this->set_redraw();
         }
         bool get_bool(std::string key, bool is_missing = false) {
-          return this->get_variable(key, is_missing).b;
+          return this->get_variable(key, is_missing).bool_;
         }
 
-        bool has_variable(std::string key, char type = '*')
-        {
-          if ( this->vars_.count(key) != 0 )
-          {
-            if (type =='*') { return true; }
-            uvar var = this->vars_[key];
-            return var.t == type;
-          }
-          return false;
-        }
+        bool has_variable(std::string key) { return ( this->vars_.count(key) != 0 ); }
 
-        void parent(SwitchPlateBase *parent) { this->parent_ = parent; }
+        void set_parent(SwitchPlateBase *parent) { this->parent_ = parent; }
         SwitchPlateBase *parent() { return this->parent_; }
 
         virtual void set_redraw() =0 ;
 
       protected:
         SwitchPlateBase *parent_{nullptr};
-        std::map<std::string, uvar> vars_ {  };
+        std::map<std::string, TaggedVariable> vars_ {  };
     };
 
     // ============================================================================== SwitchPlateStyle
@@ -321,16 +288,16 @@ namespace esphome
       public:
         SwitchPlateBase(){};
 
-        virtual int16_t x() { return this->vars_["x"].i; }
-        virtual int16_t y() { return this->vars_["y"].i; }
-        virtual int16_t height() { return this->vars_["height"].i; }
-        virtual int16_t width()  { return this->vars_["width"].i; }
+        virtual int16_t x() { return this->vars_["x"].int32_; }
+        virtual int16_t y() { return this->vars_["y"].int32_; }
+        virtual int16_t height() { return this->vars_["height"].int32_; }
+        virtual int16_t width()  { return this->vars_["width"].int32_; }
 
         virtual void setup(){};
         virtual void call_setup(){ this->setup(); };
 
         virtual void show( DisplayBuffer & disp_buf ){};
-        virtual void call_show( DisplayBuffer & disp_buf ){ this->show( disp_buf ); };
+        virtual void call_show( DisplayBuffer & disp_buf ) {};
 
         virtual int16_t max_width()
         {
@@ -370,7 +337,6 @@ namespace esphome
 
         virtual Rect get_boundry() {
           Rect r = Rect(this->calc_x(), this->calc_y(), this->calc_x()+ this->width(), this->calc_y()+this->height());
-          ESP_LOGW("", "Boundry (%d,%d,%d,%d)",r.x,r.y,r.w,r.h);
           return r;
         }
 
@@ -436,8 +402,9 @@ namespace esphome
         void set_display(display::DisplayBuffer *display) {
           this->display_ = display;
           display->set_writer([this](display::DisplayBuffer &disp_buf) {
-            ESP_LOGW("", "----------------------------------------------------------------------");
+            ESP_LOGVV("SwitchPlate", "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
             this->show(disp_buf);
+            ESP_LOGVV("SwitchPlate", "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
           });
         }
         void set_touchscreen(touchscreen::Touchscreen *touchscreen) {
@@ -449,10 +416,10 @@ namespace esphome
         void add_footerItem(SwitchPlateItem *item);
 
         /// Get the width of the image in pixels with rotation applied.
-        int max_Width();
+        int16_t max_width();
 
         /// Get the height of the image in pixels with rotation applied.
-        int max_Height();
+        int16_t max_height();
 
         void show_page(SwitchPlatePage *page);
 
@@ -478,12 +445,6 @@ namespace esphome
 
         float get_setup_priority() const override { return esphome::setup_priority::DATA; }
 
-        void set_background_color(Color color) { this->background_color_ = color; }
-        Color get_background_color() { return this->background_color_; }
-
-        void set_background_image(Image * image) { this->background_image_ = image; }
-        Image * get_background_image() { return this->background_image_; }
-
 
 
       protected:
@@ -499,7 +460,7 @@ namespace esphome
         std::vector<SwitchPlateItem *> footer_;
 
         bool tabview_ = false;
-        Rotation rotation_{DISPLAY_ROTATION_0_DEGREES};
+
         SwitchPlatePage *first_page_{nullptr};
         SwitchPlatePage *current_page_{nullptr};
         SwitchPlatePage *previous_page_{nullptr};
@@ -531,10 +492,10 @@ namespace esphome
       public:
         SwitchPlateItem() {  };
 
-        int minValue() { return this->vars_["min_value"].i; }
-        int maxValue() { return this->vars_["max_value"].i; }
+        int32_t minValue() { return this->vars_["min_value"].int32_; }
+        int32_t maxValue() { return this->vars_["max_value"].int32_; }
 
-        bool enabled() { return this->vars_["enabled"].b; }
+        bool enabled() { return this->vars_["enabled"].bool_; }
 
         bool need_redrawing() {
           std::string txt = this->get_text_();
@@ -557,27 +518,49 @@ namespace esphome
         template <typename V> void set_state(V val) { this->state_ = val; }
         int state() const { return const_cast<SwitchPlateItem *>(this)->state_.value(this); }
 
-        virtual void show(DisplayBuffer & disp_buf){
-          ESP_LOGW("", "paint border and backround");
-          return;
+        void show_background(DisplayBuffer & disp_buf){
           uint8_t radius = get_int("border_radius");
           Rect r = this->get_boundry();
+
+          ESP_LOGW("", "SwitchPlateItem.show (%d)",radius);
+
           if (this->has_variable("background_color")) {
-            disp_buf.filled_rectangle(r.x, r.y, r.w, r.h, radius, this->get_color("background_color"));
+            disp_buf.filled_rectangle(r.x, r.y, r.w-r.x, r.h-r.y, radius, this->get_color("background_color"));
           } else if (this->has_variable("background_gradient_from")) {
             Color from_color = this->get_color("background_gradient_from");
-            Color to_color = this->get_color("background_gradient_from");
+            Color to_color = this->get_color("background_gradient_to");
             GradientDirection dir = (GradientDirection) this->get_direction("background_gradient_direction");
-            disp_buf.filled_rectangle(r.x, r.y, r.w, r.h, radius, from_color, to_color, dir);
+            disp_buf.filled_rectangle(r.x, r.y, r.w-r.x, r.h-r.y, radius, from_color, to_color, dir);
           }
           if (this->has_variable("border_color")) {
-            disp_buf.rectangle(r.x, r.y, r.w, r.h, radius, this->get_color("border_color"));
+            disp_buf.rectangle(r.x, r.y, r.w-r.x, r.h-r.y, radius, this->get_color("border_color"));
           } else if (this->has_variable("border_gradient_from")) {
             Color from_color = this->get_color("border_gradient_from");
-            Color to_color = this->get_color("border_gradient_from");
+            Color to_color = this->get_color("border_gradient_to");
             GradientDirection dir = (GradientDirection) this->get_direction("border_gradient_direction");
-            disp_buf.filled_rectangle(r.x, r.y, r.w, r.h, radius, from_color, to_color, dir);
+            disp_buf.rectangle(r.x, r.y, r.w-r.x, r.h-r.y, radius, from_color, to_color, dir);
           }
+        }
+        virtual void show_text(DisplayBuffer & disp_buf){
+          show_background(disp_buf);
+          Color color = this->get_color("text_color");
+          Font * font = this->get_font("text_font");
+          Align align = this->get_align("text_align");
+          //int x, int y, Font *font, Color color, TextAlign align, const char *text
+          disp_buf.print(this->calc_x(), this->calc_y(), font, color, this->text().c_str());
+        };
+
+        virtual void call_show(DisplayBuffer & disp_buf){
+          Rect r = this->get_boundry();
+          if (this->visible() && !disp_buf.is_clipped(r)) {
+            r.intersect(disp_buf.get_clipping());
+            if (r.is_set()) {
+              disp_buf.set_clipping(r);
+              this->show(disp_buf);
+              disp_buf.clear_clipping();
+            }
+          }
+          clear_redraw();
         }
 
       protected:
@@ -597,12 +580,12 @@ namespace esphome
 
       // ============================================================================== SwitchPlateGroup
 
-      class SwitchPlateGroup : public SwitchPlateBase
+      class SwitchPlateGroup : public SwitchPlateItem
       {
       public:
         void add_widget(SwitchPlateBase *widget)
         {
-          widget->parent(this);
+          widget->set_parent(this);
           this->widgets_.push_back(widget);
         }
 
@@ -626,9 +609,9 @@ namespace esphome
         virtual void call_show(DisplayBuffer & disp_buf) {
           if (this->visible() && !disp_buf.is_clipped(this->get_boundry())) {
             Rect r = this->calc_clipping();
-            ESP_LOGW("", "Group clipping (%d,%d,%d,%d)",r.x,r.y,r.w,r.h);
             if (r.is_set()) {
               disp_buf.set_clipping(r);
+
               this->show(disp_buf);
               for (auto *widget : this->widgets_)
               {
@@ -637,6 +620,7 @@ namespace esphome
               disp_buf.clear_clipping();
             }
           }
+          clear_redraw();
         }
 
         size_t items_size() const { return this->widgets_.size(); }
@@ -664,6 +648,13 @@ namespace esphome
       class SwitchPlatePage : public SwitchPlateGroup
       {
       public:
+        void setup() {
+          this->set_variable("background_color",  Color( 0x111111), true);
+        };
+        void show(DisplayBuffer & disp_buf) {
+          show_background(disp_buf);
+        }
+
         virtual int16_t x() { return 0; }
         virtual int16_t y() { return 0; }
         virtual int16_t height() { return this->max_height(); }
@@ -700,31 +691,22 @@ namespace esphome
       {
         public:
           void setup() {
-            this->set_variable("text_color", new Color(0xFFFFFF), true);
+            this->set_variable("text_color", Color(0xFFFFFF), true);
             this->set_variable("text_font", this->get_font("default_font", true), true);
-            this->set_variable("border_color", new Color( 0xFF0000), true);
-            this->set_variable("background_color", new Color( 0x00FF00), true);
+            this->get_variable("text_align", LEFT);
 
           };
           virtual void show(DisplayBuffer & disp_buf){
-            SwitchPlateItem::show(disp_buf);
+            show_background(disp_buf);
             Color color = this->get_color("text_color");
             Font * font = this->get_font("text_font");
-            TextAlign align = (TextAlign) this->get_align("text_align");
+            Align align = this->get_align("text_align");
             //int x, int y, Font *font, Color color, TextAlign align, const char *text
-            //  disp_buf.print(this->calc_x(), this->calc_y(), font, color, align, this->text().c_str());
+            disp_buf.print(this->calc_x(), this->calc_y(), font, color, this->text().c_str());
           };
       };
 
-/// ============================================================================== SwitchPlateFrame
 
-
-      class SwitchPlateFrame : public SwitchPlateGroup
-      {
-        public:
-          virtual void show(DisplayBuffer & disp_buf);
-
-      };
 
 // ============================================================================== SwitchPlateLabel
 
@@ -732,7 +714,13 @@ namespace esphome
       {
         public:
           void setup() {
-            this->set_variable("text_color", Color((uint32_t) 0xFFFFFF), true);
+            this->set_variable("text_color", Color((uint32_t) 0x000000), true);
+            this->set_variable("text_font", this->get_font("default_font", true), true);
+            this->get_variable("text_align", CENTER);
+
+            this->set_variable("border_color",      Color( 0xDDDDDD), true);
+            this->set_variable("border_radius", 10);
+            this->set_variable("background_color",  Color( 0x999999), true);
           };
           virtual void show(DisplayBuffer & disp_buf){
     //       disp_buf.print(this->calc_x, this->calc_y, this->text());
@@ -748,7 +736,14 @@ namespace esphome
             this->set_variable("text_color", Color((uint32_t) 0xFFFFFF), true);
           };
           virtual void show(DisplayBuffer & disp_buf){
-    //       disp_buf.print(this->calc_x, this->calc_y, this->text());
+            SwitchPlateItem::show(disp_buf);
+//            return;
+            Color color = this->get_color("text_color");
+            Font * font = this->get_font("text_font");
+            Align align = this->get_align("text_align");
+            //int x, int y, Font *font, Color color, TextAlign align, const char *text
+            disp_buf.print(this->calc_x(), this->calc_y(), font, color, this->text().c_str());
+
           };
       };
 
