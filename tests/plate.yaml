@@ -64,13 +64,13 @@ display:
     auto_clear_enabled: false
 
 switchplate:
-  display: my_display # Req 
+  display_id: my_display # Req 
   default_font: my_font
   pages:
     - id: myMainPage # Opt.
       name: myName
       selectable: true # can be opened with next and previous page selectors
-      objects:
+      widgets:
         - type: label
           id: txtHello
           x: 10 # Opt. Horizontal position on the page
@@ -78,7 +78,7 @@ switchplate:
           width: 300 # Opt. Width of the object
           height: 30 # Opt. Height of the object
           text: "Hello From SwitchPlate" # The text of the label
-          align: left # Text alignment: left, center, right
+          #align: left # Text alignment: left, center, right
           mode: expand # The wrapping mode of long text labels
         - type: button
           id: btnClick
