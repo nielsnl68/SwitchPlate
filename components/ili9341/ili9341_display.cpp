@@ -133,7 +133,7 @@ void ILI9341Display::fill_internal_(uint8_t color) {
   memset(transfer_buffer_, color, sizeof(transfer_buffer_));
 
   uint32_t rem = (this->get_buffer_length_()*2);
-  rotate_my(0);
+  rotate_my_(0);
   this->set_addr_window_(0, 0, this->get_width_internal(), this->get_height_internal());
   this->start_data_();
 
@@ -146,6 +146,35 @@ void ILI9341Display::fill_internal_(uint8_t color) {
   this->end_data_();
 
   memset(buffer_, color, this->get_buffer_length_());
+}
+
+void ILI9341Display::rotate_my_(uint8_t m) {
+  uint8_t rotation = m && 3; // can't be higher than 3
+  switch (rotation) {
+  case 0:
+    m = (MADCTL_MX | MADCTL_BGR);
+   // _width = ILI9341_TFTWIDTH;
+   // _height = ILI9341_TFTHEIGHT;
+    break;
+  case 1:
+    m = (MADCTL_MV | MADCTL_BGR);
+    //_width = ILI9341_TFTHEIGHT;
+    //_height = ILI9341_TFTWIDTH;
+    break;
+  case 2:
+    m = (MADCTL_MY | MADCTL_BGR);
+    //_width = ILI9341_TFTWIDTH;
+    //_height = ILI9341_TFTHEIGHT;
+    break;
+  case 3:
+    m = (MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
+    //_width = ILI9341_TFTHEIGHT;
+    //_height = ILI9341_TFTWIDTH;
+    break;
+  }
+
+  this->command(ILI9341_MADCTL);
+  this->data(m);
 }
 
 void HOT ILI9341Display::draw_absolute_pixel_internal(int x, int y, Color color) {
@@ -231,8 +260,6 @@ uint32_t ILI9341Display::buffer_to_transfer_(uint32_t pos, uint32_t sz) {
   if (sz > sizeof(transfer_buffer_) / 2) {
     sz = sizeof(transfer_buffer_) / 2;
   }
-
-  memset(transfer_buffer_, 255, sizeof(transfer_buffer_));
 
   for (uint32_t i = 0; i < sz; ++i) {
     uint16_t color;

@@ -61,34 +61,8 @@ class ILI9341Display : public PollingComponent,
   void reset_();
   void fill_internal_(uint8_t color);
   void display_();
-  void rotate_my(uint8_t m) {
-    uint8_t rotation = m && 3; // can't be higher than 3
-    switch (rotation) {
-    case 0:
-      m = (MADCTL_MX | MADCTL_BGR);
-     // _width = ILI9341_TFTWIDTH;
-     // _height = ILI9341_TFTHEIGHT;
-      break;
-    case 1:
-      m = (MADCTL_MV | MADCTL_BGR);
-      //_width = ILI9341_TFTHEIGHT;
-      //_height = ILI9341_TFTWIDTH;
-      break;
-    case 2:
-      m = (MADCTL_MY | MADCTL_BGR);
-      //_width = ILI9341_TFTWIDTH;
-      //_height = ILI9341_TFTHEIGHT;
-      break;
-    case 3:
-      m = (MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
-  //    _width = ILI9341_TFTHEIGHT;
-    //  _height = ILI9341_TFTWIDTH;
-      break;
-    }
+  void rotate_my_(uint8_t m);
 
-    this->command(ILI9341_MADCTL);
-    this->data(m);
-  }
   ILI9341Model model_;
   int16_t width_{320};   ///< Display width as modified by current rotation
   int16_t height_{240};  ///< Display height as modified by current rotation
