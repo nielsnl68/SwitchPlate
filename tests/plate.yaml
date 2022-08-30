@@ -5,27 +5,37 @@ esphome:
 esp32:
   board: firebeetle32
 
-time:
-  - platform: homeassistant
-    id: the_time
-
 wifi: 
   networks:
     - ssid: !secret wifi_ssid
       password: !secret wifi_password
-  
-api: 
-
-
-ota:
-  password: !secret ota_password
 
 logger:
 
 color:
   - id: my_light_red
     red: 100%
+  - id: my_black
+    blue: 0%
+    green: 0%  
+    red: 0%
+  - id: my_red
+    red: 100%
+  - id: color_blue 
+    blue: 86%
+  - id: my_white
+    red: 100%
+    blue: 100%
     green: 100%
+  - id: my_blue
+    red: 0%
+    blue: 100%
+    green: 0%    
+  - id: my_green
+    red: 0%
+    blue: 0%
+    green: 100%
+
 external_components:
   # use rtttl and dfplayer from ESPHome's dev branch in GitHub
   # equivalent shorthand for GitHub
@@ -34,19 +44,15 @@ external_components:
       type: local
       path: C:\development\projects\switchplate\components
 
-
-
 spi:
   mosi_pin: 23
   miso_pin: 19
   clk_pin: 18
 
-  
 font:
   - file: "gfonts://Roboto"
     id: my_font
-    size: 20
-    
+    size: 30
 
 display:
   - id: my_display
@@ -55,10 +61,10 @@ display:
     cs_pin: 5
     dc_pin: 16
     rotation: 90
+    auto_clear_enabled: false
 
 switchplate:
   display: my_display # Req 
-  id: abcname # Opt.
   default_font: my_font
   pages:
     - id: myMainPage # Opt.
@@ -69,8 +75,15 @@ switchplate:
           id: txtHello
           x: 10 # Opt. Horizontal position on the page
           y: 10 # Opt. Vertical position on the page
-          width: 60 # Opt. Width of the object
-          height: 20 # Opt. Height of the object
-          text: "Hello " # The text of the label
+          width: 300 # Opt. Width of the object
+          height: 30 # Opt. Height of the object
+          text: "Hello From SwitchPlate" # The text of the label
           align: left # Text alignment: left, center, right
           mode: expand # The wrapping mode of long text labels
+        - type: button
+          id: btnClick
+          x: 110
+          y: 190
+          width: 200
+          height: 40
+          text: "Click me"

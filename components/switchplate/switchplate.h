@@ -99,7 +99,7 @@ namespace esphome
 
     class DisplayOnPageChangeTrigger;
 
-    struct TaggedVariable {    
+    struct TaggedVariable {
       union  {
         uint32_t uint32_;
         int32_t int32_;
