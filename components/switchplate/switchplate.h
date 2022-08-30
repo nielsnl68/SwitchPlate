@@ -31,7 +31,7 @@ namespace esphome
 
   namespace switch_plate
   {
-    enum class Align: uint8_t {
+    enum Align {
       TOP = 0x00,
       CENTER_VERTICAL = 0x01,
       BASELINE = 0x02,
@@ -63,7 +63,7 @@ namespace esphome
       GROUP_ALIGN_VERTICAL  = 0x83,
     };
 
-    enum class Mode: uint8_t {
+    enum Mode {
       TEXT_MODE_EXPAND = 0,
       TEXT_MODE_BREAK = 1,
       TEXT_MODE_DOTS = 2,
@@ -75,7 +75,7 @@ namespace esphome
       SPINNER_MODE_SLOWSTRATCH = 12,
     };
 
-    enum class Direction: uint8_t {
+    enum Direction {
       DIRECTION_DOWN = 0,
       DIRECTION_UP = 1,
       DIRECTION_LEFT = 2,
@@ -164,7 +164,7 @@ namespace esphome
           if (is_missing && has_variable(key)) {
             return;
           }
-          ESP_LOGW("", "- Set mode %s to %d", key.c_str(), var);
+          ESP_LOGW("", "- Set mode %s to %d", key.c_str(), (uint8_t) var);
 
           this->vars_[key].mode_ = var;
           this->set_redraw();
@@ -177,7 +177,7 @@ namespace esphome
           if (is_missing && has_variable(key)) {
             return;
           }
-          ESP_LOGW("", "- Set align %s to %d", key.c_str(), var);
+          ESP_LOGW("", "- Set align %s to %d", key.c_str(), (uint8_t) var);
 
           this->vars_[key].align_ =  var;
           this->set_redraw();
@@ -190,7 +190,7 @@ namespace esphome
           if (is_missing && has_variable(key)) {
             return;
           }
-          ESP_LOGW("", "- Set direction %s to %d", key.c_str(), var);
+          ESP_LOGW("", "- Set direction %s to %d", key.c_str(), (uint8_t) var);
 
           this->vars_[key].direction_=  var;
           this->set_redraw();
@@ -411,11 +411,11 @@ namespace esphome
         void set_touchscreen(touchscreen::Touchscreen *touchscreen) {
           this->touchscreen_ = touchscreen;
           this->set_display(touchscreen->get_display());
-          touchscreen->set_writer([this](display::DisplayBuffer &disp_buf) {
-            ESP_LOGVV("SP_touch", "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-            this->show(disp_buf);
-            ESP_LOGVV("SP_touch", "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
-          });
+        //  touchscreen->set_writer([this](display::DisplayBuffer &disp_buf) {
+         //   ESP_LOGVV("SP_touch", "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+        //    this->show(disp_buf);
+        //    ESP_LOGVV("SP_touch", "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
+        //  });
         }
 
         void add_page(SwitchPlatePage *page);
@@ -471,11 +471,6 @@ namespace esphome
         SwitchPlatePage *first_page_{nullptr};
         SwitchPlatePage *current_page_{nullptr};
         SwitchPlatePage *previous_page_{nullptr};
-
-        Color background_color_;
-        Image * background_image_{nullptr};
-
-
 
 #ifdef USE_SENSOR
         std::vector<sensor::Sensor *> sensors_;
@@ -578,9 +573,6 @@ namespace esphome
         TemplatableValue<int, const SwitchPlateItem *> state_;
         int old_state_{0};
 
-        Mode MODE_ = TEXT_MODE_CROP;
-        Align ALIGN_ = LEFT;
-
         TemplatableValue<std::string, const SwitchPlateItem *> text_;
         std::string old_text_ {""};
       };
@@ -658,6 +650,7 @@ namespace esphome
         void setup() {
           this->set_variable("background_color",  Color( 0x111111), true);
         };
+
         void show(DisplayBuffer & disp_buf) {
           show_background(disp_buf);
         }
