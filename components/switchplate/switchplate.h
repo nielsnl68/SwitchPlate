@@ -402,13 +402,20 @@ namespace esphome
         void set_display(display::DisplayBuffer *display) {
           this->display_ = display;
           display->set_writer([this](display::DisplayBuffer &disp_buf) {
-            ESP_LOGVV("SwitchPlate", "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            ESP_LOGVV("SP_display", "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
             this->show(disp_buf);
-            ESP_LOGVV("SwitchPlate", "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
+            ESP_LOGVV("SP_display", "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
           });
         }
+
         void set_touchscreen(touchscreen::Touchscreen *touchscreen) {
           this->touchscreen_ = touchscreen;
+          this->set_display(touchscreen->get_display());
+          touchscreen->set_writer([this](display::DisplayBuffer &disp_buf) {
+            ESP_LOGVV("SP_touch", "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            this->show(disp_buf);
+            ESP_LOGVV("SP_touch", "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
+          });
         }
 
         void add_page(SwitchPlatePage *page);

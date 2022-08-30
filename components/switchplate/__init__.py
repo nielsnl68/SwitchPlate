@@ -71,9 +71,11 @@ WIDGET_MSGBOX = 'msgbox' # 	Selector	Messagebox
 CONF_ON_PAGE_CHANGE = "on_page_change"
 
 CONF_WIDGET_ID = 'widget_id'
-CONF_DISPLAY_DEFINE = 'display'
+CONF_DISPLAY_DEFINE = 'display_id'
 CONF_HEADER = 'header'
+CONF_HEADER_HEIGHT = "header_height"
 CONF_FOOTER = 'footer'
+CONF_FOOTER_HEIGHT = "footer_height"
 CONF_TABVIEW = "tabview"
 
 CONF_X = "x"
@@ -239,7 +241,7 @@ SWITCHPLATE_ITEM_SCHEMA = cv.All(
                     cv.Optional(CONF_VISIBLE):cv.boolean,
                     cv.Optional(CONF_ENABLED):cv.boolean,
                     cv.Required(CONF_WIDGETS): cv.All(
-                        #cv.ensure_list(switchplate_item_schema), cv.Length(min=1)
+                        cv.ensure_list(switchplate_item_schema), cv.Length(min=1)
                     ),
                 }
             ),
@@ -325,15 +327,18 @@ SWITCHPLATE_ITEM_SCHEMA = cv.All(
 
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(SwitchPlate),
-    cv.Required(CONF_DISPLAY_DEFINE): cv.use_id(display.DisplayBuffer) ,
+    cv.Optional(CONF_DISPLAY_DEFINE): cv.use_id(display.DisplayBuffer) ,
+    cv.Optional(touchscreen.CONF_TOUCHSCREEN_ID): cv.use_id(touchscreen.Touchscreen),
     cv.Required(CONF_DEFAULT_FONT): cv.use_id(font.Font) ,
     cv.Optional(CONF_TABVIEW): cv.boolean,
     cv.Optional(CONF_HEADER): cv.All(
         cv.ensure_list(switchplate_item_schema), cv.Length(min=1)
     ),
+    cv.Optional(CONF_HEADER_HEIGHT, default=23): cv.uint8_t,
     cv.Optional(CONF_FOOTER): cv.All(
         cv.ensure_list(switchplate_item_schema), cv.Length(min=1)
     ),
+    cv.Optional(CONF_FOOTER_HEIGHT, default=23): cv.uint8_t,
     cv.Required(CONF_PAGES): cv.All(
         cv.ensure_list(
             {
@@ -356,7 +361,7 @@ CONFIG_SCHEMA = cv.Schema({
             cv.Optional(CONF_TO): cv.use_id(SwitchPlatePage),
         }
     ),
-}).extend(cv.COMPONENT_SCHEMA)
+}).extend(cv.COMPONENT_SCHEMA).has_exactly_one_key([CONF_DISPLAY_DEFINE, touchscreen.CONF_TOUCHSCREEN_ID])
 
 
 async def item_to_code(config):
@@ -401,8 +406,11 @@ async def to_code(config):
     for key, value in config.items():
         if ((key == CONF_ID) or (key==CONF_TYPE )): pass
         elif (key == CONF_DISPLAY_DEFINE):
-            parent = await cg.get_variable(config[CONF_DISPLAY_DEFINE])
+            parent = await cg.get_variable(value)
             cg.add(var.set_display( parent))
+        elif (key == touchscreen.CONF_TOUCHSCREEN_ID):
+            parent = await cg.get_variable(value)
+            cg.add(var.set_touchscreen( parent))
         elif (key == CONF_PAGES):
             for c in config[CONF_PAGES]:
                 item = await item_to_code(c)
