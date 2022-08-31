@@ -39,7 +39,8 @@ color:
 external_components:
   # use rtttl and dfplayer from ESPHome's dev branch in GitHub
   # equivalent shorthand for GitHub
-  #- source: github://nielsnl68/SwitchPlate
+  - source: github://pr#3755
+    components: [ xpt2046]
   - source:
       type: local
       path: C:\development\projects\switchplate\components
