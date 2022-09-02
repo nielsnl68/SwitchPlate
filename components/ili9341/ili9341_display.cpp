@@ -9,8 +9,20 @@ namespace ili9341 {
 
 static const char *const TAG = "ili9341";
 
-void ILI9341Display::setup_pins_() {
+void ILI9341Display::setup() {
+  this->setup_pins_();
+  this->initialize();
+
+  this->x_low_ = this->width_;
+  this->y_low_ = this->height_;
+  this->x_high_ = 0;
+  this->y_high_ = 0;
+
   this->init_internal_(this->get_buffer_length_());
+  this->fill_internal_(0x00);
+}
+
+void ILI9341Display::setup_pins_() {
   this->dc_pin_->setup();  // OUTPUT
   this->dc_pin_->digital_write(false);
   if (this->reset_pin_ != nullptr) {
@@ -28,15 +40,14 @@ void ILI9341Display::setup_pins_() {
 
 void ILI9341Display::dump_config() {
   LOG_DISPLAY("", "ili9341", this);
-  //ESP_LOGCONFIG(TAG, "  Width: %d, Height: %d,  Rotation: %d", this->width_, this->height_, this->rotation_); // already shown in the line above.
   LOG_PIN("  Reset Pin: ", this->reset_pin_);
   LOG_PIN("  DC Pin: ", this->dc_pin_);
   LOG_PIN("  Busy Pin: ", this->busy_pin_);
- // LOG_PIN("  Backlight Pin: ", this->led_pin_);
   LOG_UPDATE_INTERVAL(this);
 }
 
-float ILI9341Display::get_setup_priority() const { return setup_priority::PROCESSOR; }
+float ILI9341Display::get_setup_priority() const { return setup_priority::HARDWARE; }
+
 void ILI9341Display::command(uint8_t value) {
   this->start_command_();
   this->write_byte(value);
@@ -90,11 +101,15 @@ void ILI9341Display::display_() {
   uint16_t h = this->y_high_ - this->y_low_ + 1;
   uint32_t start_pos = ((this->y_low_ * this->width_) + x_low_);
 
-  if ((this->x_high_ < this->x_low_ ) || (this->y_high_ < this->y_low_ )) return; // check i something was displayed
+  // check if something was displayed
+  if ((this->x_high_ < this->x_low_) || (this->y_high_ < this->y_low_)) {
+    return;
+  }
 
   set_addr_window_(this->x_low_, this->y_low_, w, h);
 
-  ESP_LOGD("ILI9341", "Start ILI9341Display::display_(xl:%d, xh:%d, yl:%d, yh:%d, w:%d, h:%d, start_pos:%d)",this->x_low_, this->x_high_, this->y_low_, this->y_high_, w, h, start_pos );
+  ESP_LOGVV("ILI9341", "Start ILI9341Display::display_(xl:%d, xh:%d, yl:%d, yh:%d, w:%d, h:%d, start_pos:%d)",
+           this->x_low_, this->x_high_, this->y_low_, this->y_high_, w, h, start_pos);
 
   this->start_data_();
   for (uint16_t row = 0; row < h; row++) {
@@ -111,7 +126,6 @@ void ILI9341Display::display_() {
     App.feed_wdt();
   }
   this->end_data_();
-  ESP_LOGD("ILI9341", "Finish ILI9341Display::display_()");
 
   // invalidate watermarks
   this->x_low_ = this->width_;
@@ -132,8 +146,8 @@ void ILI9341Display::fill(Color color) {
 void ILI9341Display::fill_internal_(uint8_t color) {
   memset(transfer_buffer_, color, sizeof(transfer_buffer_));
 
-  uint32_t rem = (this->get_buffer_length_()*2);
-  rotate_my_(0);
+  uint32_t rem = (this->get_buffer_length_() * 2);
+
   this->set_addr_window_(0, 0, this->get_width_internal(), this->get_height_internal());
   this->start_data_();
 
@@ -149,28 +163,28 @@ void ILI9341Display::fill_internal_(uint8_t color) {
 }
 
 void ILI9341Display::rotate_my_(uint8_t m) {
-  uint8_t rotation = m && 3; // can't be higher than 3
+  uint8_t rotation = m & 3;  // can't be higher than 3
   switch (rotation) {
-  case 0:
-    m = (MADCTL_MX | MADCTL_BGR);
-   // _width = ILI9341_TFTWIDTH;
-   // _height = ILI9341_TFTHEIGHT;
-    break;
-  case 1:
-    m = (MADCTL_MV | MADCTL_BGR);
-    //_width = ILI9341_TFTHEIGHT;
-    //_height = ILI9341_TFTWIDTH;
-    break;
-  case 2:
-    m = (MADCTL_MY | MADCTL_BGR);
-    //_width = ILI9341_TFTWIDTH;
-    //_height = ILI9341_TFTHEIGHT;
-    break;
-  case 3:
-    m = (MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
-    //_width = ILI9341_TFTHEIGHT;
-    //_height = ILI9341_TFTWIDTH;
-    break;
+    case 0:
+      m = (MADCTL_MX | MADCTL_BGR);
+      // _width = ILI9341_TFTWIDTH;
+      // _height = ILI9341_TFTHEIGHT;
+      break;
+    case 1:
+      m = (MADCTL_MV | MADCTL_BGR);
+      // _width = ILI9341_TFTHEIGHT;
+      // _height = ILI9341_TFTWIDTH;
+      break;
+    case 2:
+      m = (MADCTL_MY | MADCTL_BGR);
+      // _width = ILI9341_TFTWIDTH;
+      // _height = ILI9341_TFTHEIGHT;
+      break;
+    case 3:
+      m = (MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
+      // _width = ILI9341_TFTHEIGHT;
+      // _height = ILI9341_TFTWIDTH;
+      break;
   }
 
   this->command(ILI9341_MADCTL);
@@ -190,13 +204,15 @@ void HOT ILI9341Display::draw_absolute_pixel_internal(int x, int y, Color color)
     new_color = display::ColorUtil::color_to_index8_palette888(color, this->palette_);
   }
 
-  if (buffer_[pos] != new_color) { //
+  if (buffer_[pos] != new_color) {
     buffer_[pos] = new_color;
-  // low and high watermark may speed up drawing from buffer
-    this->x_low_  = (x < this->x_low_)  ? x : this->x_low_;
-    this->y_low_  = (y < this->y_low_)  ? y : this->y_low_;
+    // low and high watermark may speed up drawing from buffer
+    this->x_low_ = (x < this->x_low_) ? x : this->x_low_;
+    this->y_low_ = (y < this->y_low_) ? y : this->y_low_;
     this->x_high_ = (x > this->x_high_) ? x : this->x_high_;
     this->y_high_ = (y > this->y_high_) ? y : this->y_high_;
+    ESP_LOGVV("ILI9341", "=>>> pixel (x:%d, y:%d) (xl:%d, xh:%d, yl:%d, yh:%d",
+             x, y, this->x_low_, this->x_high_, this->y_low_, this->y_high_);
   }
 }
 
@@ -282,7 +298,6 @@ void ILI9341M5Stack::initialize() {
   this->width_ = 320;
   this->height_ = 240;
   this->invert_display_(true);
-  this->fill_internal_(0x00);
 }
 
 //   24_TFT display
@@ -290,7 +305,6 @@ void ILI9341TFT24::initialize() {
   this->init_lcd_(INITCMD_TFT);
   this->width_ = 240;
   this->height_ = 320;
-  this->fill_internal_(0x00);
 }
 
 //   24_TFT rotated display
@@ -298,7 +312,6 @@ void ILI9341TFT24R::initialize() {
   this->init_lcd_(INITCMD_TFT);
   this->width_ = 320;
   this->height_ = 240;
-  this->fill_internal_(0x00);
 }
 
 }  // namespace ili9341

@@ -44,11 +44,7 @@ class ILI9341Display : public PollingComponent,
   void fill(Color color) override;
 
   void dump_config() override;
-  void setup() override {
-    this->setup_pins_();
-    this->initialize();
-  }
-
+  void setup() override ;
   display::DisplayType get_display_type() override { return display::DisplayType::DISPLAY_TYPE_COLOR; }
 
  protected:
