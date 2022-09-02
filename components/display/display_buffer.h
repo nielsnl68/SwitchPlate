@@ -20,7 +20,6 @@
 #include "esphome/components/qr_code/qr_code.h"
 #endif
 
-#define USE_EXTENDEDDRAW
 #define POLAR_2PI 6.28318530718F
 
 namespace esphome {
@@ -669,7 +668,8 @@ class DisplayBuffer {
 
   virtual void draw_absolute_pixel_internal(int x, int y, Color color) = 0;
 
-  void init_internal_(uint32_t buffer_length);
+  uint8_t init_internal_(uint32_t buffer_length, uint8_t bytes_per_pixel = 1);
+
 
   void do_update_();
 
