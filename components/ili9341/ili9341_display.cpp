@@ -314,7 +314,7 @@ void ILI9341TFT24R::initialize_() {
   this->height_ = 240;
 }
 
-ILI9341ILI9486::initialize_() {
+void ILI9341ILI9486::initialize_() {
   this->init_lcd_(INITCMD_M5STACK);
   this->width_ = 480;
   this->height_ = 320;
