@@ -33,6 +33,7 @@ MODELS = {
     "M5STACK": ILI9341Model.M5STACK,
     "TFT_2.4": ILI9341Model.TFT_24,
     "TFT_2.4R": ILI9341Model.TFT_24R,
+    "ILI9486": ILI9341Model.ILI9486,
 }
 
 ILI9341_MODEL = cv.enum(MODELS, upper=True, space="_")
