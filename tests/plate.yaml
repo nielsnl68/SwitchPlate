@@ -63,8 +63,24 @@ display:
     rotation: 90
     auto_clear_enabled: false
 
+touchscreen:
+  - platform: xpt2046
+    display: my_display
+    id: my_toucher
+    cs_pin: 14
+    #irq_pin: 16
+    setup_priority: 400
+    report_interval: 50ms
+    threshold: 400
+    calibration_x_min: 3860
+    calibration_x_max: 340
+    calibration_y_min: 3860
+    calibration_y_max: 340
+    swap_x_y: false
+
 switchplate:
   display_id: my_display # Req 
+  touchscreen_id: my_toucher
   default_font: my_font
   pages:
     - id: myMainPage # Opt.
@@ -73,17 +89,26 @@ switchplate:
       widgets:
         - type: label
           id: txtHello
-          x: 10 # Opt. Horizontal position on the page
-          y: 10 # Opt. Vertical position on the page
-          width: 300 # Opt. Width of the object
-          height: 30 # Opt. Height of the object
-          text: "Hello From SwitchPlate" # The text of the label
-          #align: left # Text alignment: left, center, right
-          mode: expand # The wrapping mode of long text labels
+          dimension:
+            x: 15
+            y: 10
+            width: 310 
+            height: 30
+          text: "I am your SwitchPlate" # The text of the label
+        - type: label
+          id: theTime
+          dimension:
+            x: 100
+            y: 60
+            width: 120 
+            height: 30
+          text: "00:00:00" # The text of the label
+
         - type: button
           id: btnClick
-          x: 110
-          y: 190
-          width: 200
-          height: 40
+          dimension:
+            x: 60
+            y: 150
+            width: 200
+            height: 40
           text: "Click me"

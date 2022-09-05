@@ -5,42 +5,17 @@ esphome:
 esp32:
   board: firebeetle32
 
-wifi: 
+wifi:
   networks:
     - ssid: !secret wifi_ssid
       password: !secret wifi_password
 
 logger:
-
-color:
-  - id: my_light_red
-    red: 100%
-  - id: my_black
-    blue: 0%
-    green: 0%  
-    red: 0%
-  - id: my_red
-    red: 100%
-  - id: color_blue 
-    blue: 86%
-  - id: my_white
-    red: 100%
-    blue: 100%
-    green: 100%
-  - id: my_blue
-    red: 0%
-    blue: 100%
-    green: 0%
-  - id: my_green
-    red: 0%
-    blue: 0%
-    green: 100%
+  level: debug
 
 external_components:
   # use rtttl and dfplayer from ESPHome's dev branch in GitHub
   # equivalent shorthand for GitHub
-  - source: github://pr#3755
-    components: [ xpt2046]
   - source:
       type: local
       path: C:\development\projects\switchplate\components
@@ -61,7 +36,8 @@ display:
     model: TFT 2.4
     cs_pin: 5
     dc_pin: 16
-    rotation: 90
+    rotation: 270
+    setup_priority: 800.0
     auto_clear_enabled: false
     lambda: |-
       //it.fill(my_black);
@@ -70,8 +46,12 @@ display:
       //    it.horizontal_line(110,i,100, my_red.fade_to_black(i));
       //    it.horizontal_line(215,i,100, my_red.gradient(my_blue, i));
       //}
-      it.rectangle(5, 101, 30, 160, 10, my_white);
-      it.rectangle(112, 208, 30, 160, 10, my_white);
+      it.print(5,5,my_font, "top");
+      //it.filled_rectangle(5, 101, 100, 100, 10, Color(0x777777));
+      it.rectangle(5, 101, 100, 100, 10);
+      //it.filled_rectangle(115, 101, 100, 100, 10, Color(0x777777));
+      it.rectangle(115, 101, 100, 100, 10);
+      //it.draw_pixel_at(160,120);
 
 touchscreen:
   - platform: xpt2046
@@ -79,28 +59,29 @@ touchscreen:
     id: my_toucher
     cs_pin: 14
     #irq_pin: 16
+    setup_priority: 400
     report_interval: 50ms
     threshold: 400
     calibration_x_min: 3860
-    calibration_x_max: 280
-    calibration_y_min: 340
-    calibration_y_max: 3860
-    #swap_x_y: true
+    calibration_x_max: 340
+    calibration_y_min: 3860
+    calibration_y_max: 340
+    swap_x_y: false
 
 binary_sensor:
   - platform: touchscreen
     touchscreen_id: my_toucher
     id: touch_key0
     x_min: 5
-    x_max: 101
-    y_min: 30
-    y_max: 160
+    x_max: 105
+    y_min: 101
+    y_max: 201
 
   - platform: touchscreen
     touchscreen_id: my_toucher
     id: touch_key1
-    x_min: 112
-    x_max: 208
-    y_min: 30
-    y_max: 126
+    x_min: 115
+    x_max: 215
+    y_min: 101
+    y_max: 201
 

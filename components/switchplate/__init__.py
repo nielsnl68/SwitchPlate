@@ -83,10 +83,11 @@ CONF_HEIGHT = "height"
 CONF_TEXT = "text"
 
 CONF_STATE = "state"
-CONF_ENABLED = "enabled"
+CONF_DISABLED = "disabled"
 
-CONF_TOGGLE = "toggleble"
 CONF_SELECTABLE = "selectable"
+CONF_SELECTED = "selected"
+
 CONF_CLICKABLE = "clickable"
 
 CONF_FIRSTPAGE = "firstpage"
@@ -200,15 +201,17 @@ def validate_min_max(config):
 def switchplate_item_schema(value):
     return SWITCHPLATE_ITEM_SCHEMA(value)
 
-
+CONF_DIMENSION = 'dimension'
 SWITCHPLATE_ITEM_COMMON_SCHEMA = cv.Schema(
     {
-        cv.Optional(CONF_X): cv.int_range(-512, 512),
-        cv.Optional(CONF_Y): cv.int_range(-512, 512),
-        cv.Optional(CONF_WIDTH): cv.positive_not_null_int,
-        cv.Optional(CONF_HEIGHT): cv.positive_not_null_int,
+        cv.Optional(CONF_DIMENSION) : cv.Schema ({
+            cv.Optional(CONF_X, default=0): cv.int_range(-1024, 1024),
+            cv.Optional(CONF_Y, default=0): cv.int_range(-1024, 1024),
+            cv.Optional(CONF_WIDTH, default=-1): cv.int_range(-3, 1024),
+            cv.Optional(CONF_HEIGHT, default=-1): cv.int_range(-3, 1024),
+        }),
         cv.Optional(CONF_VISIBLE): cv.boolean,
-        cv.Optional(CONF_ENABLED): cv.boolean,
+        cv.Optional(CONF_DISABLED): cv.boolean,
     }
 )  # .extend(sps.SWITCHPLATE_COMMON_STYLE_SCHEMA)
 
@@ -248,7 +251,7 @@ SWITCHPLATE_ITEM_SCHEMA = cv.All(
                 {
                     cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGET_CLASSES[WIDGET_GROUPED]),
                     cv.Optional(CONF_VISIBLE): cv.boolean,
-                    cv.Optional(CONF_ENABLED): cv.boolean,
+                    cv.Optional(CONF_DISABLED): cv.boolean,
                     cv.Required(CONF_WIDGETS): cv.All(
                         cv.ensure_list(switchplate_item_schema),
                         cv.Length(min=1)
@@ -270,16 +273,16 @@ SWITCHPLATE_ITEM_SCHEMA = cv.All(
             WIDGET_BUTTON: SWITCHPLATE_ITEM_TEXT_SCHEMA.extend(
                 {
                     cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGET_CLASSES[WIDGET_BUTTON]),
-                    cv.Optional(CONF_ENABLED): cv.boolean,
-                    cv.Optional(CONF_TOGGLE, default=False): cv.boolean,
-                    cv.Optional(CONF_STATE, default=False): cv.boolean,
+                    cv.Optional(CONF_SELECTED, default=False): cv.boolean,
+                    cv.Optional(CONF_DISABLED): cv.boolean,
+                    cv.Optional(CONF_SELECTABLE): cv.boolean,
                     cv.Optional(CONF_CLICKABLE): cv.boolean,
                 }
             ),
             WIDGET_SWITCH: SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
                 {
                     cv.GenerateID(CONF_ID): cv.declare_id(CONF_WIDGET_CLASSES[WIDGET_SWITCH]),
-                    cv.Optional(CONF_STATE, default=False): cv.boolean,
+                    cv.Optional(CONF_SELECTED, default=False): cv.boolean,
 
                     # cv.Optional(CONF_ON_TEXT, default="On"): cv.string_strict,
                     # cv.Optional(CONF_OFF_TEXT, default="Off"): cv.string_strict,
@@ -360,21 +363,32 @@ CONFIG_SCHEMA = cv.Schema({
                 cv.Optional(CONF_NAME): cv.string,
                 cv.Optional(CONF_SELECTABLE): cv.boolean,
                 cv.Optional(CONF_VISIBLE): cv.boolean,
-                cv.Optional(CONF_ENABLED): cv.boolean,
+                cv.Optional(CONF_DISABLED): cv.boolean,
             }
         ),
         cv.Length(min=1),
     ),
 }).extend(cv.COMPONENT_SCHEMA)#.add_extra(cv.has_exactly_one_key([CONF_DISPLAY_DEFINE, touchscreen.CONF_TOUCHSCREEN_ID]))
 
+WIDGET_STATUS_OPTIONS = {
+    CONF_SELECTED: 2,
+    CONF_DISABLED: 4,
+    CONF_VISIBLE : 9,
+    CONF_CLICKABLE: 10,
+    CONF_SELECTABLE: 11,
+}
+
 
 async def item_to_code(config):
     item = cg.new_Pvariable(config[CONF_ID])
     for key, value in config.items():
-        if ((key == CONF_ID) or (key == CONF_TYPE)):
+        if (key in [CONF_ID, CONF_TYPE, CONF_X, CONF_Y, CONF_WIDTH, CONF_HEIGHT]):
             pass
         elif (key == CONF_NAME):
             cg.add(item.set_name(config[CONF_NAME]))
+        elif (key == CONF_DIMENSION):
+            dim = config[CONF_DIMENSION]
+            cg.add(item.set_dimension(dim[CONF_X], dim[CONF_Y], dim[CONF_WIDTH], dim[CONF_HEIGHT]))
         elif (key == CONF_TEXT):
             if isinstance(value, core.Lambda):
                 template_ = await cg.templatable(value, [(SwitchPlateItemConstPtr, "it")], cg.std_string)
@@ -400,6 +414,8 @@ async def item_to_code(config):
         elif (isinstance(value, core.ID)):
             parent = await cg.get_variable(value)
             cg.add(item.set_variable(key, parent))
+        elif (key in WIDGET_STATUS_OPTIONS.keys()):
+            cg.add(item.set_widget_options(WIDGET_STATUS_OPTIONS[key], value))
         else:
             cg.add(item.set_variable(key, value))
     return item

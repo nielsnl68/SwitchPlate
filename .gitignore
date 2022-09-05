@@ -42,3 +42,5 @@ secrets.yaml
 lcd_menu.yaml
 components/switchplate/hasp
 components/switchplate/widgets
+
+components/touchscreen
