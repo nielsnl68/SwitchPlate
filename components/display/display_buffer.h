@@ -5,7 +5,7 @@
 #include "esphome/core/automation.h"
 #include "display_color_utils.h"
 #include "esphome/core/helpers.h"
-
+#include "esphome/core/log.h"
 #include <cstdarg>
 
 #ifdef USE_TIME
@@ -119,7 +119,7 @@ struct Rect {
   inline Rect(int16_t x, int16_t y, int16_t w, int16_t h) ALWAYS_INLINE : x(x), y(y), w(w), h(h) {}
   inline bool is_set() ALWAYS_INLINE { return (this->h != 32766) && (this->w != 32766); }
 
-  void expand(int16_t width, int16_t height){
+  inline void expand(int16_t width, int16_t height){
     if ((*this).is_set() && ((*this).w >= (-2 * width)) && ( (*this).h >= (-2 * height))) { 
       (*this).x = (*this).x - width;
       (*this).y = (*this).y - height;
@@ -128,7 +128,7 @@ struct Rect {
     }
   }
 
-  void join(Rect rect) {
+  inline void join(Rect rect) {
     if (!this->is_set()) {
       this->x = rect.x;
       this->y = rect.y;
@@ -141,12 +141,9 @@ struct Rect {
       if (this->h < rect.h) { this->h = rect.h; }
     }
   }
-  void intersect(Rect rect) {
-    if (!this->is_set()) {
-      this->x = rect.x;
-      this->y = rect.y;
-      this->w = rect.w;
-      this->h = rect.h;
+  inline void substract(Rect rect) {
+    if (!this->inside(rect)) {
+      (*this) = Rect();
     } else {
       if (this->x < rect.x) { this->x = rect.x; }
       if (this->y < rect.y) { this->y = rect.y; }
@@ -155,14 +152,32 @@ struct Rect {
     }
   }
 
-  bool inside(int16_t x, int16_t y, bool absolute ) {
+  inline bool inside(int16_t x, int16_t y, bool absolute = false) {
     if (!this->is_set()) return true;
     if (absolute) {
-      return ((x >= this->x) && (x <= this->w) && (y >= this->y) && (y <= this->h));
-    } else {
       return ((x >= 0) && (x <= this->w - this->x) && (y >= 0) && (y <= this->h - this->y));
+    } else {
+      return ((x >= this->x) && (x <= this->w) && (y >= this->y) && (y <= this->h));
     }
   }
+  inline bool inside(Rect rect, bool absolute = false) {
+    if (!this->is_set() || !rect.is_set()) return true;
+    if (absolute) {
+      return ((rect.x <= this->w - this->x) && (rect.w >= 0) && (rect.y <= this->h - this->y) && (rect.y >= 0));
+    } else {
+      return ((rect.x <= this->w) && (rect.w >= this->x) && (rect.y <= this->h) && (rect.h >= this->x));
+    }
+  }
+
+  //  rect           x--------------w
+  //  this        x--------------w
+  inline void info(std::string prefix = "rect info:") {
+    if (this->is_set()) {
+      ESP_LOGI("Rect", "%s [%3d,%3d,%3d,%3d]",prefix.c_str(), this->x, this->y, this->w, this->h);
+    } else
+      ESP_LOGI("Rect", "%s ** NOT SET **",prefix.c_str());
+  }
+
 };
 
 class Font;
@@ -181,7 +196,7 @@ using display_writer_t = std::function<void(DisplayBuffer &)>;
   }
 
 class DisplayBuffer {
- public:
+public:
   /// Fill the entire screen with the given color.
   virtual void fill(Color color);
   /// Clear the entire screen by filling it with OFF pixels.
@@ -568,7 +583,7 @@ class DisplayBuffer {
   };
 
   ///
-  /// intersect a rectangular region to the invalidation region
+  /// substract a rectangular region to the invalidation region
   /// - This is usually called when an element has been modified
   ///
   /// \param[in]  rect: Rectangle to add to the invalidation region
@@ -661,7 +676,7 @@ class DisplayBuffer {
   void polar_line(int16_t x, int16_t y, uint16_t radius_start, uint16_t radius_end, int16_t angle,
                   Color color = COLOR_ON);
 
-
+  void call_update ();
 
  protected:
   void vprintf_(int x, int y, Font *font, Color color, TextAlign align, const char *format, va_list arg);
@@ -669,7 +684,7 @@ class DisplayBuffer {
   virtual void draw_absolute_pixel_internal(int x, int y, Color color) = 0;
 
   uint8_t init_internal_(uint32_t buffer_length, uint8_t bytes_per_pixel = 1);
-
+  virtual void display_() {};
 
   void do_update_();
 

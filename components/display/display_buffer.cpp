@@ -255,7 +255,7 @@ void DisplayBuffer::filled_triangle(int16_t x0, int16_t y0, int16_t x1, int16_t 
   //   1) ensures that the division between the flat bottom
   //      and flat top triangles occurs at Y=Y1
   //   2) ensure that we avoid division-by-zero in the for loops
-  // - Walk each scan line and determine the intersection
+  // - Walk each scan line and determine the substraction
   //   between triangle side A & B (flat bottom triangle)
   //   and then C and B (flat top triangle) using line slopes.
 
@@ -600,16 +600,33 @@ void DisplayBuffer::show_page(DisplayPage *page) {
 }
 void DisplayBuffer::show_next_page() { this->page_->show_next(); }
 void DisplayBuffer::show_prev_page() { this->page_->show_prev(); }
-void DisplayBuffer::do_update_() {
-  if (this->auto_clear_enabled_) {
-    this->clear();
-  }
-  if (this->page_ != nullptr) {
-    this->page_->get_writer()(*this);
-  } else if (this->writer_.has_value()) {
-    (*this->writer_)(*this);
-  }
+
+void DisplayBuffer::call_update() {
+  this->do_update_();
 }
+
+void DisplayBuffer::do_update_() {
+  static bool prossing_update = false, need_update = false; 
+  if (prossing_update) {
+    need_update = true;
+    return;
+  }
+  do {
+    prossing_update = true;
+    need_update = false;
+    if (this->auto_clear_enabled_) {
+      this->clear();
+    }
+    if (this->page_ != nullptr) {
+      this->page_->get_writer()(*this);
+    } else if (this->writer_.has_value()) {
+      (*this->writer_)(*this);
+    }
+    if (!need_update) this->display_();
+  } while (need_update);
+  prossing_update = false;
+}
+
 void DisplayOnPageChangeTrigger::process(DisplayPage *from, DisplayPage *to) {
   if ((this->from_ == nullptr || this->from_ == from) && (this->to_ == nullptr || this->to_ == to))
     this->trigger(from, to);
