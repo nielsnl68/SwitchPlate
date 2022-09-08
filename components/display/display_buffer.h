@@ -763,7 +763,8 @@ class Font {
 
   void measure(const char *str, int *width, int *x_offset, int *baseline, int *height);
   int get_baseline() {return this->baseline_;}
-  int get_height() {return this->heigth_;}
+  int get_height() {return this->height_;}
+  
   const std::vector<Glyph> &get_glyphs() const;
 
  protected:
