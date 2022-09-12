@@ -5,7 +5,7 @@
 #include "esphome/core/automation.h"
 #include "display_color_utils.h"
 #include "esphome/core/helpers.h"
-#include "esphome/core/log.h"
+
 #include <cstdarg>
 
 #ifdef USE_TIME
@@ -117,6 +117,10 @@ struct Rect {
 
   inline Rect() ALWAYS_INLINE : x(32766), y(32766), w(32766), h(32766) {}  // NOLINT
   inline Rect(int16_t x, int16_t y, int16_t w, int16_t h) ALWAYS_INLINE : x(x), y(y), w(w), h(h) {}
+  inline int16_t x2() { return this->x + this->w;};  ///< X coordinate of corner
+  inline int16_t y2() { return this->y + this->h;};;  ///< Y coordinate of corner
+
+
   inline bool is_set() ALWAYS_INLINE { return (this->h != 32766) && (this->w != 32766); }
 
   inline void expand(int16_t width, int16_t height){
@@ -137,8 +141,8 @@ struct Rect {
     } else {
       if (this->x > rect.x) { this->x = rect.x; }
       if (this->y > rect.y) { this->y = rect.y; }
-      if (this->w < rect.w) { this->w = rect.w; }
-      if (this->h < rect.h) { this->h = rect.h; }
+      if (this->x2() < rect.x2()) { this->w = rect.x2()-this->x; }
+      if (this->y2() < rect.y2()) { this->h = rect.y2()-this->y; }
     }
   }
   inline void substract(Rect rect) {
@@ -147,25 +151,26 @@ struct Rect {
     } else {
       if (this->x < rect.x) { this->x = rect.x; }
       if (this->y < rect.y) { this->y = rect.y; }
-      if (this->w > rect.w) { this->w = rect.w; }
-      if (this->h > rect.h) { this->h = rect.h; }
+      if (this->x2() > rect.x2()) { this->w = rect.x2()-this->x; }
+      if (this->y2() > rect.y2()) { this->h = rect.y2()-this->y; }
     }
   }
 
   inline bool inside(int16_t x, int16_t y, bool absolute = false) {
     if (!this->is_set()) return true;
     if (absolute) {
-      return ((x >= 0) && (x <= this->w - this->x) && (y >= 0) && (y <= this->h - this->y));
+      return ((x >= 0) && (x <= this->w) && (y >= 0) && (y <= this->h));
     } else {
-      return ((x >= this->x) && (x <= this->w) && (y >= this->y) && (y <= this->h));
+      return ((x >= this->x) && (x <= this->x2()) && (y >= this->y) && (y <= this->y2()));
     }
   }
   inline bool inside(Rect rect, bool absolute = false) {
     if (!this->is_set() || !rect.is_set()) return true;
     if (absolute) {
-      return ((rect.x <= this->w - this->x) && (rect.w >= 0) && (rect.y <= this->h - this->y) && (rect.y >= 0));
+      return ((rect.x <= this->w) && (rect.w >= 0) && (rect.y <= this->h) && (rect.h >= 0));
     } else {
-      return ((rect.x <= this->w) && (rect.w >= this->x) && (rect.y <= this->h) && (rect.h >= this->x));
+      ESP_LOGVV("TAG2", "rect inside = %s , %s , %s , %s", YESNO(rect.x <= this->x2()) , YESNO(rect.x2() >= this->x), YESNO(rect.y <= this->y2()) , YESNO(rect.y2() >= this->y));
+      return ((rect.x <= this->x2()) && (rect.x2() >= this->x) && (rect.y <= this->y2()) && (rect.y2() >= this->y));
     }
   }
 
@@ -564,9 +569,9 @@ public:
   ///
   /// \return true if success, false if error
   ///
-  void set_clipping(Rect rect);
-  void set_clipping(int16_t left, int16_t top, int16_t right, int16_t bottom) {
-    set_clipping(Rect(left, top, right, bottom));
+  void push_clipping(Rect rect);
+  void push_clipping(int16_t left, int16_t top, int16_t right, int16_t bottom) {
+    push_clipping(Rect(left, top, right, bottom));
   };
 
   ///
@@ -590,17 +595,17 @@ public:
   ///
   /// \return none
   ///
-  void sub_clipping(Rect rect);
-  void sub_clipping(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) {
-    this->sub_clipping(Rect(left, top, right, bottom));
-  };
+  void substract_clipping(Rect rect);
+  void substract_clipping(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) {
+    this->substract_clipping(Rect(left, top, right, bottom));
+ };
 
   ///
   /// Reset the invalidation region
   ///
   /// \return none
   ///
-  void clear_clipping();
+  void pop_clipping();
 
   ///
   /// Get the current the clipping rectangle
@@ -609,17 +614,6 @@ public:
   /// \return rect for active clipping region
   ///
   Rect get_clipping();
-
-  ///
-  /// Perform basic clipping of a single point to a clipping region
-  ///
-  /// \param[in]  X:          X coordinate of point
-  /// \param[in]  Y:          Y coordinate of point
-  ///
-  /// \return true if point is visible, false if it should be discarded
-  ///
-  bool is_clipped(int16_t x, int16_t y);
-  bool is_clipped(Rect rect);
 
   ///
   /// Convert polar coordinate to cartesian
@@ -690,7 +684,6 @@ public:
 
   void swap_coords_(int16_t *x0, int16_t *y0, int16_t *x1, int16_t *y1);
   std::vector<Rect> clipping_rectangle_;
-
 
   uint8_t *buffer_{nullptr};
   DisplayRotation rotation_{DISPLAY_ROTATION_0_DEGREES};
