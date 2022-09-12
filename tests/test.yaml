@@ -1,24 +1,177 @@
 esphome:
   name: lum-iot34
   comment: switchplate test yaml
+  on_boot: 
+    priority: 800
+    then:
+     - lambda: |-
+          Rect r1, r2;
+          r1 = Rect(20,20, 50,50);
+          r2 = Rect(20,20, 50,50);
+          ESP_LOGW("TAG", "join BASE   (%3d,%3d,%3d,%3d) [%3d,%3d]", r1.x, r1.y, r1.w, r1.h, r1.x2(),r1.y2());
+          ESP_LOGW("TAG", "join test 1 (%3d,%3d,%3d,%3d) [%3d,%3d]", r2.x, r2.y, r2.w, r2.h, r2.x2(),r2.y2());
+          r1.join(r2);
+          ESP_LOGD("TAG", "join result (%3d,%3d,%3d,%3d) [%3d,%3d]", r1.x, r1.y, r1.w, r1.h, r1.x2(),r1.y2());
+          r1 = Rect(20,20, 50,50);
+          r2 = Rect(20,20, 60,50);
+          ESP_LOGW("TAG", "join test 2 (%3d,%3d,%3d,%3d) [%3d,%3d]", r2.x, r2.y, r2.w, r2.h, r2.x2(),r2.y2());
+          r1.join(r2);
+          ESP_LOGD("TAG", "join result (%3d,%3d,%3d,%3d) [%3d,%3d]", r1.x, r1.y, r1.w, r1.h, r1.x2(),r1.y2());
+          r1 = Rect(20,20, 50,50);
+          r2 = Rect(20,20, 40,50);
+          ESP_LOGW("TAG", "join test 3 (%3d,%3d,%3d,%3d) [%3d,%3d]", r2.x, r2.y, r2.w, r2.h, r2.x2(),r2.y2());
+          r1.join(r2);
+          ESP_LOGD("TAG", "join result (%3d,%3d,%3d,%3d) [%3d,%3d]", r1.x, r1.y, r1.w, r1.h, r1.x2(),r1.y2());
+  
+          r1 = Rect(20,20, 50,50);
+          r2 = Rect(30,20, 40,50);
+          ESP_LOGW("TAG", "join test 4 (%3d,%3d,%3d,%3d) [%3d,%3d]", r2.x, r2.y, r2.w, r2.h, r2.x2(),r2.y2());
+          r1.join(r2);
+          ESP_LOGD("TAG", "join result (%3d,%3d,%3d,%3d) [%3d,%3d]", r1.x, r1.y, r1.w, r1.h, r1.x2(),r1.y2());
+
+          r1 = Rect(20,20, 50,50);
+          r2 = Rect(10,20, 50,50);
+          ESP_LOGW("TAG", "join test 5 (%3d,%3d,%3d,%3d) [%3d,%3d]", r2.x, r2.y, r2.w, r2.h, r2.x2(),r2.y2());
+          r1.join(r2);
+          ESP_LOGD("TAG", "join result (%3d,%3d,%3d,%3d) [%3d,%3d]", r1.x, r1.y, r1.w, r1.h, r1.x2(),r1.y2());
+
+          r1 = Rect(20,20, 50,50);
+          r2 = Rect(10,20, 70,50);
+          ESP_LOGW("TAG", "join test 6 (%3d,%3d,%3d,%3d) [%3d,%3d]", r2.x, r2.y, r2.w, r2.h, r2.x2(),r2.y2());
+          r1.join(r2);
+          ESP_LOGD("TAG", "join result (%3d,%3d,%3d,%3d) [%3d,%3d]", r1.x, r1.y, r1.w, r1.h, r1.x2(),r1.y2());
+          ESP_LOGW("TAG", "");
+          ESP_LOGW("TAG", "=================================================");
+          ESP_LOGW("TAG", "");
+          r1 = Rect(20,20, 50,50);
+          r2 = Rect(20,20, 50,50);
+          ESP_LOGW("TAG", "substract BASE   (%3d,%3d,%3d,%3d) [%3d,%3d]", r1.x, r1.y, r1.w, r1.h, r1.x2(),r1.y2());
+          ESP_LOGW("TAG", "substract test 1 (%3d,%3d,%3d,%3d) [%3d,%3d]", r2.x, r2.y, r2.w, r2.h, r2.x2(),r2.y2());
+          r1.substract(r2);
+          ESP_LOGD("TAG", "substract result (%3d,%3d,%3d,%3d) [%3d,%3d]", r1.x, r1.y, r1.w, r1.h, r1.x2(),r1.y2());
+
+          r1 = Rect(20,20, 50,50);
+          r2 = Rect(20,20, 60,50);
+          ESP_LOGW("TAG", "substract test 2 (%3d,%3d,%3d,%3d) [%3d,%3d]", r2.x, r2.y, r2.w, r2.h, r2.x2(),r2.y2());
+          r1.substract(r2);
+          ESP_LOGD("TAG", "substract result (%3d,%3d,%3d,%3d) [%3d,%3d]", r1.x, r1.y, r1.w, r1.h, r1.x2(),r1.y2());
+
+          r1 = Rect(20,20, 50,50);
+          r2 = Rect(20,20, 40,50);
+          ESP_LOGW("TAG", "substract test 3 (%3d,%3d,%3d,%3d) [%3d,%3d]", r2.x, r2.y, r2.w, r2.h, r2.x2(),r2.y2());
+          r1.substract(r2);
+          ESP_LOGD("TAG", "substract result (%3d,%3d,%3d,%3d) [%3d,%3d]", r1.x, r1.y, r1.w, r1.h, r1.x2(),r1.y2());
+
+          r1 = Rect(20,20, 50,50);
+          r2 = Rect(30,20, 40,50);
+          ESP_LOGW("TAG", "substract test 4 (%3d,%3d,%3d,%3d) [%3d,%3d]", r2.x, r2.y, r2.w, r2.h, r2.x2(),r2.y2());
+          r1.substract(r2);
+          ESP_LOGD("TAG", "substract result (%3d,%3d,%3d,%3d) [%3d,%3d]", r1.x, r1.y, r1.w, r1.h, r1.x2(),r1.y2());
+
+          r1 = Rect(20,20, 50,50);
+          r2 = Rect(10,20, 50,50);
+          ESP_LOGW("TAG", "substract test 5 (%3d,%3d,%3d,%3d) [%3d,%3d]", r2.x, r2.y, r2.w, r2.h, r2.x2(),r2.y2());
+          r1.substract(r2);
+          ESP_LOGD("TAG", "substract result (%3d,%3d,%3d,%3d) [%3d,%3d]", r1.x, r1.y, r1.w, r1.h, r1.x2(),r1.y2());
+
+          r1 = Rect(20,20, 50,50);
+          r2 = Rect(10,20, 70,50);
+          ESP_LOGW("TAG", "substract test 6 (%3d,%3d,%3d,%3d) [%3d,%3d]", r2.x, r2.y, r2.w, r2.h, r2.x2(),r2.y2());
+          r1.substract(r2);
+          ESP_LOGD("TAG", "substract result (%3d,%3d,%3d,%3d) [%3d,%3d]", r1.x, r1.y, r1.w, r1.h, r1.x2(),r1.y2());
+
+          ESP_LOGW("TAG", "");
+          ESP_LOGW("TAG", "=================================================");
+          ESP_LOGW("TAG", "");
+
+          r1 = Rect(120,20, 50,50);
+          ESP_LOGW("TAG", "rect inside BASE   (%3d,%3d,%3d,%3d) " , r1.x, r1.y, r1.w, r1.h);
+
+          r2 = Rect(119,25, 52,40);
+          ESP_LOGW("TAG", "rect inside test 1a (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+          r2 = Rect(120,25, 50,40);
+          ESP_LOGW("TAG", "rect inside test 1b (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+          r2 = Rect(121,25, 48,40);
+          ESP_LOGW("TAG", "rect inside test 1c (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+          r2 = Rect(125,25, 40,40);
+          ESP_LOGW("TAG", "rect inside test 1d (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+          ESP_LOGW("TAG", "");
+
+          r2 = Rect(120,25, 60,40);
+          ESP_LOGW("TAG", "rect inside test 2a (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+          r2 = Rect(121,25, 60,40);
+          ESP_LOGW("TAG", "rect inside test 2b (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+          r2 = Rect(119,25, 60,40);
+          ESP_LOGW("TAG", "rect inside test 2c (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+          ESP_LOGW("TAG", "");
+
+          r2 = Rect(59,25, 60,40);
+          ESP_LOGW("TAG", "rect inside test 3a (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+          r2 = Rect(60,25, 60,40);
+          ESP_LOGW("TAG", "rect inside test 3b (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+          r2 = Rect(61,25, 60,40);
+          ESP_LOGW("TAG", "rect inside test 3c (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+          ESP_LOGW("TAG", "");
+
+          r2 = Rect(169,25, 60,40);
+          ESP_LOGW("TAG", "rect inside test 4a (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+          r2 = Rect(170,25, 60,40);
+          ESP_LOGW("TAG", "rect inside test 4b (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+          r2 = Rect(171,25, 60,40);
+          ESP_LOGW("TAG", "rect inside test 4c (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+          ESP_LOGW("TAG", "");
+
+          r2 = Rect(179,25, 60,40);
+          ESP_LOGW("TAG", "rect inside test 4a (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+          r2 = Rect(180,25, 60,40);
+          ESP_LOGW("TAG", "rect inside test 4b (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+          r2 = Rect(181,25, 60,40);
+          ESP_LOGW("TAG", "rect inside test 4c (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+
+          ESP_LOGW("TAG", "");
+          ESP_LOGW("TAG", "=================================================");
+          ESP_LOGW("TAG", "");
+          r1 = Rect();
+          ESP_LOGW("TAG", "rect inside BASE   (%3d,%3d,%3d,%3d) " , r1.x, r1.y, r1.w, r1.h);
+          r2 = Rect(119,25, 52,40);
+          ESP_LOGW("TAG", "rect inside test 1a (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+          ESP_LOGW("TAG", "");
+          r1 = Rect(120,20, 50,50);
+          ESP_LOGW("TAG", "rect inside BASE   (%3d,%3d,%3d,%3d) " , r1.x, r1.y, r1.w, r1.h);
+          r2 = Rect();
+          ESP_LOGW("TAG", "rect inside test 1a (%3d,%3d,%3d,%3d) = %s", r2.x, r2.y, r2.w, r2.h, YESNO(r1.inside(r2)));
+
+          ESP_LOGW("TAG", "");
+          ESP_LOGW("TAG", "=================================================");
+          ESP_LOGW("TAG", "");
+
+          r1 = Rect(120,20, 50,50);
+          ESP_LOGW("TAG", "point inside BASE   (%3d,%3d,%3d,%3d) " , r1.x, r1.y, r1.w, r1.h);
+
+          ESP_LOGW("TAG", "point inside test 1a (110,45) = %s", YESNO(r1.inside(110,45)));
+          ESP_LOGW("TAG", "point inside test 1b (119,45) = %s", YESNO(r1.inside(119,45)));
+          ESP_LOGW("TAG", "point inside test 1c (120,45) = %s", YESNO(r1.inside(120,45)));
+          ESP_LOGW("TAG", "point inside test 1d (121,45) = %s", YESNO(r1.inside(121,45)));
+          ESP_LOGW("TAG", "point inside test 1d (131,45) = %s", YESNO(r1.inside(131,45)));
+          ESP_LOGW("TAG", "point inside test 2a (169,45) = %s", YESNO(r1.inside(169,45)));
+          ESP_LOGW("TAG", "point inside test 2b (170,45) = %s", YESNO(r1.inside(170,45)));
+          ESP_LOGW("TAG", "point inside test 2c (171,45) = %s", YESNO(r1.inside(171,45)));
+          ESP_LOGW("TAG", "point inside test 2c (191,45) = %s", YESNO(r1.inside(191,45)));
+          ESP_LOGW("TAG", "");
+
+
+
 
 esp32:
   board: firebeetle32
-
-time:
-  - platform: homeassistant
-    id: the_time
 
 wifi: 
   networks:
     - ssid: !secret wifi_ssid
       password: !secret wifi_password
   
-api: 
-
-
-ota:
-  password: !secret ota_password
+#ota:
+#  password: !secret ota_password
 
 logger:
 
@@ -60,13 +213,6 @@ spi:
   miso_pin: 19
   clk_pin: 18
 
-  
-font:
-  - file: "gfonts://Roboto"
-    id: my_font
-    size: 20
-    
-
 display:
   - id: my_display
     platform: ili9341
@@ -75,24 +221,36 @@ display:
     dc_pin: 16
     rotation: 90
     pages:
-      - id: page2
-        lambda: |-
-          it.fill(my_black);
-          for(uint8_t i = 0; i<255; i++) {
-             it.horizontal_line(5,i,100, my_red.fade_to_white(i));
-             it.horizontal_line(110,i,100, my_red.fade_to_black(i));
-             it.horizontal_line(215,i,100, my_red.gradient(my_blue, i));
-          }
       - id: page1
         lambda: |-
-          it.fill(id(my_green));
-          it.print(2, 2, id(my_font), id(my_white), TextAlign::TOP_LEFT, "Woonkamer lampen");
+
+          /*
+
+          it.fill(Color::BLACK);
+          //it.print(2, 2, id(my_font), id(my_white), TextAlign::TOP_LEFT, "Woonkamer lampen");
           //it.strftime(210, 2, id(my_font), "%d/%m %H:%M", id(the_time).now() );
-          //it.rectangle(    50, 50 ,228, 150, id(my_green));
+          it.push_clipping( 0, 0 ,320, 240);
+          it.rectangle(    0, 0 ,320, 240, id(my_green));
+          it.pop_clipping();
+          it.filled_rectangle(3, 28, 99, 99, id(my_blue));
+          it.filled_rectangle(110, 28, 99, 99, id(my_blue));
+          it.filled_rectangle(218, 28, 99, 99, id(my_blue));
+          it.filled_rectangle(3, 136, 99, 99, id(my_blue));
+          it.filled_rectangle(110,136, 99, 99, id(my_blue));
+          it.filled_rectangle(218,136, 99, 99, id(my_blue));
 
-          it.set_clipping( 50, 50 ,228, 150);
+          it.push_clipping( 50, 50 ,228, 150);
           it.filled_rectangle(0, 0, 320, 240,  id(my_black));
+          it.pop_clipping();
+          */
 
+      - id: page3
+        lambda: |-
+          /*
+          it.push_clipping( 50, 50 ,228, 150);
+          it.filled_rectangle(0, 0, 320, 240,  id(my_black));
+          it.pop_clipping();
+          */
           it.rectangle(3, 28, 99, 99, id(my_blue));
           it.rectangle(3,136, 99, 99, 8, id(my_red));
 
@@ -105,46 +263,11 @@ display:
           it.triangle(       268,  28,  218, 128, 318, 128, id(my_blue));
 
           it.filled_triangle(268, 136,  218, 236, 318, 236, id(my_red));
-
-switchplate:
-  display: my_display # Req 
-  id: abcname # Opt.
-  default_font: my_font
-  header:
-    - type: label
-      id: header_title
-      text: SwitchPlate test
-    - type: label
-      id: header_time
-      text: !lambda return "test";
-  pages:
-    - id: myMainPage # Opt.
-      name: myName
-      selectable: true # can be opened with next and previous page selectors
-      objects:
-        - type: button
-          id: btnHello
-          x: 10 # Opt. Horizontal position on the page
-          y: 10 # Opt. Vertical position on the page
-          width: 60 # Opt. Width of the object
-          height: 20 # Opt. Height of the object
-          toggle: false # True: creates a toggle-on/toggle-off button. False: creates a normal button
-          state: false # 0 = untoggled, 1 = toggled
-          text: "Hello " # The text of the label
-          align: left # Text alignment: left, center, right
-          mode: expand # The wrapping mode of long text labels
-        - type: slider
-          max_value: 100
-          min_value: 00
-          value: !lambda return 10;
-    - id: otherPage
-      objects:
-        - type: label
-          text:  !lambda return "Hello World";
-        - type: spinner
-          x: -10
-          y: 20
-          width: 60
-          height: 60
-          #circle_color: "#704020"
-          #segment_color: red
+      - id: page2
+        lambda: |-
+          it.fill(my_black);
+          for(uint8_t i = 0; i<255; i++) {
+             it.horizontal_line(5,i,100, my_red.fade_to_white(i));
+             it.horizontal_line(110,i,100, my_red.fade_to_black(i));
+             it.horizontal_line(215,i,100, my_red.gradient(my_blue, i));
+          }

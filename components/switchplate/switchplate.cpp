@@ -78,7 +78,9 @@ void SwitchPlate::show() {
     ESP_LOGW(TAG, "no page found");
     return;
   }
-  display().set_clipping(Rect(0, 0, this->screen_width(), this->screen_height()));
+  display()->push_clipping(Rect(0, 0, this->screen_width(), this->screen_height()));
+
+  this->current_page_->call_show();
 
   if (!this->header_.empty()) {
     for (auto *header : this->header_) {
@@ -86,14 +88,12 @@ void SwitchPlate::show() {
     }
   }
 
-  this->current_page_->call_show();
-
   if (!this->header_.empty()) {
     for (auto *footer : this->footer_) {
       footer->call_show();
     }
   }
-  display().clear_clipping();
+  display()->pop_clipping();
 }
 
 void SwitchPlate::add_page(SwitchPlatePage *page) {
@@ -108,13 +108,18 @@ void SwitchPlate::add_page(SwitchPlatePage *page) {
   }
 }
 
-void SwitchPlate::add_headerItem(SwitchPlateItem *item) {
+void SwitchPlate::add_header_widget(SwitchPlateItem *item) {
   item->set_parent(this);
+  item->set_display(this->display_);
+  item->set_switchplate(this);
   this->header_.push_back(item);
 }
 
-void SwitchPlate::add_footerItem(SwitchPlateItem *item) {
+void SwitchPlate::add_footer_widget(SwitchPlateItem *item) {
   item->set_parent(this);
+  item->set_display(this->display_);
+  item->set_switchplate(this);
+
   this->footer_.push_back(item);
 }
 
@@ -210,32 +215,55 @@ bool SwitchPlate::can_prev() { return this->get_prev() != nullptr; }
 void SwitchPlatePage::set_prev(SwitchPlatePage *prev) { this->prev_ = prev; }
 void SwitchPlatePage::set_next(SwitchPlatePage *next) { this->next_ = next; }
 
-TaggedVariable SwitchPlateVars::get_variable(std::string key, bool search_parent) {
-  TaggedVariable var;
-  var.uint32_ = 0;
-
-  if (!has_variable(key)) {
-    if (search_parent && (this->parent_ != nullptr)) {
-      var = this->parent_->get_variable(key, search_parent);
-    }
-  } else {
-    var = this->vars_[key];
-  }
-  return var;
-}
-bool SwitchPlateVars::has_variable(std::string key, bool search_parent) {
-  bool result = this->vars_.count(key) != 0;
-  if (!result && search_parent && (this->parent_ != nullptr)) {
-    result = this->parent_->has_variable(key, search_parent);
-  }
-  return result;
-}
-
 void SwitchPlateStyle::set_redraw() {
   if (parent_ != nullptr) {
     parent_->set_redraw();
   }
 }
+
+void SwitchPlateItem::show_image(int x, int y, Image *image, Color color_on, Color color_off) {
+  /*
+  switch (image->get_type()) {
+    case IMAGE_TYPE_BINARY:
+      for (int img_x = 0; img_x < image->get_width(); img_x++) {
+        for (int img_y = 0; img_y < image->get_height(); img_y++) {
+          this->draw_pixel_at(x + img_x, y + img_y, image->get_pixel(img_x, img_y) ? color_on : color_off);
+        }
+      }
+      break;
+    case IMAGE_TYPE_GRAYSCALE:
+      for (int img_x = 0; img_x < image->get_width(); img_x++) {
+        for (int img_y = 0; img_y < image->get_height(); img_y++) {
+          this->draw_pixel_at(x + img_x, y + img_y, image->get_grayscale_pixel(img_x, img_y));
+        }
+      }
+      break;
+    case IMAGE_TYPE_RGB24:
+      for (int img_x = 0; img_x < image->get_width(); img_x++) {
+        for (int img_y = 0; img_y < image->get_height(); img_y++) {
+          this->draw_pixel_at(x + img_x, y + img_y, image->get_color_pixel(img_x, img_y));
+        }
+      }
+      break;
+    case IMAGE_TYPE_TRANSPARENT_BINARY:
+      for (int img_x = 0; img_x < image->get_width(); img_x++) {
+        for (int img_y = 0; img_y < image->get_height(); img_y++) {
+          if (image->get_pixel(img_x, img_y))
+            this->draw_pixel_at(x + img_x, y + img_y, color_on);
+        }
+      }
+      break;
+    case IMAGE_TYPE_RGB565:
+      for (int img_x = 0; img_x < image->get_width(); img_x++) {
+        for (int img_y = 0; img_y < image->get_height(); img_y++) {
+          this->draw_pixel_at(x + img_x, y + img_y, image->get_rgb565_pixel(img_x, img_y));
+        }
+      }
+      break;
+  }
+  */
+}
+
 
 //SwitchPlateBase::thema_ = new SwitchPlateStyle();
 

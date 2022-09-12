@@ -9,6 +9,9 @@
 #include "esphome/core/log.h"
 #include <map>
 
+#ifdef USE_TIME
+#include "esphome/components/time/real_time_clock.h"
+#endif
 #ifdef USE_SENSOR
 #include "esphome/components/sensor/sensor.h"
 #endif
@@ -29,16 +32,13 @@ using display::TextAlign;
 using touchscreen::TouchPoint;
 using touchscreen::TouchListener;
 
-#define CONF_WIDGET_STATUS_PRESSED "_pressed"
-#define CONF_WIDGET_STATUS_SELECTED "_selected"
-#define CONF_WIDGET_STATUS_DISABLED "_disabled"
 #define CONST_TOUCH_TO_MOVE 6  // NOLINT
 
 namespace switch_plate {
 
 const static char *TAG = "SwitchPlate";
 
-enum Align {
+enum class Align : uint8_t {
   TOP = 0x00,
   CENTER_VERTICAL = 0x01,
   BASELINE = 0x02,
@@ -67,7 +67,7 @@ enum Align {
   GROUP_ALIGN_RELATIVE = 0x80,
   GROUP_ALIGN_ABSOLUTE = 0x81,
   GROUP_ALIGN_HORZONTAL = 0x82,
-  GROUP_ALIGN_VERTICAL = 0x83,
+  GROUP_ALIGN_VERTICAL = 0x84,
 };
 
 enum Mode {
@@ -107,8 +107,7 @@ class SwitchPlateStyle;
 
 class DisplayOnPageChangeTrigger;
 
-//struct Style: uint32_t {
-const uint32_t STYLE_DEFAULT = 0x0000;
+// struct Style: uint32_t {
 
 const uint32_t STYLE_BACKGROUND = 0x0001;
 const uint32_t STYLE_BORDER = 0x0002;
@@ -117,25 +116,29 @@ const uint32_t STYLE_HEADER = 0x0004;
 const uint32_t STYLE_FOOTER = 0x0005;
 
 const uint32_t STYLE_COLOR = 0x0100;
-const uint32_t STYLE_GRADIENT_TO = 0x0200;
-const uint32_t STYLE_GRADIENT_FROM = 0x0300;
+const uint32_t STYLE_GRADIENT_FROM = 0x0200;
+const uint32_t STYLE_GRADIENT_TO = 0x0300;
 const uint32_t STYLE_GRADIENT_DIRECTION = 0x0400;
 const uint32_t STYLE_FONT = 0x0500;
 const uint32_t STYLE_ALIGN = 0x0600;
 const uint32_t STYLE_MODE = 0x0700;
-const uint32_t STYLE_IMAGE = 0x0800;
-const uint32_t STYLE_RADIUS = 0X0900;
+const uint32_t STYLE_RADIUS = 0X0800;
+const uint32_t STYLE_IMAGE = 0x0900;
+const uint32_t STYLE_IMAGE_SHIFT_X = 0x0A00;
+const uint32_t STYLE_IMAGE_SHIFT_Y = 0x0B00;
 
+const uint32_t STYLE_DEFAULT = 0x00000;
 const uint32_t STYLE_PRESSED = 0x10000;
 const uint32_t STYLE_SELECTED = 0x20000;
 const uint32_t STYLE_DISABLED = 0x40000;
 
 const uint32_t STYLE_BASE_SWITCHPLATE = 0x100000;
-const uint32_t STYLE_WIDGET_LABEL    = 0x200000;
-const uint32_t STYLE_WIDGET_CLOCK    = 0x300000;
-const uint32_t STYLE_WIDGET_BUTTON   = 0x400000;
-const uint32_t STYLE_WIDGET_PAGE     = 0x500000;
-const uint32_t STYLE_WIDGET_PANEL    = 0x600000;
+const uint32_t STYLE_WIDGET_LABEL = 0x200000;
+const uint32_t STYLE_WIDGET_DATETIME = 0x300000;
+const uint32_t STYLE_WIDGET_BUTTON = 0x400000;
+const uint32_t STYLE_WIDGET_PAGE = 0x500000;
+const uint32_t STYLE_WIDGET_PAGETITLE = 0x600000;
+const uint32_t STYLE_WIDGET_PANEL = 0x600000;
 
 const uint32_t STYLE_BACKGROUND_COLOR = STYLE_BACKGROUND | STYLE_COLOR;
 const uint32_t STYLE_BACKGROUND_GRADIENT_TO = STYLE_BACKGROUND | STYLE_GRADIENT_TO;
@@ -156,8 +159,6 @@ const uint32_t STYLE_TEXT_GRADIENT_DIRECTION = STYLE_TEXT | STYLE_GRADIENT_DIREC
 const uint32_t STYLE_TEXT_FONT = STYLE_TEXT | STYLE_FONT;
 const uint32_t STYLE_TEXT_ALIGN = STYLE_TEXT | STYLE_ALIGN;
 
-
-
 struct TaggedVariable {
   union {
     uint32_t uint32_;
@@ -173,7 +174,10 @@ struct TaggedVariable {
     Component *component_;
   };
   Color color_;
+  uint8_t var_type;
+  inline TaggedVariable() ALWAYS_INLINE : var_type(0), uint32_(0) {}  // NOLINT
 };
+
 struct WidgetStatus {
   union {
     struct {
@@ -184,11 +188,12 @@ struct WidgetStatus {
       uint8_t invalidate : 1;
 
       uint8_t visible : 1;
+
       uint8_t clickable : 1;
       uint8_t selectable : 1;
-      uint8_t editable : 2;
       uint8_t draggable : 1;
       uint8_t droppable : 1;
+      uint8_t editable : 2;
       uint8_t dummyoptions : 1;
     };
     uint16_t raw;
@@ -224,202 +229,89 @@ struct SwitchPlateTouch {
                                             start_now(0) {}  // NOLINT
 };
 
-// ============================================================================== SwitchPlateVars
-
-class SwitchPlateVars : public Parented<SwitchPlateBase> {
- public:
-  SwitchPlateVars(){};
-
-  void set_variable(std::string key, uint32_t var, bool as_missing = false) {
-    if (as_missing && has_variable(key))
-      return;  // NOLINT
-    ESP_LOGW("", "- Set uint %s to %d ", key.c_str(), var);
-    this->vars_[key].uint32_ = var;
-    this->set_redraw();
-  }
-  uint32_t get_uint(std::string key, bool search_parent = false) {
-    return this->get_variable(key, search_parent).uint32_;
-  }
-
-  void set_variable(std::string key, int32_t var, bool as_missing = false) {
-    if (as_missing && has_variable(key))
-      return;  // NOLINT
-    ESP_LOGW("", "- Set int %s to %d", key.c_str(), var);
-    this->vars_[key].int32_ = var;
-    this->set_redraw();
-  }
-  int32_t get_int(std::string key, bool search_parent = false) { return this->get_variable(key, search_parent).int32_; }
-
-  void set_variable(std::string key, float var, bool as_missing = false) {
-    if (as_missing && has_variable(key))
-      return;  // NOLINT
-    ESP_LOGW("", "- Set float %s to %f", key.c_str(), var);
-    this->vars_[key].fload_ = var;
-    this->set_redraw();
-  }
-  float get_float(std::string key, bool search_parent = false) { return this->get_variable(key, search_parent).fload_; }
-
-  void set_variable(std::string key, Mode var, bool as_missing = false) {
-    if (as_missing && has_variable(key))
-      return;  // NOLINT
-    ESP_LOGW("", "- Set mode %s to %d", key.c_str(), (uint8_t) var);
-
-    this->vars_[key].mode_ = var;
-    this->set_redraw();
-  }
-  Mode get_mode(std::string key, bool search_parent = false) { return this->get_variable(key, search_parent).mode_; }
-
-  void set_variable(std::string key, Align var, bool as_missing = false) {
-    if (as_missing && has_variable(key))
-      return;  // NOLINT
-    ESP_LOGW("", "- Set align %s to %d", key.c_str(), (uint8_t) var);
-
-    this->vars_[key].align_ = var;
-    this->set_redraw();
-  }
-  Align get_align(std::string key, bool search_parent = false) { return this->get_variable(key, search_parent).align_; }
-
-  void set_variable(std::string key, Direction var, bool as_missing = false) {
-    if (as_missing && has_variable(key))
-      return;  // NOLINT
-    ESP_LOGW("", "- Set direction %s to %d", key.c_str(), (uint8_t) var);
-
-    this->vars_[key].direction_ = var;
-    this->set_redraw();
-  }
-  Direction get_direction(std::string key, bool search_parent = false) {
-    return this->get_variable(key, search_parent).direction_;
-  }
-
-  void set_variable(std::string key, Color var, bool as_missing = false) {
-    if (as_missing && has_variable(key))
-      return;  // NOLINT
-    ESP_LOGW("", "- Set Color %s to #%08x", key.c_str(), var.raw_32);
-
-    this->vars_[key].uint32_ = var.raw_32;
-    this->set_redraw();
-  }
-  Color get_color(std::string key, bool search_parent = false) {
-    return this->get_variable(key, search_parent).color_;
-  }
-
-  void set_variable(std::string key, Font *var, bool as_missing = false) {
-    if (as_missing && has_variable(key))
-      return;  // NOLINT
-    ESP_LOGW("", "- Set Font %s to %p", key.c_str(), var);
-    this->vars_[key].font_ = var;
-    this->set_redraw();
-  }
-  Font *get_font(std::string key, bool search_parent = false) { return this->get_variable(key, search_parent).font_; }
-
-  void set_variable(std::string key, Image *var, bool as_missing = false) {
-    if (as_missing && has_variable(key))
-      return;  // NOLINT
-    ESP_LOGW("", "- Set Image %s to %p", key.c_str(), var);
-    this->vars_[key].image_ = var;
-    this->set_redraw();
-  }
-  Image *get_image(std::string key, bool search_parent = false) {
-    return this->get_variable(key, search_parent).image_;
-  }
-
-  void set_variable(std::string key, Component *var, bool as_missing = false) {
-    if (as_missing && has_variable(key))
-      return;  // NOLINT
-    ESP_LOGW("", "- Set Image %s to %p", key.c_str(), var);
-    this->vars_[key].component_ = var;
-    this->set_redraw();
-  }
-  void set_variable(std::string key, bool var, bool as_missing = false) {
-    if (as_missing && has_variable(key))
-      return;  // NOLINT
-    ESP_LOGW("", "- Set bool %s to %s", key.c_str(), var ? "true" : "false");
-
-    this->vars_[key].bool_ = var;
-    this->set_redraw();
-  }
-
-  TaggedVariable get_variable(std::string key, bool search_parent = false);
-
-  bool has_variable(std::string key, bool search_parent = false);
-
-  virtual void set_redraw() = 0;
-
- protected:
-  std::map<std::string, TaggedVariable> vars_{};
-};
-
 // ============================================================================== SwitchPlateStyle
 
-class SwitchPlateStyle: public Parented<SwitchPlateBase> {
+class SwitchPlateStyle : public Parented<SwitchPlateBase> {
  public:
   SwitchPlateStyle(){};
   void set(uint32_t key, uint32_t var, bool as_missing = false) {
     if (as_missing && has(key))
-      return;  // NOLINT
+      return;  // NOLIN
+    ESP_LOGI("", "- Set uint %x to %d ", key, var);
+    this->styles_[key].uint32_ = var;
+    this->styles_[key].var_type = 1;
     this->set_redraw();
   }
 
   void set(uint32_t key, int32_t var, bool as_missing = false) {
     if (as_missing && has(key))
       return;  // NOLINT
+    ESP_LOGI("", "- Set int %x to %d ", key, var);
     this->styles_[key].int32_ = var;
+    this->styles_[key].var_type = 2;
     this->set_redraw();
   }
 
   void set(uint32_t key, float var, bool as_missing = false) {
     if (as_missing && has(key))
       return;  // NOLINT
+    ESP_LOGI("", "- Set float %x to %f", key, var);
     this->styles_[key].fload_ = var;
+    this->styles_[key].var_type = 3;
     this->set_redraw();
   }
 
   void set(uint32_t key, Mode var, bool as_missing = false) {
     if (as_missing && has(key))
       return;  // NOLINT
+    ESP_LOGI("", "- Set mode %x to %d", key, (uint8_t) var);
     this->styles_[key].mode_ = var;
+    this->styles_[key].var_type = 4;
     this->set_redraw();
   }
 
   void set(uint32_t key, Align var, bool as_missing = false) {
     if (as_missing && has(key))
       return;  // NOLINT
+    ESP_LOGI("", "- Set align %x to %d", key, (uint8_t) var);
     this->styles_[key].align_ = var;
+    this->styles_[key].var_type = 5;
     this->set_redraw();
   }
 
   void set(uint32_t key, Direction var, bool as_missing = false) {
     if (as_missing && has(key))
       return;  // NOLINT
+    ESP_LOGI("", "- Set direction %x to %d", key, (uint8_t) var);
     this->styles_[key].direction_ = var;
+    this->styles_[key].var_type = 6;
     this->set_redraw();
   }
 
   void set(uint32_t key, Color var, bool as_missing = false) {
     if (as_missing && has(key))
       return;  // NOLINT
+    ESP_LOGI("", "- Set Color %x to #%08x", key, var.raw_32);
     this->styles_[key].color_ = var;
+    this->styles_[key].var_type = 7;
     this->set_redraw();
   }
 
   void set(uint32_t key, Font *var, bool as_missing = false) {
     if (as_missing && has(key))
       return;  // NOLINT
+    ESP_LOGI("", "- Set Font %x to %p", key, var);
     this->styles_[key].font_ = var;
+    this->styles_[key].var_type = 8;
     this->set_redraw();
   }
 
   void set(uint32_t key, Image *var, bool as_missing = false) {
     if (as_missing && has(key))
       return;  // NOLINT
+    ESP_LOGI("", "- Set Image %x to %p", key, var);
     this->styles_[key].image_ = var;
-    this->set_redraw();
-  }
-
-  void set(uint32_t key, Component *var, bool as_missing = false) {
-    if (as_missing && has(key))
-      return;  // NOLINT
-    this->styles_[key].component_ = var;
+    this->styles_[key].var_type = 9;
     this->set_redraw();
   }
 
@@ -427,14 +319,13 @@ class SwitchPlateStyle: public Parented<SwitchPlateBase> {
     if (as_missing && has(key))
       return;  // NOLINT
     this->styles_[key].bool_ = var;
+    ESP_LOGI("", "- Set bool %x to %s", key, var ? "true" : "false");
+    this->styles_[key].var_type = 10;
     this->set_redraw();
   }
-  TaggedVariable get(uint32_t key) {
-    return this->styles_[key];
-  }
-  bool has(uint32_t key) {
-    return this->styles_.count(key) != 0;
-  }
+
+  TaggedVariable get(uint32_t key) { return this->styles_[key]; }
+  bool has(uint32_t key) { return this->styles_.count(key) != 0; }
 
   void set_redraw();
 
@@ -444,7 +335,7 @@ class SwitchPlateStyle: public Parented<SwitchPlateBase> {
 
 // ============================================================================== SwitchPlateBase
 
-class SwitchPlateBase : public SwitchPlateVars {
+class SwitchPlateBase : public Parented<SwitchPlateBase> {
  public:
   SwitchPlateBase() { style_.set_parent(this); };
   virtual uint32_t get_style_class_id() { return STYLE_DEFAULT; }
@@ -455,88 +346,138 @@ class SwitchPlateBase : public SwitchPlateVars {
   virtual void show(){};
   virtual void call_show() { this->show(); };
 
+  virtual int16_t screen_width() { return 32666; }
+  virtual int16_t screen_height() { return 32666; }
+
   virtual int16_t x() { return 0; }
   virtual int16_t y() { return 0; }
   virtual int16_t width() { return this->screen_width(); }
   virtual int16_t height() { return this->screen_height(); }
 
-  virtual int16_t screen_width() { return 32666; }
+  virtual int16_t absolute_x() { return x(); }
+  virtual int16_t absolute_y() { return y(); }
 
-  virtual int16_t screen_height() { return 32666; }
+  virtual Rect get_boundry() {
+    return Rect(this->absolute_x(), this->absolute_y(), this->absolute_x() + this->width(),
+                this->absolute_y() + this->height());
+  }
 
-  virtual int16_t calc_x() { return x(); }
-
-  virtual int16_t calc_y() { return y(); }
   virtual bool visible() { return true; }
   virtual bool enabled() { return true; }
 
-  virtual DisplayBuffer &display() {
-    if ((display_ == nullptr) && (parent_ != nullptr)) {
-      display_ = parent_->display_;
-    }
-    return (*display_);
-  };
-  virtual SwitchPlateBase *check_touch(SwitchPlateTouch tp, Rect parent) { return nullptr; }
+  void set_display(display::DisplayBuffer *display) { display_ = display; }
+  void set_touchscreen(touchscreen::Touchscreen *touchscreen) { touchscreen_ = touchscreen; };
+  void set_switchplate(SwitchPlate *plate) { this->switchplate_ = plate; }
 
-  uint32_t find_key(uint32_t key) {
+  virtual DisplayBuffer *display() {
+    if ((this->display_ == nullptr) && (parent_ != nullptr)) {
+      this->display_ = parent_->display();
+    }
+    return (this->display_);
+  }
+  virtual SwitchPlate *plate() {
+    if ((this->switchplate_ == nullptr) && (parent_ != nullptr)) {
+      this->switchplate_ = parent_->plate();
+    }
+    if (this->switchplate_ == nullptr) {
+      ESP_LOGE("SwitchPlateBase", "  >>-  SwitchPlate has not been set.");
+    }
+    return (this->switchplate_);
+  }
+
+  virtual SwitchPlateBase *check_touch(SwitchPlateTouch tp, Rect parent) { return nullptr; }
+  virtual void handle_touch(SwitchPlateTouch tp) {}
+
+  uint32_t find_style_with_status(uint32_t key, WidgetStatus status) {
     uint32_t result = 0;
     uint32_t themed = get_style_class_id();
-    uint32_t pressed = STYLE_PRESSED;
-    uint32_t selected = STYLE_SELECTED;
-    uint32_t disabled = STYLE_DISABLED;
 
-    if (((status_.raw & 6) == 6) && style_.has(result = (key | disabled | selected))) { return result; }
-    if (((status_.raw & 6) == 6) && thema().has(result = (key | themed | disabled | selected))) { return result; }
+    if (((status.raw & 6) == 6) && style_.has(result = (key | STYLE_DISABLED | STYLE_SELECTED))) {
+      return result;
+    }
+    if (((status.raw & 6) == 6) && thema()->has(result = (themed | key | STYLE_DISABLED | STYLE_SELECTED))) {
+      return result;
+    }
 
-    if ((status_.disabled) && style_.has(result = (key | disabled))) { return result; }
-    if ((status_.disabled) && thema().has(result = (themed | key | disabled))) { return result; }
+    if ((status.disabled) && style_.has(result = (key | STYLE_DISABLED))) {
+      return result;
+    }
+    if ((status.disabled) && thema()->has(result = (themed | key | STYLE_DISABLED))) {
+      return result;
+    }
 
-    if (((status_.raw & 3) == 3) && style_.has(result = (key | pressed | selected))) { return result; }
-    if (((status_.raw & 3) == 3) && thema().has(result = (themed | key | pressed | selected))) { return result; }
+    if (((status.raw & 3) == 3) && style_.has(result = (key | STYLE_PRESSED | STYLE_SELECTED))) {
+      return result;
+    }
+    if (((status.raw & 3) == 3) && thema()->has(result = (themed | key | STYLE_PRESSED | STYLE_SELECTED))) {
+      return result;
+    }
 
-    if ((status_.pressed) && style_.has(result = (key | pressed))) { return result; }
-    if ((status_.pressed) && thema().has(result = (themed | key | pressed))) { return result; }
+    if ((status.pressed) && style_.has(result = (key | STYLE_PRESSED))) {
+      return result;
+    }
+    if ((status.pressed) && thema()->has(result = (themed | key | STYLE_PRESSED))) {
+      return result;
+    }
 
-    if ((status_.selected) && style_.has(result = (key | selected))) { return result; }
-    if ((status_.selected) && thema().has(result = (themed | key | selected))) { return result; }
+    if ((status.selected) && style_.has(result = (key | STYLE_SELECTED))) {
+      return result;
+    }
+    if ((status.selected) && thema()->has(result = (themed | key | STYLE_SELECTED))) {
+      return result;
+    }
 
-    if (style_.has(result = key)) { return result; }
-    if (thema().has(result = (themed | key))) { return result; }
+    if (style_.has(result = key)) {
+      return result;
+    }
+    if (thema()->has(result = (themed | key))) {
+      return result;
+    }
     return STYLE_DEFAULT;
   }
 
-
-  virtual TaggedVariable get_style(uint32_t key) {
-    key = find_key(key);
-    if ((uint32_t)key < (uint32_t) STYLE_BASE_SWITCHPLATE) {
-      return style_.get(key);
+  virtual TaggedVariable get_style(uint32_t key, WidgetStatus status = WidgetStatus()) {
+    uint32_t key_ = find_style_with_status(key, status);
+    if (key_ == STYLE_DEFAULT) {
+      ESP_LOGV("", " -- Style %x NOT found ! ! !  (%x)", key, get_style_class_id());
+      return TaggedVariable();
+    } else if (key_ < STYLE_BASE_SWITCHPLATE) {
+      return style_.get(key_);
     } else {
-      return thema().get(key);
+      return thema()->get(key_);
     }
   };
 
-  virtual bool has_style(uint32_t key) {
-    return find_key(key) !=  STYLE_DEFAULT;
+  virtual bool has_style(uint32_t key, WidgetStatus status = WidgetStatus()) {
+    return find_style_with_status(key, status) != STYLE_DEFAULT;
   };
 
-  static SwitchPlateStyle thema() {
-    static SwitchPlateStyle theme_ ;
-    return theme_;
+  SwitchPlateStyle *thema() {
+    static SwitchPlateStyle *theme_{nullptr};
+    if (theme_ == nullptr) {
+      theme_ = new SwitchPlateStyle();
+      theme_->set_parent(this);
+    }
+    if (theme_ == nullptr) {
+      ESP_LOGE("SwitchPlateBase", "  >>-  Theme-style has not been set.");
+    }
+    return (theme_);
   }
+  virtual void set_redraw() = 0;
 
  protected:
   display::DisplayBuffer *display_{nullptr};
-  SwitchPlateStyle style_{};
+  touchscreen::Touchscreen *touchscreen_{nullptr};
 
-  WidgetStatus status_{};
+  SwitchPlate *switchplate_{nullptr};
+  SwitchPlateStyle style_{};
 };
 
 // ============================================================================== SwitchPlate
 
 class SwitchPlate : public Component, public SwitchPlateBase, public TouchListener {
-
  public:
-  uint32_t get_style_class_id() { return STYLE_BASE_SWITCHPLATE; }
+  uint32_t get_style_class_id() override { return STYLE_BASE_SWITCHPLATE; }
 #ifdef USE_SENSOR
   void register_sensor(sensor::Sensor *obj) { this->sensors_.push_back(obj); }
 #endif
@@ -549,9 +490,9 @@ class SwitchPlate : public Component, public SwitchPlateBase, public TouchListen
   void set_display(display::DisplayBuffer *display) {
     this->display_ = display;
     display->set_writer([this](display::DisplayBuffer &disp_buf) {
-      ESP_LOGVV("SP_display", "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+      ESP_LOGD("SP_display", "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
       this->show();
-      ESP_LOGVV("SP_display", "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
+      ESP_LOGD("SP_display", "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
     });
   }
 
@@ -560,16 +501,32 @@ class SwitchPlate : public Component, public SwitchPlateBase, public TouchListen
     this->set_display(touchscreen->get_display());
     touchscreen->register_listener(this);
   }
+  void set_default_font(Font *font) {
+    this->style_.set(STYLE_FONT, font);
+    this->set_redraw();
+  }
+  void set_tabview(bool tabview) {
+    this->tabview_ = tabview;
+    this->set_redraw();
+  }
+  void set_header_height(uint16_t header_height) {
+    this->header_height_ = header_height;
+    this->set_redraw();
+  }
+  void set_footer_height(uint16_t footer_height) {
+    this->footer_height_ = footer_height;
+    this->set_redraw();
+  }
 
   void add_page(SwitchPlatePage *page);
-  void add_headerItem(SwitchPlateItem *item);
-  void add_footerItem(SwitchPlateItem *item);
+  void add_header_widget(SwitchPlateItem *item);
+  void add_footer_widget(SwitchPlateItem *item);
 
   /// Get the width of the image in pixels with rotation applied.
-  int16_t screen_width() { return this->display().get_width(); }
+  int16_t screen_width() override { return this->display()->get_width(); }
 
   /// Get the height of the image in pixels with rotation applied.
-  int16_t screen_height() { return this->display().get_height(); };
+  int16_t screen_height() override { return this->display()->get_height(); };
 
   void show_page(SwitchPlatePage *page);
 
@@ -588,14 +545,14 @@ class SwitchPlate : public Component, public SwitchPlateBase, public TouchListen
   void add_on_page_change_trigger(DisplayOnPageChangeTrigger *t) { this->on_page_change_triggers_.push_back(t); }
 
   void setup() override;
-  virtual void call_setup();
+  void call_setup() override;
 
   void dump_config() override;
   void show() override;
 
   float get_setup_priority() const override { return esphome::setup_priority::HARDWARE; }
 
-  void set_redraw() {} // TODO: check of we need to do display()->call_update() here.
+  void set_redraw() {}  // TODO: check of we need to do display()->call_update() here.
 
   void touch(TouchPoint tp);
 
@@ -606,22 +563,18 @@ class SwitchPlate : public Component, public SwitchPlateBase, public TouchListen
     this->touch(tp);
   }
 
-  void register_listener(TouchListener *listener) {
-    if (this->touchscreen_ != nullptr) {
-      this->touchscreen_->register_listener(listener);
-    }
-  }
+  SwitchPlate *plate() { return this; }
 
  protected:
   /// High Frequency loop() requester used during sampling phase.
   // HighFrequencyLoopRequester high_freq_;
 
-  touchscreen::Touchscreen *touchscreen_{nullptr};
-
   std::vector<SwitchPlateItem *> header_;
   std::vector<SwitchPlateItem *> footer_;
 
   bool tabview_ = false;
+  uint16_t header_height_{23};
+  uint16_t footer_height_{23};
 
   SwitchPlatePage *first_page_{nullptr};
   SwitchPlatePage *current_page_{nullptr};
@@ -663,7 +616,7 @@ class SwitchPlateItem : public SwitchPlateBase {
         if (this->status_.pressed) {
           this->status_.pressed = 0;
           this->set_redraw();
-          display().call_update();
+          display()->call_update();
         }
         if (this->status_.droppable && (tp.origin != this) && touched) {
           ESP_LOGW("SwitchPlate", "    =====> N");
@@ -673,7 +626,7 @@ class SwitchPlateItem : public SwitchPlateBase {
         if (this->status_.pressed == 0) {
           this->status_.pressed = 1;
           this->set_redraw();
-          display().call_update();
+          display()->call_update();
           ESP_LOGD("SwitchPlate", "    =====> O");
         } else {
           ESP_LOGI("SwitchPlate", "    =====> Q");
@@ -697,7 +650,7 @@ class SwitchPlateItem : public SwitchPlateBase {
   };
   virtual void handle_touch(SwitchPlateTouch tp) {}
 
-  void set_widget_options(uint8_t bit_no, bool state) {
+  void set_widget_status(uint8_t bit_no, bool state) {
     if (bit_no >= 16) {
       if (state) {
         this->status_.raw |= 1UL << bit_no;
@@ -714,44 +667,39 @@ class SwitchPlateItem : public SwitchPlateBase {
   void set_dimension(int16_t x, int16_t y, int16_t width, int16_t height) {
     this->dimension_ = Rect(x, y, width, height);
   }
-  int16_t x() { return this->dimension_.x; }
-  int16_t y() { return this->dimension_.y; }
-  int16_t width() { return this->dimension_.w; }
-  int16_t height() { return this->dimension_.h; }
+  int16_t x() override { return this->dimension_.x; }
+  int16_t y() override { return this->dimension_.y; }
+  int16_t width() override { return this->dimension_.w; }
+  int16_t height() override { return this->dimension_.h; }
 
-  virtual int16_t screen_width() {
+  int16_t screen_width() override {
     if ((this->parent_ != nullptr)) {
       return this->parent_->screen_width();
     }
     return 32666;
   }
 
-  virtual int16_t screen_height() {
+  int16_t screen_height() override {
     if ((this->parent_ != nullptr)) {
       return this->parent_->screen_height();
     }
     return 32666;
   }
 
-  virtual int16_t calc_x() {
+  int16_t absolute_x() override {
     int x = 0;
     if ((this->parent_ != nullptr)) {
-      x = this->parent_->calc_x();
+      x = this->parent_->absolute_x();
     }
     return x + this->x();
   }
 
-  virtual int16_t calc_y() {
+  int16_t absolute_y() override {
     int y = 0;
     if ((this->parent_ != nullptr)) {
-      y = this->parent_->calc_y();
+      y = this->parent_->absolute_y();
     }
     return y + this->y();
-  }
-
-  virtual Rect get_boundry() {
-    Rect r = Rect(this->calc_x(), this->calc_y(), this->calc_x() + this->width(), this->calc_y() + this->height());
-    return r;
   }
 
   void set_visible(bool visible) { this->status_.visible = visible ? 1 : 0; }
@@ -802,6 +750,7 @@ class SwitchPlateItem : public SwitchPlateBase {
       this->old_text_ = txt;
       this->set_redraw();
     }
+    ESP_LOGD("SwitchPlate", "Need '%s' to redraw? %S", this->old_text_.c_str(),(this->status_.invalidate?"Yes":"No"));
     return this->status_.invalidate == 1;
   }
 
@@ -812,45 +761,85 @@ class SwitchPlateItem : public SwitchPlateBase {
   int state() const { return const_cast<SwitchPlateItem *>(this)->state_.value(this); }
 
   void show_background() {
-    uint8_t radius = get_style(STYLE_BORDER_RADIUS).uint32_;
+    uint8_t radius = get_style(STYLE_BORDER_RADIUS, this->status_).uint32_;
     Rect r = this->get_boundry();
 
-    if (this->has_style(STYLE_BACKGROUND_COLOR)) {
-      display().filled_rectangle(r.x, r.y, r.w - r.x, r.h - r.y, radius,
-                                 this->get_style(STYLE_BACKGROUND_COLOR).color_);
-    } else if (this->has_style(STYLE_BACKGROUND_GRADIENT_FROM)) {
-      Color from_color = this->get_style(STYLE_BACKGROUND_GRADIENT_FROM).color_;
-      Color to_color = this->get_style(STYLE_BACKGROUND_GRADIENT_TO).color_;
-      GradientDirection dir = (GradientDirection) this->get_style(STYLE_BACKGROUND_GRADIENT_DIRECTION).direction_;
-      display().filled_rectangle(r.x, r.y, r.w - r.x, r.h - r.y, radius, from_color, to_color, dir);
+    if (this->has_style(STYLE_BACKGROUND_COLOR, this->status_)) {
+      display()->filled_rectangle(r.x, r.y, r.w - r.x, r.h - r.y, radius,
+                                  this->get_style(STYLE_BACKGROUND_COLOR, this->status_).color_);
+    } else if (this->has_style(STYLE_BACKGROUND_GRADIENT_FROM, this->status_)) {
+      Color from_color = this->get_style(STYLE_BACKGROUND_GRADIENT_FROM, this->status_).color_;
+      Color to_color = this->get_style(STYLE_BACKGROUND_GRADIENT_TO, this->status_).color_;
+      GradientDirection dir =
+          (GradientDirection) this->get_style(STYLE_BACKGROUND_GRADIENT_DIRECTION, this->status_).direction_;
+      display()->filled_rectangle(r.x, r.y, r.w - r.x, r.h - r.y, radius, from_color, to_color, dir);
     }
-    if (this->has_style(STYLE_BORDER_COLOR)) {
-      display().rectangle(r.x, r.y, r.w - r.x, r.h - r.y, radius, this->get_style(STYLE_BORDER_COLOR).color_);
-    } else if (this->has_style(STYLE_BORDER_GRADIENT_FROM)) {
-      Color from_color = this->get_style(STYLE_BORDER_GRADIENT_FROM).color_;
-      Color to_color = this->get_style(STYLE_BORDER_GRADIENT_TO).color_;
-      GradientDirection dir = (GradientDirection) this->get_style(STYLE_BORDER_GRADIENT_DIRECTION).direction_;
-      display().rectangle(r.x, r.y, r.w - r.x, r.h - r.y, radius, from_color, to_color, dir);
+    if (this->has_style(STYLE_BORDER_COLOR, this->status_)) {
+      display()->rectangle(r.x, r.y, r.w - r.x, r.h - r.y, radius,
+                           this->get_style(STYLE_BORDER_COLOR, this->status_).color_);
+    } else if (this->has_style(STYLE_BORDER_GRADIENT_FROM, this->status_)) {
+      Color from_color = this->get_style(STYLE_BORDER_GRADIENT_FROM, this->status_).color_;
+      Color to_color = this->get_style(STYLE_BORDER_GRADIENT_TO, this->status_).color_;
+      GradientDirection dir =
+          (GradientDirection) this->get_style(STYLE_BORDER_GRADIENT_DIRECTION, this->status_).direction_;
+      display()->rectangle(r.x, r.y, r.w - r.x, r.h - r.y, radius, from_color, to_color, dir);
     }
   }
 
-  virtual void show_text() {
-    show_background();
-    Color color = this->get_style(STYLE_TEXT_COLOR).color_;
-    Font *font = this->get_style(STYLE_TEXT_FONT).font_;
-    Align align = this->get_style(STYLE_TEXT_ALIGN).align_;
-    // int x, int y, Font *font, Color color, TextAlign align, const char *text
-    display().print(this->calc_x(), this->calc_y(), font, color, this->text().c_str());
-  };
+  void show_image(int x, int y, Image *image, Color color_on, Color color_off);
+
+  bool has_border() {
+    return (this->has_style(STYLE_BORDER_COLOR, this->status_) ||
+            this->has_style(STYLE_BORDER_GRADIENT_FROM, this->status_));
+  }
+
+  void calc_text_alignment(Font *font, Align align, int16_t &x, int16_t &y) {
+    Rect r = get_boundry();
+    if (this->has_border()) {
+      r.expand(-1, -1);
+    }
+
+    auto x_align = TextAlign(int(align) & 0x18);
+    auto y_align = TextAlign(int(align) & 0x07);
+
+    switch (x_align) {
+      case TextAlign::RIGHT:
+        x = r.w;
+        break;
+      case TextAlign::CENTER_HORIZONTAL:
+        x = r.x + ((r.w - r.x + 1) / 2);
+        break;
+      case TextAlign::LEFT:
+      default:
+        // LEFT
+        x = r.x;
+        break;
+    }
+    switch (y_align) {
+      case TextAlign::BOTTOM:
+        y = r.h;
+        break;
+      case TextAlign::BASELINE:
+        y = r.y + font->get_baseline();
+        break;
+      case TextAlign::CENTER_VERTICAL:
+        y = r.y + ((r.h - r.y + 1) / 2);
+        break;
+      case TextAlign::TOP:
+      default:
+        y = r.y;
+        break;
+    }
+  }
 
   virtual void call_show() {
-    Rect r = this->get_boundry();
-    if (this->visible() && !display().is_clipped(r)) {
-      r.substract(display().get_clipping());
+    Rect r = this->get_boundry(), cr= display()->get_clipping();
+    if (this->visible() && display()->get_clipping().inside(r)) {
+      r.substract(cr);
       if (r.is_set()) {
-        display().set_clipping(r);
+        display()->push_clipping(r);
         this->show();
-        display().clear_clipping();
+        display()->pop_clipping();
       }
     }
     clear_redraw();
@@ -868,6 +857,7 @@ class SwitchPlateItem : public SwitchPlateBase {
   std::string old_text_{""};
 
   Rect dimension_;
+  WidgetStatus status_{};
 };
 
 // ============================================================================== SwitchPlateGroup
@@ -887,7 +877,7 @@ class SwitchPlateGroup : public SwitchPlateItem {
       widget->call_setup();
     }
   }
-  SwitchPlateBase *check_touch(SwitchPlateTouch tp, Rect parent) {
+  SwitchPlateBase *check_touch(SwitchPlateTouch tp, Rect parent) override {
     Rect r = this->get_boundry();
     SwitchPlateBase *check;
     r.substract(parent);
@@ -903,26 +893,16 @@ class SwitchPlateGroup : public SwitchPlateItem {
     return SwitchPlateItem::check_touch(tp, parent);
   }
 
-  bool need_child_redrawing() {
-    for (auto *widget : this->widgets_) {
-      if (widget->need_redrawing()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  virtual void call_show() {
-    if (this->visible() && !display().is_clipped(this->get_boundry())) {
+  void call_show() override {
+    if (this->visible() && display()->get_clipping().inside(this->get_boundry())) {
       Rect r = this->calc_clipping();
       if (r.is_set()) {
-        display().set_clipping(r);
-
+        display()->push_clipping(r);
         this->show();
         for (auto *widget : this->widgets_) {
           widget->call_show();
         }
-        display().clear_clipping();
+        display()->pop_clipping();
       }
     }
     clear_redraw();
@@ -931,7 +911,7 @@ class SwitchPlateGroup : public SwitchPlateItem {
   size_t items_size() const { return this->widgets_.size(); }
   SwitchPlateBase *item(size_t i) { return this->widgets_[i]; }
 
-  virtual Rect calc_child_clipping() {
+  Rect calc_child_clipping() override {
     Rect r = Rect();
     if (this->visible()) {
       for (auto *widget : this->widgets_) {
@@ -973,63 +953,105 @@ class SwitchPlatePage : public SwitchPlateGroup {
   void set_selectable(bool selectable) { this->selectable_ = selectable; }
   bool get_selectable() { return this->selectable_; }
 
-  void set_name(std::string name) { this->name_ = name; }
-  std::string get_name() { return this->name_; }
+  void set_title(std::string title) { this->title_ = title; }
+  std::string get_title() { return this->title_; }
 
  protected:
   SwitchPlatePage *prev_{nullptr};
   SwitchPlatePage *next_{nullptr};
   bool selectable_ = true;
-  std::string name_ = "";
+  std::string title_ = "";
 };
 
 /// ============================================================================== SwitchPlateLabel
 
 class SwitchPlateLabel : public SwitchPlateItem {
  public:
-  uint32_t get_style_class_id() { return STYLE_WIDGET_LABEL; }
+  uint32_t get_style_class_id() override { return STYLE_WIDGET_LABEL; }
 
   void setup() {
+    if (this->plate() == nullptr) {
+      ESP_LOGE("SwitchPlateLabel", "  >>-  SwitchPlate has not been set.");
+    } else {
+      Font *font = this->plate()->get_style(STYLE_FONT).font_;
+      this->style_.set(STYLE_TEXT_FONT, font, true);
+    }
     this->style_.set(STYLE_TEXT_COLOR, Color(0xFFFFFF), true);
-    this->style_.set(STYLE_TEXT_FONT, this->get_font("default_font", true), true);
-    this->style_.set(STYLE_TEXT_ALIGN, LEFT);
-    ESP_LOGW("SwitchPlate", "    Style test  %s 0x%06X %s  0x%06X",
-             YESNO(this->style_.has(STYLE_TEXT_COLOR)), this->style_.get(STYLE_TEXT_COLOR).color_.raw_32,
-             YESNO(this->has_style(STYLE_TEXT_COLOR)),  this->get_style(STYLE_TEXT_COLOR).color_.raw_32);
+    this->style_.set(STYLE_TEXT_ALIGN, Align::LEFT, true);
   };
+
   virtual void show() {
+    int16_t x, y;
+    Align align = this->get_style(STYLE_TEXT_ALIGN).align_;
+    Color color = this->get_style(STYLE_TEXT_COLOR).color_;
+    Font *font = this->get_style(STYLE_TEXT_FONT).font_;
+    // int x, int y, Font *font, Color color, TextAlign align, const char *text
+
     show_background();
-    show_text();
+    calc_text_alignment(font, align, x, y);
+    display()->print(x, y, font, color, (TextAlign) align, text().c_str());
   };
+
+  void set_mode(Mode mode) {
+    this->mode_ = mode;
+    this->set_redraw();
+  }
+
+ protected:
+  Mode mode_{TEXT_MODE_CROP};
 };
 
-/// ============================================================================== SwitchPlateLabel
+/// ============================================================================== SwitchPlateDateTime
 
-class SwitchPlateClock : public SwitchPlateLabel {
+class SwitchPlateDateTime : public SwitchPlateLabel {
  public:
-  uint32_t get_style_class_id() { return STYLE_WIDGET_CLOCK; }
+  uint32_t get_style_class_id() override { return STYLE_WIDGET_DATETIME; }
   void setup() {
-    this->style_.set(STYLE_TEXT_COLOR, Color(0xFFFFFF), true);
-    this->style_.set(STYLE_TEXT_FONT, this->get_font("default_font", true), true);
-    this->style_.set(STYLE_TEXT_ALIGN, LEFT);
-  };
-  virtual void show() {
-    show_background();
-    show_text();
-  };
+    SwitchPlateLabel::setup();
+#ifdef USE_TIME
+    auto *time = *this->time_;
+    auto format = this->format_;
+    set_text([=](const switch_plate::SwitchPlateItem *it) -> std::string { return (*time).now().strftime(format); });
+#endif
+  }
+  void set_time_format(std::string format) {
+    this->format_ = format;
+    this->set_redraw();
+  }
+  void set_time(time::RealTimeClock *time) {
+    this->time_ = time;
+    this->set_redraw();
+  }
+
+ protected:
+  std::string format_ = "%X";
+  optional<time::RealTimeClock *> time_{};
+};
+
+/// ============================================================================== SwitchPlatePageTitle
+
+class SwitchPlatePageTitle : public SwitchPlateLabel {
+ public:
+  uint32_t get_style_class_id() override { return STYLE_WIDGET_PAGETITLE; }
+  void setup() {
+    SwitchPlateLabel::setup();
+    auto plate = this->plate();
+    set_text([=](const switch_plate::SwitchPlateItem *it) -> std::string { return return plate.current_page()->get_title(); });
+  }
+
+ protected:
 };
 
 // ============================================================================== SwitchPlateLabel
 
-class SwitchPlateButton : public SwitchPlateItem {
+class SwitchPlateButton : public SwitchPlateLabel {
  public:
-   uint32_t get_style_class_id() { return STYLE_WIDGET_BUTTON; }
+  uint32_t get_style_class_id() override { return STYLE_WIDGET_BUTTON; }
 
   void setup() {
-    this->style_.set(STYLE_TEXT_COLOR, Color((uint32_t) 0xffffff), true);
-    this->style_.set(STYLE_TEXT_FONT, this->get_font("default_font", true), true);
-    this->style_.set(STYLE_TEXT_ALIGN, CENTER, true);
-    this->style_.set(STYLE_BORDER_RADIUS, 10,true);
+    this->style_.set(STYLE_TEXT_ALIGN, Align::CENTER, true);
+    SwitchPlateLabel::setup();
+    this->style_.set(STYLE_BORDER_RADIUS, 10, true);
 
     this->style_.set(STYLE_BORDER_COLOR, Color(0xDD0000), true);
     this->style_.set(STYLE_BACKGROUND_COLOR, Color(0x660000), true);
@@ -1038,10 +1060,6 @@ class SwitchPlateButton : public SwitchPlateItem {
     this->style_.set(STYLE_BACKGROUND_COLOR | STYLE_PRESSED, Color(0x00600), true);
 
     this->status_.clickable = 1;
-  };
-  virtual void show() {
-    show_background();
-    show_text();
   };
 };
 
@@ -1059,7 +1077,7 @@ class SwitchPlateSlider : public SwitchPlateItem {
  public:
   void setup() { this->style_.set(STYLE_TEXT_COLOR, 0xFFFFFF, true); };
   virtual void show(){
-      //       display().print(this->calc_x, this->calc_y, this->text());
+      //       display()->print(this->absolute_x, this->absolute_y, this->text());
   };
 };
 
@@ -1127,8 +1145,6 @@ class DisplayOnPageChangeTrigger : public Trigger<SwitchPlatePage *, SwitchPlate
   SwitchPlatePage *from_{nullptr};
   SwitchPlatePage *to_{nullptr};
 };
-
-
 
 }  // namespace switch_plate
 }  // namespace esphome

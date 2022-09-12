@@ -4,6 +4,8 @@ from esphome import core, automation
 from esphome.automation import maybe_simple_id
 from esphome.core import coroutine_with_priority
 from esphome.components import font, image
+
+from components.switchplate import CONF_DISABLED
 #from rgb_color import color
 try:
      from . import rgb_color as rc    # "myapp" case
@@ -12,9 +14,9 @@ except:
 
 openHASP_ns = cg.esphome_ns.namespace('switch_plate')
 
-CONF_PRESSED = "_pressed"
-CONF_SELECTED = "_selected"
-
+CONF_PRESSED = "pressed"
+CONF_SELECTED = "selected"
+CONF_DISABLED = "disabled"
 
 SWITCHPLATE_COMMON_STYLE_SCHEMA = cv.Schema({})
 SWITCHPLATE_TEXT_STYLE_SCHEMA = cv.Schema({})
@@ -35,22 +37,13 @@ CONF_ALIGN_RIGHT = "right"
 CONF_GRADIENT_HORIZONTAL = "horizontal"
 CONF_GRADIENT_VERTICAL = "vertical"
 
-TextAlign_ = openHASP_ns.enum("Align", is_class=True)
-CONF_ALIGNS = {
-    CONF_ALIGN_LEFT : TextAlign_.LEFT,
-    CONF_ALIGN_CENTER : TextAlign_.CENTER,
-    CONF_ALIGN_RIGHT : TextAlign_.RIGHT
-}
-
-
-
-
 Direction_ = openHASP_ns.enum("Direction", is_class=True)
-
 CONF_GRANDIENT_DIRECTIONS = {
     CONF_GRADIENT_HORIZONTAL : Direction_.GRADIENT_HORIZONTAL,
     CONF_GRADIENT_VERTICAL : Direction_.GRADIENT_VERTICAL,
 }
+
+
 
 CONF_BACKGROUND_COLOR = "background_color"
 styles(SWITCHPLATE_COMMON_STYLE_SCHEMA, CONF_BACKGROUND_COLOR, rc.color )
@@ -95,10 +88,6 @@ styles(SWITCHPLATE_TEXT_STYLE_SCHEMA, CONF_TEXT_COLOR, rc.color )
 
 CONF_TEXT_FONT  = "text_font"
 styles(SWITCHPLATE_TEXT_STYLE_SCHEMA, CONF_TEXT_FONT, cv.use_id(font.Font) )
-
-CONF_TEXT_ALIGN = "text_align"
-styles(SWITCHPLATE_TEXT_STYLE_SCHEMA, CONF_TEXT_FONT, cv.enum(CONF_ALIGNS)  )
-
 
 CONF_CIRCLE_WIDTH = "circle_width"
 CONF_CIRCLE_COLOR = "circle_color"
