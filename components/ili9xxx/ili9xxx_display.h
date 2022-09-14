@@ -80,25 +80,37 @@ class ILI9XXXDisplay : public PollingComponent,
 };
 
 //-----------   M5Stack display --------------
-class ILI9XXXM5Stack : public ILI9XXXDisplay {
+class ILI9XXX_M5Stack : public ILI9XXXDisplay {
  protected:
   void initialize() override;
 };
 
 //-----------   ILI9XXX_24_TFT display --------------
-class ILI9XXXTFT24 : public ILI9XXXDisplay {
+class ILI9XXX_ILI9341 : public ILI9XXXDisplay {
  protected:
   void initialize() override;
 };
 
 //-----------   ILI9XXX_24_TFT rotated display --------------
-class ILI9XXXTFT24R : public ILI9XXXDisplay {
+class ILI9XXX_ILI9342 : public ILI9XXXDisplay {
  protected:
   void initialize() override;
 };
 
-//-----------   ILI9XXX_24_TFT rotated display --------------
-class ILI9XXXTFT35 : public ILI9XXXDisplay {
+//-----------   ILI9XXX_??_TFT rotated display --------------
+class ILI9XXX_ILI9481 : public ILI9XXXDisplay {
+ protected:
+  void initialize() override;
+};
+
+//-----------   ILI9XXX_35_TFT rotated display --------------
+class ILI9XXX_ILI9486 : public ILI9XXXDisplay {
+ protected:
+  void initialize() override;
+};
+
+//-----------   ILI9XXX_35_TFT rotated display --------------
+class ILI9XXX_ILI9488 : public ILI9XXXDisplay {
  protected:
   void initialize() override;
 };

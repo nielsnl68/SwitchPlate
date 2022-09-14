@@ -287,31 +287,43 @@ uint32_t ILI9XXXDisplay::buffer_to_transfer_(uint32_t pos, uint32_t sz) {
 }
 
 //   M5Stack display
-void ILI9XXXM5Stack::initialize() {
+void ILI9XXX_M5Stack::initialize() {
   this->init_lcd_(INITCMD_M5STACK);
   this->width_ = 320;
   this->height_ = 240;
   this->invert_display_(true);
 }
-
 //   24_TFT display
-void ILI9XXXTFT24::initialize() {
-  this->init_lcd_(INITCMD_TFT);
+void ILI9XXX_ILI9341::initialize() {
+  this->init_lcd_(INITCMD_ILI9341);
   this->width_ = 240;
   this->height_ = 320;
 }
-
 //   24_TFT rotated display
-void ILI9XXXTFT24R::initialize() {
-  this->init_lcd_(INITCMD_TFT);
+void ILI9XXX_ILI9342::initialize() {
+  this->init_lcd_(INITCMD_ILI9341);
   this->width_ = 320;
   this->height_ = 240;
 }
 
-void ILI9XXXTFT35::initialize() {
-  this->init_lcd_(INITCMD_TFT35);
+//   35_TFT display
+void ILI9XXX_ILI9481::initialize() {
+  this->init_lcd_(INITCMD_ILI9481);
   this->width_ = 480;
   this->height_ = 320;
+}
+
+//   35_TFT display
+void ILI9XXX_ILI9486::initialize() {
+  this->init_lcd_(INITCMD_ILI9486);
+  this->width_ = 480;
+  this->height_ = 320;
+}
+//    40_TFT display
+void ILI9XXX_LI9488::initialize() {
+  this->init_lcd_(INITCMD_ILI9488);
+  this->width_ = 320;
+  this->height_ = 480;
 }
 
 

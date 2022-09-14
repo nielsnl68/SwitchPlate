@@ -57,6 +57,7 @@ static const uint8_t ILI9XXX_FRMCTR2 = 0xB2;
 static const uint8_t ILI9XXX_FRMCTR3 = 0xB3;
 static const uint8_t ILI9XXX_INVCTR = 0xB4;
 static const uint8_t ILI9XXX_DFUNCTR = 0xB6;
+static const uint8_t ILI9XXX_ETMOD   = 0xB7;
 
 static const uint8_t ILI9XXX_PWCTR1 = 0xC0;
 static const uint8_t ILI9XXX_PWCTR2 = 0xC1;
@@ -65,7 +66,9 @@ static const uint8_t ILI9XXX_PWCTR4 = 0xC3;
 static const uint8_t ILI9XXX_PWCTR5 = 0xC4;
 static const uint8_t ILI9XXX_VMCTR1 = 0xC5;
 static const uint8_t ILI9XXX_VMCTR2 = 0xC7;
-
+static const uint8_t ILI9XXX_PWSET  = 0xD0;
+static const uint8_t ILI9XXX_VMCTR  = 0xD1;
+static const uint8_t ILI9XXX_PWSETN = 0xD2;
 static const uint8_t ILI9XXX_RDID4 = 0xD3;
 static const uint8_t ILI9XXX_RDINDEX = 0xD9;
 static const uint8_t ILI9XXX_RDID1 = 0xDA;
@@ -75,6 +78,8 @@ static const uint8_t ILI9XXX_RDIDX = 0xDD;  // TBC
 
 static const uint8_t ILI9XXX_GMCTRP1 = 0xE0;
 static const uint8_t ILI9XXX_GMCTRN1 = 0xE1;
+
+static const uint8_t ILI9XXX_ADJCTL3 = 0xF7;
 
 }  // namespace ili9xxx
 }  // namespace esphome
