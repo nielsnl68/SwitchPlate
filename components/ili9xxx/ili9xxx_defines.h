@@ -65,7 +65,10 @@ static const uint8_t ILI9XXX_PWCTR3 = 0xC2;
 static const uint8_t ILI9XXX_PWCTR4 = 0xC3;
 static const uint8_t ILI9XXX_PWCTR5 = 0xC4;
 static const uint8_t ILI9XXX_VMCTR1 = 0xC5;
+static const uint8_t ILI9XXX_IFCTR  = 0xC6;
 static const uint8_t ILI9XXX_VMCTR2 = 0xC7;
+static const uint8_t ILI9XXX_GMCTR  = 0xC8;
+
 static const uint8_t ILI9XXX_PWSET  = 0xD0;
 static const uint8_t ILI9XXX_VMCTR  = 0xD1;
 static const uint8_t ILI9XXX_PWSETN = 0xD2;

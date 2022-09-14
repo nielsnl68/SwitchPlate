@@ -320,7 +320,7 @@ void ILI9XXX_ILI9486::initialize() {
   this->height_ = 320;
 }
 //    40_TFT display
-void ILI9XXX_LI9488::initialize() {
+void ILI9XXX_ILI9488::initialize() {
   this->init_lcd_(INITCMD_ILI9488);
   this->width_ = 320;
   this->height_ = 480;
