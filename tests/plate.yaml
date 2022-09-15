@@ -12,11 +12,17 @@ esp32:
 external_components:
   # use rtttl and dfplayer from ESPHome's dev branch in GitHub
   # equivalent shorthand for GitHub
-   - source:
-      type: local
-      path: C:\development\projects\switchplate\components
-
-
+    - source: github://pr#3796
+      components: [display, animation]
+      refresh: 10s
+    - source: github://pr#3793
+      components: [xpt2046]
+      refresh: 10s
+    - source:
+       type: local
+       path: C:\development\projects\switchplate\components
+      components: [switchplate, ili9xxx]
+      refresh: 10s
 
 wifi: 
   networks:
@@ -68,7 +74,7 @@ font:
 
 display:
   - id: my_display
-    platform: ili9341
+    platform: ili9xxx
     model: TFT 2.4
     cs_pin: 5
     dc_pin: 16
@@ -91,6 +97,7 @@ touchscreen:
     swap_x_y: false
 
 switchplate:
+  id: my_plate
   display_id: my_display # Req 
   touchscreen_id: my_toucher
   default_font: my_font
@@ -98,17 +105,17 @@ switchplate:
     - type: pagetitle 
       dimension:
         x: 2
-        y: 2
+        y: 0
         width: 198
-        height: 2
+        height: 20
     - type: datetime
       id: theTime
       time_id: the_time
       dimension:
-        x: 200
-        y: 2
+        x: 240
+        y: 0
         width: 120 
-        height: 30
+        height: 20
 
   pages:
     - id: myMainPage # Opt.
@@ -118,16 +125,50 @@ switchplate:
         - type: label
           id: txtHello
           dimension:
-            x: 15
-            y: 10
-            width: 310 
-            height: 30
-          text: !lambda return "I am your SwitchPlate";
+            x: 10
+            y: 30
+            width: 300 
+            height: 20
+          text: "I am your SwitchPlate"
         - type: button
           id: btnClick
           dimension:
             x: 60
-            y: 150
+            y: 180
             width: 200
             height: 40
           text: "Click me"
+        - type: image
+          image_id: my_image
+          dimension:
+            x: 10
+            y: 70
+            width: 100
+            height: 100
+        - type: image
+          image_id: my_animation
+          dimension:
+            x: 160
+            y: 70
+            width: 100
+            height: 100
+
+
+
+image:
+  - file: "images/logo.png"
+    id: my_image
+    resize: 100x100
+    type: TRANSPARENT_BINARY
+
+animation:
+  - file: "images/writingpen.gif"
+    id: my_animation
+    resize: 100x100
+ 
+interval:
+  - interval: 200ms
+    then:
+      lambda: |-
+        id(my_animation).next_frame();
+        id(my_display).call_update();
