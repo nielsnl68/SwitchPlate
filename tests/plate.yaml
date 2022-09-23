@@ -12,16 +12,16 @@ esp32:
 external_components:
   # use rtttl and dfplayer from ESPHome's dev branch in GitHub
   # equivalent shorthand for GitHub
-    - source: github://pr#3796
-      components: [display, animation]
-      refresh: 10s
+  #  - source: github://pr#3796
+  #    components: [display, animation]
+  #    refresh: 10s
     - source: github://pr#3793
       components: [xpt2046]
       refresh: 10s
     - source:
        type: local
        path: C:\development\projects\switchplate\components
-      components: [switchplate, ili9xxx]
+      components: [switchplate, ili9xxx, display, animation]
       refresh: 10s
 
 wifi: 
@@ -61,7 +61,13 @@ color:
     red: 0%
     blue: 0%
     green: 100%
-
+  - id: my_yellow
+    red: 50%
+    green: 50%
+  - id: my_light_blue
+    red_int: 86
+    green_int: 86
+    blue_int: 255
 spi:
   mosi_pin: 23
   miso_pin: 19
@@ -118,6 +124,88 @@ switchplate:
         height: 20
 
   pages:
+    - id: myButtons
+      title: Woonkamer lampen
+      selectable: true # can be opened with next and previous page selectors
+      widgets:
+        - type: image
+          style:
+            pressed:
+              image: 
+                 id: my_image1
+            image: 
+              id: my_image0
+              foreground: my_light_blue
+
+          selectable: true
+          clickable: true
+          dimension:
+            x: 5
+            y: 30
+            width: 96
+            height: 96
+        - type: image
+          style:
+            image: 
+              id: my_image1
+              foreground: my_light_blue
+          selectable: true
+          clickable: true
+          dimension:
+            x: 112
+            y: 30
+            width: 96
+            height: 96
+        - type: image
+          style:
+            image: 
+              id: my_image2
+              foreground: my_light_blue
+          selectable: true
+          clickable: true
+          dimension:
+            x: 220
+            y: 30
+            width: 96
+            height: 96
+
+        - type: image
+          style:
+            image: 
+              id: my_image3
+              foreground: my_light_blue
+          selectable: true
+          clickable: true
+          dimension:
+            x: 5
+            y: 138
+            width: 96
+            height: 96
+        - type: image
+          style:
+            image: 
+              id: my_image4
+              foreground: my_light_blue
+          selectable: true
+          clickable: true
+          dimension:
+            x: 112
+            y: 138
+            width: 96
+            height: 96
+        - type: image
+          style:
+            image: 
+              id: my_image5
+              foreground: my_light_blue
+          selectable: true
+          clickable: true
+          dimension:
+            x: 220
+            y: 138
+            width: 96
+            height: 96
+
     - id: myMainPage # Opt.
       title: Basic widgets
       selectable: true # can be opened with next and previous page selectors
@@ -129,7 +217,7 @@ switchplate:
             y: 30
             width: 300 
             height: 20
-          text: "I am your SwitchPlate"
+          content: "I am your SwitchPlate"
         - type: button
           id: btnClick
           dimension:
@@ -137,35 +225,60 @@ switchplate:
             y: 180
             width: 200
             height: 40
-          text: "Click me"
+          style:
+              border: my_yellow
+          content: "Click me"
         - type: image
-          image_id: my_image
+          style:
+            image: 
+              id: my_image
+              foreground: my_green
           dimension:
             x: 10
             y: 70
             width: 100
             height: 100
         - type: image
-          image_id: my_animation
+          style:
+            image: 
+              id: my_animation
+              foreground: my_blue
           dimension:
-            x: 160
+            x: 170
             y: 70
             width: 100
             height: 100
-
-
 
 image:
   - file: "images/logo.png"
     id: my_image
     resize: 100x100
     type: TRANSPARENT_BINARY
+  - file: "images/icons8-book-shelf-96.png"
+    id: my_image0
+    type : TRANSPARENT_BINARY  
+  - file: "images/icons8-sofa-96.png"
+    id: my_image1
+    type : TRANSPARENT_BINARY    
+  - file: "images/icons8-table-96.png"
+    id: my_image2
+    type : TRANSPARENT_BINARY    
+  - file: "images/icons8-floor-plan-96.png"
+    id: my_image3
+    type : TRANSPARENT_BINARY    
+  - file: "images/icons8-light-off-96.png"
+    id: my_image4
+    type : TRANSPARENT_BINARY
+  - file: "images/icons8-chevron-right-96.png"
+    id: my_image5
+    type : TRANSPARENT_BINARY
 
 animation:
   - file: "images/writingpen.gif"
     id: my_animation
     resize: 100x100
- 
+    type: BINARY
+
 interval:
   - interval: 200ms
     then:
