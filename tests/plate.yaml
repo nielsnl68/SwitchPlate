@@ -132,7 +132,7 @@ switchplate:
           style:
             pressed:
               image: 
-                 id: my_image1
+                 foreground: my_blue
             image: 
               id: my_image0
               foreground: my_light_blue

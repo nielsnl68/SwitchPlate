@@ -1,5 +1,6 @@
 #include "switchplate.h"
 #include "esphome/core/log.h"
+#include "esphome/core/application.h"
 
 namespace esphome {
 namespace switch_plate {
@@ -64,8 +65,6 @@ void SwitchPlate::show_page(SwitchPlatePage *page) {
     this->previous_page_ = this->current_page_;
     this->current_page_ = page;
     page->call_setup();
-    // for (auto *t : this->on_page_change_triggers_)
-    //     t->process(this->previous_page_, this->current_page_);
   }
 }
 
@@ -83,13 +82,17 @@ void SwitchPlate::show() {
   this->current_page_->call_show();
 
   if (!this->header_.empty()) {
+    //ESP_LOGW(TAG, "show headers");
+    display()->filled_rectangle(0,0,this->screen_width(),this->header_height_,Color(0x000088));
     for (auto *header : this->header_) {
+      header->need_redrawing();
       header->call_show();
     }
   }
 
   if (!this->header_.empty()) {
     for (auto *footer : this->footer_) {
+      footer->need_redrawing();
       footer->call_show();
     }
   }
@@ -140,21 +143,21 @@ void SwitchPlate::show_next() { this->show_page(this->get_next()); }
 bool SwitchPlate::can_next() { return this->get_next() != nullptr; }
 
 void SwitchPlate::touch(TouchPoint tpoint) {
-  ESP_LOGD("SwitchPlate","=====> A (%3d, %3d) %3d", tpoint.x, tpoint.y, (uint8_t)this->touch_info_.state);
+  ESP_LOGV("SwitchPlate","=====> A (%3d, %3d) %3d", tpoint.x, tpoint.y, (uint8_t)this->touch_info_.state);
   if (tpoint.x == 32666) {
     if ((this->touch_info_.state != SwitchPlateTouchState::Released) && (this->touch_info_.origin != nullptr)) {
       if ((this->touch_info_.state != SwitchPlateTouchState::Dragging) &&(this->touch_info_.destiny != nullptr)) {
+        ESP_LOGD("SwitchPlate","=====> B");
         this->touch_info_.state = SwitchPlateTouchState::Dropping;
         this->touch_info_.destiny->check_touch(this->touch_info_, Rect(0, 0, this->screen_width(), this->screen_height()));
         this->touch_info_.destiny = nullptr;
       }
-      ESP_LOGD("SwitchPlate","=====> B");
       this->touch_info_.state = SwitchPlateTouchState::Released;
 
       this->touch_info_.origin->check_touch(this->touch_info_, Rect(0, 0, this->screen_width(), this->screen_height()));
     } else {
       this->touch_info_.state = SwitchPlateTouchState::Released;
-      ESP_LOGD("SwitchPlate","=====> C");
+      ESP_LOGV("SwitchPlate","=====> C");
     }
     this->touch_info_.origin = nullptr;
   } else if ((this->touch_info_.state == SwitchPlateTouchState::Released)) {
@@ -165,21 +168,19 @@ void SwitchPlate::touch(TouchPoint tpoint) {
     this->touch_info_.start_now = millis();
     if (this->current_page_ != nullptr) {
       this->touch_info_.state = SwitchPlateTouchState::Pressed;
-      ESP_LOGD("SwitchPlate","=====> D");
+      ESP_LOGV("SwitchPlate","=====> D");
       this->touch_info_.origin =
           this->current_page_->check_touch(this->touch_info_, Rect(0, 0, this->screen_width(), this->screen_height()));
       if (this->touch_info_.origin == nullptr) {
         this->touch_info_.state = SwitchPlateTouchState::Ignore;
-        ESP_LOGE("SwitchPlate","=====> E");
+        ESP_LOGV("SwitchPlate","=====> E");
       } else {
-        ESP_LOGD("SwitchPlate","=====> F");
+        ESP_LOGV("SwitchPlate","=====> F");
       }
     } else {
         ESP_LOGW("SwitchPlate","=====> I");
     }
-  } else if (this->touch_info_.state == SwitchPlateTouchState::Ignore) {
-    // do noting anymore until wait touch release
-  } else {
+  } else if (this->touch_info_.state != SwitchPlateTouchState::Ignore) {
     this->touch_info_.x = tpoint.x;
     this->touch_info_.y = tpoint.y;
 
@@ -187,9 +188,9 @@ void SwitchPlate::touch(TouchPoint tpoint) {
         (abs(this->touch_info_.origin_y - tpoint.y) >= CONST_TOUCH_TO_MOVE)) &&
         (this->touch_info_.state == SwitchPlateTouchState::Ignore)) {
       this->touch_info_.state = SwitchPlateTouchState::Moving;
-      ESP_LOGD("SwitchPlate","=====> G");
+      ESP_LOGV("SwitchPlate","=====> G");
     } else {
-      ESP_LOGD("SwitchPlate","=====> H");
+      ESP_LOGV("SwitchPlate","=====> H");
     }
     auto * check =
       this->current_page_->check_touch(this->touch_info_, Rect(0, 0, this->screen_width(), this->screen_height()));
@@ -215,57 +216,61 @@ bool SwitchPlate::can_prev() { return this->get_prev() != nullptr; }
 void SwitchPlatePage::set_prev(SwitchPlatePage *prev) { this->prev_ = prev; }
 void SwitchPlatePage::set_next(SwitchPlatePage *next) { this->next_ = next; }
 
-void SwitchPlateStyle::set_redraw() {
-  if (parent_ != nullptr) {
-    parent_->set_redraw();
+void SwitchPlateItem::show_image(int16_t x, int16_t y, Image *image, Color color_on, Color color_off) {
+  Color color;
+  int16_t width = image->get_width(), height = image->get_height();   // NOLINT
+  Rect r = this->get_boundry();  // NOLINT
+  //  r.info();
+  int16_t x_org = r.x, y_org = r.y;
+  //  ESP_LOGI(TAG,"x_org %d - y_org: %d ", x_org, y_org);
+  Rect clip = display()->get_clipping();
+  //  clip.info();
+  r.substract(clip);
+  //  r.info();
+  x_org = x_org - r.x;
+  y_org = y_org - r.y;
+  //  ESP_LOGI(TAG,"x_org %d - y_org: %d ", x_org, y_org);
+  x =- x_org; x =+ x_org;
+  if (width > r.w) { width = r.w; }
+  if (height > r.h) { height = r.y; }
+  //  ESP_LOGI(TAG,"%d - %d - %d - %d  - %d ", x, y, width, height, image->get_width(),image->get_height());
+  for (int16_t img_x = x; img_x < width; img_x++) {
+    if ((img_x < 0) || (img_x >= image->get_width())) {
+      ESP_LOGI(TAG,"img_x:%d - %d - %d", x, img_x, image->get_width());
+      continue;
+    }
+    for (int16_t img_y = y; img_y < height; img_y++) {
+      if ((img_y < 0) || (img_y >= image->get_height())) {
+        ESP_LOGI(TAG,"img_y: %d - %d - %d", y, img_y, image->get_height());
+        continue;
+      }
+      switch (image->get_type()) {
+        case display::IMAGE_TYPE_BINARY:
+          color = image->get_pixel(img_x, img_y) ? color_on : color_off;
+          break;
+        case display::IMAGE_TYPE_TRANSPARENT_BINARY:
+          if (image->get_pixel(img_x, img_y)){
+            color =  color_on;
+          } else {
+            continue;
+          }
+          break;
+        case display::IMAGE_TYPE_GRAYSCALE:
+          color = image->get_grayscale_pixel(img_x, img_y);
+          break;
+        case display::IMAGE_TYPE_RGB24:
+          color = image->get_color_pixel(img_x, img_y);
+          break;
+        case display::IMAGE_TYPE_RGB565:
+          color = image->get_rgb565_pixel(img_x, img_y);
+          break;
+      }
+      //ESP_LOGI(TAG,"x:%d y:%d ",r.x + (img_x -x), r.y + (img_y-y));
+      display()->draw_pixel_at(r.x + (img_x -x), r.y + (img_y-y), color);
+    }
+    App.feed_wdt();
   }
 }
-
-void SwitchPlateItem::show_image(int x, int y, Image *image, Color color_on, Color color_off) {
-  /*
-  switch (image->get_type()) {
-    case IMAGE_TYPE_BINARY:
-      for (int img_x = 0; img_x < image->get_width(); img_x++) {
-        for (int img_y = 0; img_y < image->get_height(); img_y++) {
-          this->draw_pixel_at(x + img_x, y + img_y, image->get_pixel(img_x, img_y) ? color_on : color_off);
-        }
-      }
-      break;
-    case IMAGE_TYPE_GRAYSCALE:
-      for (int img_x = 0; img_x < image->get_width(); img_x++) {
-        for (int img_y = 0; img_y < image->get_height(); img_y++) {
-          this->draw_pixel_at(x + img_x, y + img_y, image->get_grayscale_pixel(img_x, img_y));
-        }
-      }
-      break;
-    case IMAGE_TYPE_RGB24:
-      for (int img_x = 0; img_x < image->get_width(); img_x++) {
-        for (int img_y = 0; img_y < image->get_height(); img_y++) {
-          this->draw_pixel_at(x + img_x, y + img_y, image->get_color_pixel(img_x, img_y));
-        }
-      }
-      break;
-    case IMAGE_TYPE_TRANSPARENT_BINARY:
-      for (int img_x = 0; img_x < image->get_width(); img_x++) {
-        for (int img_y = 0; img_y < image->get_height(); img_y++) {
-          if (image->get_pixel(img_x, img_y))
-            this->draw_pixel_at(x + img_x, y + img_y, color_on);
-        }
-      }
-      break;
-    case IMAGE_TYPE_RGB565:
-      for (int img_x = 0; img_x < image->get_width(); img_x++) {
-        for (int img_y = 0; img_y < image->get_height(); img_y++) {
-          this->draw_pixel_at(x + img_x, y + img_y, image->get_rgb565_pixel(img_x, img_y));
-        }
-      }
-      break;
-  }
-  */
-}
-
-
-//SwitchPlateBase::thema_ = new SwitchPlateStyle();
 
 }  // namespace switch_plate
 }  // namespace esphome

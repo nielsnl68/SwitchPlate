@@ -4,7 +4,6 @@ from tkinter import TRUE
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome import automation, core
-from esphome.automation import maybe_simple_id
 from esphome.components import color, display, font, image, time, touchscreen
 from esphome.const import (CONF_FORMAT, CONF_FROM, CONF_GROUP, CONF_ID,
                            CONF_MAX_VALUE, CONF_MIN_VALUE, CONF_PAGE_ID,
@@ -321,32 +320,32 @@ def add_style_statuses(validator):
             }
     )
 
-STYLE_COLOR_SCHEMA = cv.maybe_simple_value(
+STYLE_COLOR_SCHEMA = cv.Schema(
     {
         cv.Optional("from"): valid_color,
         cv.Optional("to"): valid_color,
         cv.Optional("direction"): cv.enum(CONF_GRANDIENT_DIRECTIONS),
     },
-    key="from",
+    #key="from",
 )
 def style_color_schema(value):
     return STYLE_COLOR_SCHEMA(value)
 
 
-STYLE_TEXT_SCHEMA = cv.maybe_simple_value(
+STYLE_TEXT_SCHEMA = cv.Schema(
     {
         cv.Optional("font"): cv.use_id(font.Font),
         cv.Optional("align"): cv.enum(ENUM_ALIGN),
         cv.Optional("mode"): cv.enum(ENUM_MODES),
         cv.Optional("color"): style_color_schema,
     },
-    key="fond",
+    #key="font",
 )
 def style_text_schema(value):
     return STYLE_TEXT_SCHEMA(value)
 
 
-STYLE_IMAGE_SCHEMA = cv.maybe_simple_value(
+STYLE_IMAGE_SCHEMA = cv.Schema(
     {
         cv.Optional(CONF_ID): cv.use_id(image.Image_),
         cv.Optional("shift_x"): cv.int_range(-1024, 1024),
@@ -354,28 +353,28 @@ STYLE_IMAGE_SCHEMA = cv.maybe_simple_value(
         cv.Optional("background"): style_color_schema,
         cv.Optional("foreground"): style_color_schema,
     },
-    key=CONF_ID,
+    #key=CONF_ID,
 )
 def style_image_schema(value):
     return STYLE_IMAGE_SCHEMA(value)
 
 
-STYLE_BACKGROUND_SCHEMA = cv.maybe_simple_value(
+STYLE_BACKGROUND_SCHEMA = cv.Schema(
     {
         cv.Optional("color"): style_color_schema,
         cv.Optional("image"): style_image_schema,
     },
-    key="color",
+    #key="color",
 )
 def style_background_schema(value):
     return STYLE_BACKGROUND_SCHEMA(value)
 
-STYLE_BORDER_SCHEMA = cv.maybe_simple_value(
+STYLE_BORDER_SCHEMA = cv.Schema(
     {
         cv.Optional("color"): style_color_schema,
         cv.Optional("radius"): cv.int_range(-1024, 1024),
     },
-    key="color",
+    #key="color",
 )
 def style_border_schema(value):
     return STYLE_BORDER_SCHEMA(value)
@@ -450,7 +449,6 @@ STYLE_THEMA_SCHEMA = cv.Schema(
 )
 def style_thema_schema(value):
     return STYLE_THEMA_SCHEMA(value)
-
 
 async def setup_style(var, config, style = Style_.NONE):
     for key, value in config.items():
