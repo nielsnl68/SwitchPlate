@@ -41,12 +41,14 @@ void ILI9XXXDisplay::dump_config() {
   LOG_UPDATE_INTERVAL(this);
 }
 
+float ILI9XXXDisplay::get_setup_priority() const { return setup_priority::HARDWARE; }
+
+#ifndef EXTENDED_DISPLAYBUFFER
 void ILI9XXXDisplay::update() {
   this->do_update_();
   this->display();
 }
-
-float ILI9XXXDisplay::get_setup_priority() const { return setup_priority::HARDWARE; }
+#endif
 
 void ILI9XXXDisplay::display() {
   // we will only update the changed window to the display
@@ -76,7 +78,6 @@ void ILI9XXXDisplay::display() {
       rem -= sz;
       App.feed_wdt();
     }
-    App.feed_wdt();
   }
   this->end_data_();
 

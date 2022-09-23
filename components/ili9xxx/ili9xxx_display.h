@@ -1,8 +1,10 @@
 #pragma once
-
-#include "esphome/core/component.h"
 #include "esphome/components/spi/spi.h"
 #include "esphome/components/display/display_buffer.h"
+#ifndef EXTENDED_DISPLAYBUFFER
+#include "esphome/core/component.h"
+#endif
+
 #include "ili9xxx_defines.h"
 #include "ili9xxx_init.h"
 
@@ -14,15 +16,18 @@ enum ILI9XXXColorMode {
   BITS_8_INDEXED,
 };
 
-class ILI9XXXDisplay : public PollingComponent,
-                       public display::DisplayBuffer,
+class ILI9XXXDisplay : public display::DisplayBuffer,
+#ifndef EXTENDED_DISPLAYBUFFER
+                       public PollingComponent,
+#endif
                        public spi::SPIDevice<spi::BIT_ORDER_MSB_FIRST, spi::CLOCK_POLARITY_LOW,
                                              spi::CLOCK_PHASE_LEADING, spi::DATA_RATE_40MHZ> {
  public:
   void dump_config() override;
   void setup() override;
+#ifndef EXTENDED_DISPLAYBUFFER
   void update() override ;
-
+#endif
   float get_setup_priority() const override;
   display::DisplayType get_display_type() override { return display::DisplayType::DISPLAY_TYPE_COLOR; }
 
@@ -42,8 +47,11 @@ class ILI9XXXDisplay : public PollingComponent,
   void draw_absolute_pixel_internal(int x, int y, Color color) override;
   void setup_pins_();
   virtual void initialize() = 0;
+#ifndef EXTENDED_DISPLAYBUFFER
   void display();
-
+#else
+  void display() override;
+#endif 
   void init_lcd_(const uint8_t *init_cmd);
   void set_addr_window_(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
   void invert_display_(bool invert);
