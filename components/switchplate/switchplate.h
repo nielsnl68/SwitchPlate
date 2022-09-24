@@ -185,23 +185,23 @@ struct Style {
     Image *image_;
   };
   Color color_;
-  uint8_t invalid :1;
-  enum : uint8_t {
-    is_none = 0 ,
-    is_uint32 = 1,
-    is_int32 = 2,
-    is_fload = 3,
-    is_bool = 4,
-    is_align = 5,
-    is_mode = 6,
-    is_direction = 7,
-    is_font = 7,
-    is_image  = 9,
-    is_color =10
+
+  enum {
+    is_none ,
+    is_uint32,
+    is_int32,
+    is_fload,
+    is_bool,
+    is_align,
+    is_mode,
+    is_direction,
+    is_font,
+    is_image,
+    is_color
   } var_type;
 
-  inline Style() ALWAYS_INLINE : var_type(is_none), uint32_(0) {}  // NOLINT
-  inline Style(uint32_t var) ALWAYS_INLINE : var_type(is_uint32), uint32_(var) {}   // NOLINT
+  inline Style() ALWAYS_INLINE : uint32_(0), var_type(is_none) {}  // NOLINT
+  inline Style(uint32_t var) ALWAYS_INLINE : uint32_(var),var_type(is_uint32) {}   // NOLINT
   inline Style(int32_t var) ALWAYS_INLINE : var_type(is_int32), int32_(var) {}      // NOLINT
   inline Style(float var) ALWAYS_INLINE : var_type(is_fload), fload_(var) {}        // NOLINT
   inline Style(Mode var) ALWAYS_INLINE : var_type(is_mode), mode_(var) {}          // NOLINT
@@ -1030,16 +1030,11 @@ class SwitchPlateButton : public SwitchPlateLabel {
 
 // ================================================================================================================ SwitchPlateImage
 
-template<typename Base, typename T>
-inline bool instanceof(const T*) {
-    return std::is_base_of<Base, T>::value;
-}
-
 class SwitchPlateImage : public SwitchPlateItem {
  public:
   void setup() override {
-    this->set_style(Style::IMAGE|Style::FOREGROUND|Style::COLOR, Color( 0xFFFFFF), true);
-    this->set_style(Style::IMAGE|Style::BACKGROUND_COLOR, Color(0x000000), true);
+    this->set_style(Style::IMAGE|Style::COLOR, Color( 0xFFFFFF), true);
+    this->set_style(Style::BACKGROUND_COLOR, Color(0x000000), true);
     auto * image = this->get_style(Style::IMAGE|Style::ID, this->status_).image_;
       set_state([=](const switch_plate::SwitchPlateItem *it) -> int { 
         return image->get_current_frame(); 
@@ -1048,8 +1043,8 @@ class SwitchPlateImage : public SwitchPlateItem {
   void show() override {
     show_background();
     auto * image = this->get_style(Style::IMAGE|Style::ID, this->status_).image_ ;
-    Color bg_color = this->get_style(Style::IMAGE|Style::BACKGROUND_COLOR, this->status_).color_;
-    Color fg_color = this->get_style(Style::IMAGE|Style::FOREGROUND|Style::COLOR, this->status_).color_;
+    Color bg_color = this->get_style(Style::BACKGROUND_COLOR, this->status_).color_;
+    Color fg_color = this->get_style(Style::IMAGE|Style::COLOR, this->status_).color_;
     int16_t shift_x = this->get_style(Style::IMAGE|Style::SHIFT_X, this->status_).uint32_;
     int16_t shift_y = this->get_style(Style::IMAGE|Style::SHIFT_Y, this->status_).uint32_;
     show_image(shift_x, shift_y, image, fg_color, bg_color);

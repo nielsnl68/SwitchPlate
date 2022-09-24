@@ -9,19 +9,20 @@ esp32:
     version: 2.0.3
     platform_version: 4.4.0
 
+
 external_components:
   # use rtttl and dfplayer from ESPHome's dev branch in GitHub
   # equivalent shorthand for GitHub
-  #  - source: github://pr#3796
-  #    components: [display, animation]
-  #    refresh: 10s
+    - source: github://pr#3796
+      components: [display, animation]
+      refresh: 10s
     - source: github://pr#3793
       components: [xpt2046]
       refresh: 10s
     - source:
        type: local
        path: C:\development\projects\switchplate\components
-      components: [switchplate, ili9xxx, display, animation]
+      components: [switchplate, ili9xxx]
       refresh: 10s
 
 wifi: 
@@ -65,8 +66,8 @@ color:
     red: 50%
     green: 50%
   - id: my_light_blue
-    red_int: 86
-    green_int: 86
+    red_int: 96
+    green_int: 96
     blue_int: 255
 spi:
   mosi_pin: 23
@@ -129,13 +130,10 @@ switchplate:
       selectable: true # can be opened with next and previous page selectors
       widgets:
         - type: image
-          style:
-            pressed:
-              image: 
-                 foreground: my_blue
-            image: 
-              id: my_image0
-              foreground: my_light_blue
+          image_color: my_light_blue
+          image_id: my_image0
+          pressed:
+            image_color: my_blue
 
           selectable: true
           clickable: true
@@ -145,10 +143,10 @@ switchplate:
             width: 96
             height: 96
         - type: image
-          style:
-            image: 
-              id: my_image1
-              foreground: my_light_blue
+          image_id: my_image1
+          image_color: my_light_blue
+          pressed:
+            image_color: my_blue
           selectable: true
           clickable: true
           dimension:
@@ -157,10 +155,10 @@ switchplate:
             width: 96
             height: 96
         - type: image
-          style:
-            image: 
-              id: my_image2
-              foreground: my_light_blue
+          image_id: my_image2
+          image_color: my_light_blue
+          pressed:
+            image_color: my_blue
           selectable: true
           clickable: true
           dimension:
@@ -170,10 +168,10 @@ switchplate:
             height: 96
 
         - type: image
-          style:
-            image: 
-              id: my_image3
-              foreground: my_light_blue
+          image_id: my_image3
+          image_color: my_light_blue
+          pressed:
+            image_color: my_blue
           selectable: true
           clickable: true
           dimension:
@@ -182,10 +180,10 @@ switchplate:
             width: 96
             height: 96
         - type: image
-          style:
-            image: 
-              id: my_image4
-              foreground: my_light_blue
+          image_id: my_image4
+          image_color: my_light_blue
+          pressed:
+            image_color: my_blue
           selectable: true
           clickable: true
           dimension:
@@ -194,10 +192,10 @@ switchplate:
             width: 96
             height: 96
         - type: image
-          style:
-            image: 
-              id: my_image5
-              foreground: my_light_blue
+          image_id: my_image5
+          image_color: my_light_blue
+          pressed:
+            image_color: my_blue
           selectable: true
           clickable: true
           dimension:
@@ -225,24 +223,19 @@ switchplate:
             y: 180
             width: 200
             height: 40
-          style:
-              border: my_yellow
+          border_color: my_yellow
           content: "Click me"
         - type: image
-          style:
-            image: 
-              id: my_image
-              foreground: my_green
+          image_id: my_image
+          image_color: my_green
           dimension:
             x: 10
             y: 70
             width: 100
             height: 100
         - type: image
-          style:
-            image: 
-              id: my_animation
-              foreground: my_blue
+          image_id: my_animation
+          image_color: my_blue
           dimension:
             x: 170
             y: 70
@@ -277,7 +270,7 @@ animation:
   - file: "images/writingpen.gif"
     id: my_animation
     resize: 100x100
-    type: BINARY
+    type: TRANSPARENT_BINARY
 
 interval:
   - interval: 200ms

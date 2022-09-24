@@ -4,14 +4,26 @@ from tkinter import TRUE
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome import automation, core
+from esphome.automation import maybe_simple_id
 from esphome.components import color, display, font, image, time, touchscreen
-from esphome.const import (CONF_FORMAT, CONF_FROM, CONF_GROUP, CONF_ID,
-                           CONF_MAX_VALUE, CONF_MIN_VALUE, CONF_PAGE_ID,
-                           CONF_PAGES, CONF_TIME_ID, CONF_TO, CONF_TRIGGER_ID,
-                           CONF_TYPE, CONF_VISIBLE)
+from esphome.const import (
+    CONF_FORMAT,
+    CONF_FROM,
+    CONF_GROUP,
+    CONF_ID,
+    CONF_MAX_VALUE,
+    CONF_MIN_VALUE,
+    CONF_PAGE_ID,
+    CONF_PAGES,
+    CONF_TIME_ID,
+    CONF_TO,
+    CONF_TRIGGER_ID,
+    CONF_TYPE,
+    CONF_VISIBLE,
+)
 from esphome.core import coroutine_with_priority, HexInt
 
-#from . import styles as style    # "myapp" case
+# from . import styles as style    # "myapp" case
 
 CODEOWNERS = ["@nielsnl68"]
 
@@ -151,44 +163,51 @@ CONF_SPINNER_DIRECTIONS = {
 }
 
 Style_ = openHASP_ns.enum("Style", is_class=True)
-CONF_STYLE_SECTION = {
-    "background": Style_.BACKGROUND,
-    "border": Style_.BORDER,
-    "text": Style_.TEXT,
-    "header": Style_.HEADER,
-    "footer": Style_.FOOTER,
-    "foreground": Style_.FOREGROUND,
-    "color": Style_.COLOR,
-    "image": Style_.IMAGE,
-    "-sect-00c0": 0x00c0,
-    "-sect-00e0": 0x00e0,
+ENUM_STYLE_ARTIFACT = {
+    "background_color": Style_.BACKGROUND | Style_.COLOR,
+    "background_color_from": Style_.BACKGROUND | Style_.COLOR | Style_.FROM,
+    "background_color_to": Style_.BACKGROUND | Style_.COLOR | Style_.TO,
+    "background_color_direction": Style_.BACKGROUND | Style_.COLOR | Style_.DIRECTION,
+    "image_id": Style_.IMAGE | Style_.ID,
+    "image_shift_x": Style_.IMAGE | Style_.SHIFT_X,
+    "image_shift_y": Style_.IMAGE | Style_.SHIFT_Y,
+    "image_color": Style_.IMAGE | Style_.COLOR,
+    "image_color_from": Style_.IMAGE | Style_.COLOR | Style_.FROM,
+    "image_color_to": Style_.IMAGE | Style_.COLOR | Style_.TO,
+    "image_color_direction": Style_.IMAGE | Style_.COLOR | Style_.DIRECTION,
+    "border_color": Style_.BORDER | Style_.COLOR,
+    "border_color_from": Style_.BORDER | Style_.COLOR | Style_.FROM,
+    "border_color_to": Style_.BORDER | Style_.COLOR | Style_.TO,
+    "border_direction": Style_.BORDER | Style_.COLOR | Style_.DIRECTION,
+    "text_font": Style_.TEXT | Style_.FONT,
+    "text_align": Style_.TEXT | Style_.ALIGN,
+    "text_mode": Style_.TEXT | Style_.MODE,
+    "text_color": Style_.BACKGROUND | Style_.COLOR,
+    "text_color_from": Style_.BACKGROUND | Style_.COLOR | Style_.FROM,
+    "text_color_to": Style_.BACKGROUND | Style_.COLOR | Style_.TO,
+    "text_color_direction": Style_.BACKGROUND | Style_.COLOR | Style_.DIRECTION,
+    "header_heigth": Style_.HEADER | Style_.HEIGTH,
+    "header_color": Style_.HEADER | Style_.COLOR,
+    "header_color_from": Style_.HEADER | Style_.COLOR | Style_.FROM,
+    "header_color_to": Style_.HEADER | Style_.COLOR | Style_.TO,
+    "header_color_direction": Style_.HEADER | Style_.COLOR | Style_.DIRECTION,
+    "footer_heigth": Style_.FOOTER | Style_.HEIGTH,
+    "footer_color": Style_.FOOTER | Style_.COLOR,
+    "footer_color_from": Style_.FOOTER | Style_.COLOR | Style_.FROM,
+    "footer_color_to": Style_.FOOTER | Style_.COLOR | Style_.TO,
+    "footer_color_direction": Style_.FOOTER | Style_.COLOR | Style_.DIRECTION,
+    "default_font": Style_.FONT,
 }
-CONF_STYLE_ARTIFACT = {
-    "id": Style_.ID,
-    "from": Style_.FROM,
-    "to": Style_.TO,
-    "direction": Style_.DIRECTION,
-    "font": Style_.FONT,
-    "align": Style_.ALIGN,
-    "mode": Style_.MODE,
-    "radius": Style_.RADIUS,
-    "-art-0900": 0x0900,
-    "shift_x": Style_.SHIFT_X,
-    "shift_y": Style_.SHIFT_Y,
-    "heigth": Style_.HEIGTH,
-    "width": Style_.WIDTH,
-}
-CONF_STYLE_STATUS = {
-    "none": Style_.NONE,
+
+ENUM_STYLE_STATUS = {
     "pressed": Style_.PRESS,
     "selected": Style_.SELECT,
     "disabled": Style_.DISABLE,
     "pressed_selected": Style_.PRESS | Style_.SELECT,
-    "selected_pressed": Style_.PRESS | Style_.SELECT,
     "disabled_selected": Style_.DISABLE | Style_.SELECT,
-    "selected_disabled": Style_.DISABLE | Style_.SELECT,
 }
-CONF_STYLE_WIDGETS = {
+
+ENUM_STYLE_WIDGETS = {
     "switchplate": Style_.BASE_SWITCHPLATE,
     WIDGET_LABEL: Style_.WIDGET_LABEL,
     WIDGET_DATETIME: Style_.WIDGET_DATETIME,
@@ -211,25 +230,25 @@ ENUM_MODES = {
 
 WidgetAlign_ = openHASP_ns.enum("Align", is_class=True)
 ENUM_ALIGN = {
-    "top"               : WidgetAlign_.TOP,
-    "center_vertical"   : WidgetAlign_.CENTER_VERTICAL,
-    "baseline"          : WidgetAlign_.BASELINE,
-    "bottom"            : WidgetAlign_.BOTTOM,
-    "left"              : WidgetAlign_.LEFT,
-    "center_horizontal" : WidgetAlign_.CENTER_HORIZONTAL,
-    "right"             : WidgetAlign_.RIGHT,
-    "top_left"          : WidgetAlign_.TOP_LEFT,
-    "top_center"        : WidgetAlign_.TOP_CENTER,
-    "top_right"         : WidgetAlign_.TOP_RIGHT,
-    "center_left"       : WidgetAlign_.CENTER_LEFT,
-    "center"            : WidgetAlign_.CENTER,
-    "center_right"      : WidgetAlign_.CENTER_RIGHT,
-    "baseline_left"     : WidgetAlign_.BASELINE_LEFT,
-    "baseline_center"   : WidgetAlign_.BASELINE_CENTER,
-    "baseline_right"    : WidgetAlign_.BASELINE_RIGHT,
-    "bottom_left"       : WidgetAlign_.BOTTOM_LEFT,
-    "bottom_center"     : WidgetAlign_.BOTTOM_CENTER,
-    "bottom_right"      : WidgetAlign_.BOTTOM_RIGHT,
+    "top": WidgetAlign_.TOP,
+    "center_vertical": WidgetAlign_.CENTER_VERTICAL,
+    "baseline": WidgetAlign_.BASELINE,
+    "bottom": WidgetAlign_.BOTTOM,
+    "left": WidgetAlign_.LEFT,
+    "center_horizontal": WidgetAlign_.CENTER_HORIZONTAL,
+    "right": WidgetAlign_.RIGHT,
+    "top_left": WidgetAlign_.TOP_LEFT,
+    "top_center": WidgetAlign_.TOP_CENTER,
+    "top_right": WidgetAlign_.TOP_RIGHT,
+    "center_left": WidgetAlign_.CENTER_LEFT,
+    "center": WidgetAlign_.CENTER,
+    "center_right": WidgetAlign_.CENTER_RIGHT,
+    "baseline_left": WidgetAlign_.BASELINE_LEFT,
+    "baseline_center": WidgetAlign_.BASELINE_CENTER,
+    "baseline_right": WidgetAlign_.BASELINE_RIGHT,
+    "bottom_left": WidgetAlign_.BOTTOM_LEFT,
+    "bottom_center": WidgetAlign_.BOTTOM_CENTER,
+    "bottom_right": WidgetAlign_.BOTTOM_RIGHT,
 }
 
 Direction_ = openHASP_ns.enum("Direction", is_class=True)
@@ -261,6 +280,7 @@ CONF_WIDGET_CLASSES = {
     WIDGET_LINEMETER: openHASP_ns.class_("SwitchPlateLineMeter", SwitchPlateItem),
     WIDGET_GUAUGE: openHASP_ns.class_("SwitchPlateGauge", SwitchPlateItem),
 }
+
 
 def valid_color(value):
     """Validate that the value is a hex RGB color.
@@ -310,179 +330,125 @@ def valid_color(value):
 
 
 def add_style_statuses(validator):
-    return  cv.Schema(validator).extend(
-            {
-                cv.Optional("pressed"): cv.Schema(validator),
-                cv.Optional("selected"): cv.Schema(validator),
-                cv.Optional("disabled"): cv.Schema(validator),
-                cv.Optional("pressed_selected"): cv.Schema(validator),
-                cv.Optional("disabled_selected"): cv.Schema(validator),
-            }
+    return {
+        cv.Optional("pressed"): validator,
+        cv.Optional("selected"): validator,
+        cv.Optional("disabled"): validator,
+        cv.Optional("pressed_selected"): validator,
+        cv.Optional("disabled_selected"): validator,
+    } | validator
+
+
+def style_color_schema(key=""):
+    return {
+        cv.Optional(key + "color"): valid_color,
+        cv.Optional(key + "color_from"): valid_color,
+        cv.Optional(key + "color_to"): valid_color,
+        cv.Optional(key + "color_direction"): cv.enum(CONF_GRANDIENT_DIRECTIONS),
+    }
+
+
+def style_text_schema(key=""):
+    return style_color_schema(key + "text_") | {
+        cv.Optional(key + "text_font"): cv.use_id(font.Font),
+        cv.Optional(key + "text_align"): cv.enum(ENUM_ALIGN),
+        cv.Optional(key + "text_mode"): cv.enum(ENUM_MODES),
+    }
+
+
+def style_image_schema(key=""):
+    return style_color_schema(key + "image_") | {
+        cv.Optional(key + CONF_IMAGE_ID): cv.use_id(image.Image_),
+        cv.Optional(key + "image_shift_x"): cv.int_range(-1024, 1024),
+        cv.Optional(key + "image_shift_y"): cv.int_range(-1024, 1024),
+    }
+
+
+def style_background_schema(key=""):
+    return style_color_schema(key + "background_")
+
+
+def style_border_schema(key=""):
+    return style_color_schema(key + "border_") | {
+        cv.Optional(key + "border_radius"): cv.int_range(-1024, 1024),
+    }
+
+
+def widget_switchplate_schema():
+    return (
+        style_color_schema("header_")
+        | style_color_schema("footer_")
+        | {
+            cv.Required("default_font"): cv.use_id(font.Font),
+            cv.Optional("header_height"): cv.uint8_t,
+            cv.Optional("footer_height"): cv.uint8_t,
+        }
     )
 
-STYLE_COLOR_SCHEMA = cv.Schema(
-    {
-        cv.Optional("from"): valid_color,
-        cv.Optional("to"): valid_color,
-        cv.Optional("direction"): cv.enum(CONF_GRANDIENT_DIRECTIONS),
-    },
-    #key="from",
-)
-def style_color_schema(value):
-    return STYLE_COLOR_SCHEMA(value)
+
+def widget_label_schema():
+    return add_style_statuses(
+        style_text_schema() | style_background_schema() | style_border_schema()
+    )
 
 
-STYLE_TEXT_SCHEMA = cv.Schema(
-    {
-        cv.Optional("font"): cv.use_id(font.Font),
-        cv.Optional("align"): cv.enum(ENUM_ALIGN),
-        cv.Optional("mode"): cv.enum(ENUM_MODES),
-        cv.Optional("color"): style_color_schema,
-    },
-    #key="font",
-)
-def style_text_schema(value):
-    return STYLE_TEXT_SCHEMA(value)
+def widget_datetime_schema():
+    return widget_label_schema()
 
 
-STYLE_IMAGE_SCHEMA = cv.Schema(
-    {
-        cv.Optional(CONF_ID): cv.use_id(image.Image_),
-        cv.Optional("shift_x"): cv.int_range(-1024, 1024),
-        cv.Optional("shift_y"): cv.int_range(-1024, 1024),
-        cv.Optional("background"): style_color_schema,
-        cv.Optional("foreground"): style_color_schema,
-    },
-    #key=CONF_ID,
-)
-def style_image_schema(value):
-    return STYLE_IMAGE_SCHEMA(value)
+def widget_button_schema():
+    return widget_label_schema()
 
 
-STYLE_BACKGROUND_SCHEMA = cv.Schema(
-    {
-        cv.Optional("color"): style_color_schema,
-        cv.Optional("image"): style_image_schema,
-    },
-    #key="color",
-)
-def style_background_schema(value):
-    return STYLE_BACKGROUND_SCHEMA(value)
-
-STYLE_BORDER_SCHEMA = cv.Schema(
-    {
-        cv.Optional("color"): style_color_schema,
-        cv.Optional("radius"): cv.int_range(-1024, 1024),
-    },
-    #key="color",
-)
-def style_border_schema(value):
-    return STYLE_BORDER_SCHEMA(value)
+def widget_pagetittle_schema():
+    return widget_label_schema()
 
 
-WIDGET_SWITCHPLATE_SCHEMA = cv.Schema(
-    {
-        cv.Required("default_font"): cv.use_id(font.Font),
-        cv.Optional("header_color"): style_color_schema,
-        cv.Optional("footer_color"): style_color_schema,
-        cv.Optional(CONF_HEADER_HEIGHT): cv.uint8_t,
-        cv.Optional(CONF_FOOTER_HEIGHT): cv.uint8_t,
+def widget_page_schema():
+    return add_style_statuses(
+        style_background_schema(),
+    )
 
+
+def widget_panel_schema():
+    return widget_page_schema()
+
+
+def widget_image_schema():
+    return add_style_statuses(style_image_schema())
+
+
+def style_thema_schema():
+    return {
+        cv.Optional("switchplate"): widget_switchplate_schema(),
+        cv.Optional(WIDGET_LABEL): widget_label_schema(),
+        cv.Optional(WIDGET_DATETIME): widget_datetime_schema(),
+        cv.Optional(WIDGET_BUTTON): widget_button_schema(),
+        cv.Optional("page"): widget_page_schema(),
+        cv.Optional(WIDGET_PAGETITLE): widget_pagetittle_schema(),
+        cv.Optional(WIDGET_PANEL): widget_panel_schema(),
+        cv.Optional(WIDGET_IMAGE): widget_image_schema(),
     }
-)
-def widget_switchplate_schema(value):
-    return WIDGET_SWITCHPLATE_SCHEMA(value)
 
-WIDGET_LABEL_SCHEMA = add_style_statuses(
-    {
-        cv.Optional("text"): style_text_schema,
-        cv.Optional("background"): style_background_schema,
-        cv.Optional("border"): style_border_schema,
-    }
-)
-def widget_label_schema(value):
-    return WIDGET_LABEL_SCHEMA(value)
 
-WIDGET_DATETIME_SCHEMA = WIDGET_LABEL_SCHEMA
-def widget_datetime_schema(value):
-    return WIDGET_DATETIME_SCHEMA(value)
-
-WIDGET_BUTTON_SCHEMA = WIDGET_LABEL_SCHEMA
-def widget_button_schema(value):
-    return WIDGET_BUTTON_SCHEMA(value)
-
-WIDGET_PAGETITLE_SCHEMA = WIDGET_LABEL_SCHEMA
-def widget_pagetittle_schema(value):
-    return WIDGET_PAGETITLE_SCHEMA(value)
-
-WIDGET_PAGE_SCHEMA = add_style_statuses(
-    {
-        cv.Optional("background"): style_background_schema,
-    }
-)
-def widget_page_schema(value):
-    return WIDGET_PAGE_SCHEMA(value)
-
-WIDGET_PANEL_SCHEMA = WIDGET_PAGE_SCHEMA
-def widget_panel_schema(value):
-    return WIDGET_PANEL_SCHEMA(value)
-
-WIDGET_IMAGE_SCHEMA = add_style_statuses(
-    {
-        cv.Required("image"): style_image_schema,
-    }
-)
-def widget_image_schema(value):
-    return WIDGET_IMAGE_SCHEMA(value)
-
-STYLE_THEMA_SCHEMA = cv.Schema(
-    {
-        cv.Optional("switchplate"): widget_switchplate_schema,
-        cv.Optional(WIDGET_LABEL): widget_label_schema,
-        cv.Optional(WIDGET_DATETIME): widget_datetime_schema,
-        cv.Optional(WIDGET_BUTTON): widget_button_schema,
-        cv.Optional("page"): widget_page_schema,
-        cv.Optional(WIDGET_PAGETITLE): widget_pagetittle_schema,
-        cv.Optional(WIDGET_PANEL): widget_panel_schema,
-        cv.Optional(WIDGET_IMAGE): widget_image_schema,
-    }
-)
-def style_thema_schema(value):
-    return STYLE_THEMA_SCHEMA(value)
-
-async def setup_style(var, config, style = Style_.NONE):
+async def setup_style(var, config, style=Style_.NONE):
     for key, value in config.items():
-        if key in CONF_STYLE_STATUS.keys():
-            await setup_style(var, value, style | CONF_STYLE_STATUS[key])
-        elif key in CONF_STYLE_SECTION.keys():
-            await setup_style(var, value, style | CONF_STYLE_SECTION[key])
-        elif key in CONF_STYLE_ARTIFACT.keys():
-            if (isinstance(value, core.ID)):
+        if key in ENUM_STYLE_STATUS.keys():
+            await setup_style(var, value, style | ENUM_STYLE_STATUS[key])
+        elif key in ENUM_STYLE_ARTIFACT.keys():
+            if isinstance(value, core.ID):
                 value = await cg.get_variable(value)
-            cg.add(var.set_style(style | CONF_STYLE_ARTIFACT[key], StyleStruct(value)))
-        elif key == "header_color":
-            if (isinstance(value, core.ID)):
-                value = await cg.get_variable(value)
-            cg.add(var.set_style(style | Style_.HEADER | Style_.COLOR, StyleStruct(value)))
-        elif key == "footer_color":
-            if (isinstance(value, core.ID)):
-                value = await cg.get_variable(value)
-            cg.add(var.set_style(style | Style_.FOOTER | Style_.COLOR, StyleStruct(value)))
-        elif key == "default_font":
-            if (isinstance(value, core.ID)):
-                value = await cg.get_variable(value)
-            cg.add(var.set_style(style | Style_.FONT, StyleStruct(value)))
-
+            cg.add(var.set_style(style | ENUM_STYLE_ARTIFACT[key], StyleStruct(value)))
         else:
-           pass
+            pass
+
 
 async def setup_thema(var, config):
     for key, value in config.items():
-        if key in CONF_STYLE_WIDGETS.keys():
-            await setup_style(var, value, CONF_STYLE_WIDGETS[key])
+        if key in ENUM_STYLE_WIDGETS.keys():
+            await setup_style(var, value, ENUM_STYLE_WIDGETS[key])
         else:
-           pass
-
+            pass
 
 
 def validate_min_max(config):
@@ -548,25 +514,22 @@ SWITCHPLATE_ITEM_SCHEMA = cv.All(
                     cv.Required(CONF_WIDGETS): cv.All(
                         cv.ensure_list(switchplate_item_schema), cv.Length(min=1)
                     ),
-                    cv.Optional(CONF_STYLE): widget_panel_schema,
                 }
-            ),
+            ).extend(widget_panel_schema()),
             WIDGET_LABEL: SWITCHPLATE_ITEM_TEXT_SCHEMA.extend(
                 {
                     cv.GenerateID(CONF_ID): cv.declare_id(
                         CONF_WIDGET_CLASSES[WIDGET_LABEL]
                     ),
-                    cv.Optional(CONF_STYLE): widget_label_schema,
                 }
-            ),
+            ).extend(widget_label_schema()),
             WIDGET_PAGETITLE: SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
                 {
                     cv.GenerateID(CONF_ID): cv.declare_id(
                         CONF_WIDGET_CLASSES[WIDGET_PAGETITLE]
                     ),
-                    cv.Optional(CONF_STYLE): widget_pagetittle_schema,
                 }
-            ),
+            ).extend(widget_pagetittle_schema()),
             WIDGET_DATETIME: SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
                 {
                     cv.GenerateID(CONF_ID): cv.declare_id(
@@ -574,70 +537,71 @@ SWITCHPLATE_ITEM_SCHEMA = cv.All(
                     ),
                     cv.Optional(CONF_FORMAT): cv.string,
                     cv.Required(CONF_TIME_ID): cv.use_id(time.RealTimeClock),
-                    cv.Optional(CONF_STYLE): widget_datetime_schema,
-
                 }
-            ),
+            ).extend(widget_datetime_schema()),
             WIDGET_BUTTON: SWITCHPLATE_ITEM_TEXT_SCHEMA.extend(
                 {
                     cv.GenerateID(CONF_ID): cv.declare_id(
                         CONF_WIDGET_CLASSES[WIDGET_BUTTON]
                     ),
-                    cv.Optional(CONF_STYLE): widget_button_schema,
-
+                    cv.Optional(CONF_STYLE): widget_button_schema(),
                 }
-            ),
+            ).extend(widget_button_schema()),
             WIDGET_IMAGE: SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
                 {
                     cv.GenerateID(CONF_ID): cv.declare_id(
                         CONF_WIDGET_CLASSES[WIDGET_IMAGE]
                     ),
-                    cv.Optional(CONF_STYLE): widget_image_schema,
                 }
-            ),
+            ).extend(widget_image_schema()),
         },
         default_type="label",
         lower=True,
     )
 )
 
-CONFIG_SCHEMA = cv.Schema(
-    {
-        cv.GenerateID(): cv.declare_id(SwitchPlate),
-        cv.Optional(CONF_DISPLAY_DEFINE): cv.use_id(display.DisplayBuffer),
-        cv.Optional(touchscreen.CONF_TOUCHSCREEN_ID): cv.use_id(
-            touchscreen.Touchscreen
-        ),
-        cv.Optional(CONF_TABVIEW): cv.boolean,
-        cv.Optional(CONF_HEADER): cv.All(
-            cv.ensure_list(switchplate_item_schema), cv.Length(min=1)
-        ),
-        cv.Optional(CONF_FOOTER): cv.All(
-            cv.ensure_list(switchplate_item_schema), cv.Length(min=1)
-        ),
-        cv.Optional(CONF_THEMA): style_thema_schema,
-        cv.Optional(CONF_STYLE): widget_switchplate_schema,
-        cv.Required(CONF_PAGES): cv.All(
-            cv.ensure_list(
-                cv.Schema({
-                    cv.GenerateID(): cv.declare_id(SwitchPlatePage),
-                    cv.Optional(CONF_WIDGETS): cv.All(
-                        cv.ensure_list(switchplate_item_schema), cv.Length(min=1)
-                    ),
-                    cv.Optional(CONF_TITLE): cv.string,
-                    cv.Optional(CONF_SELECTABLE, default=TRUE): cv.boolean,
-                    cv.Optional(CONF_VISIBLE): cv.boolean,
-                    cv.Optional(CONF_DISABLED): cv.boolean,
-                    cv.Optional(CONF_STYLE): widget_page_schema,
-                }),
+CONFIG_SCHEMA = (
+    cv.Schema(
+        {
+            cv.GenerateID(): cv.declare_id(SwitchPlate),
+            cv.Optional(CONF_DISPLAY_DEFINE): cv.use_id(display.DisplayBuffer),
+            cv.Optional(touchscreen.CONF_TOUCHSCREEN_ID): cv.use_id(
+                touchscreen.Touchscreen
             ),
-            cv.Length(min=1),
-        )
-    }
-).extend(
-    cv.COMPONENT_SCHEMA,
-    WIDGET_SWITCHPLATE_SCHEMA
-)  # .add_extra(cv.has_exactly_one_key([CONF_DISPLAY_DEFINE, touchscreen.CONF_TOUCHSCREEN_ID]))
+            cv.Optional(CONF_TABVIEW): cv.boolean,
+            cv.Optional(CONF_HEADER): cv.All(
+                cv.ensure_list(switchplate_item_schema), cv.Length(min=1)
+            ),
+            cv.Optional(CONF_FOOTER): cv.All(
+                cv.ensure_list(switchplate_item_schema), cv.Length(min=1)
+            ),
+            cv.Optional(CONF_THEMA): style_thema_schema,
+            cv.Required(CONF_PAGES): cv.All(
+                cv.ensure_list(
+                    cv.Schema(
+                        {
+                            cv.GenerateID(): cv.declare_id(SwitchPlatePage),
+                            cv.Optional(CONF_WIDGETS): cv.All(
+                                cv.ensure_list(switchplate_item_schema),
+                                cv.Length(min=1),
+                            ),
+                            cv.Optional(CONF_TITLE): cv.string,
+                            cv.Optional(CONF_SELECTABLE, default=TRUE): cv.boolean,
+                            cv.Optional(CONF_VISIBLE): cv.boolean,
+                            cv.Optional(CONF_DISABLED): cv.boolean,
+                        }
+                    ).extend(widget_page_schema()),
+                ),
+                cv.Length(min=1),
+            ),
+        }
+    )
+    .extend(cv.COMPONENT_SCHEMA)
+    .extend(
+        widget_switchplate_schema(),
+    )
+)
+# .add_extra(cv.has_exactly_one_key([CONF_DISPLAY_DEFINE, touchscreen.CONF_TOUCHSCREEN_ID]))
 
 WIDGET_STATUS_OPTIONS = {
     CONF_SELECTED: 2,
@@ -647,8 +611,11 @@ WIDGET_STATUS_OPTIONS = {
     CONF_SELECTABLE: 10,
 }
 
+
 async def item_to_code(config):
     item = cg.new_Pvariable(config[CONF_ID])
+    await setup_style(item, config)
+
     if CONF_TITLE in config:
         cg.add(item.set_title(config[CONF_TITLE]))
     if CONF_DIMENSION in config:
@@ -693,13 +660,14 @@ async def item_to_code(config):
         if key not in config:
             continue
         cg.add(item.set_widget_status(WIDGET_STATUS_OPTIONS[key], config[key]))
-    if CONF_STYLE in config:
-        await setup_style(item, config[CONF_STYLE])
     return item
+
 
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
+    await setup_style(var, config)
+
     if CONF_DISPLAY_DEFINE in config:
         parent = await cg.get_variable(config[CONF_DISPLAY_DEFINE])
         cg.add(var.set_display(parent))
@@ -723,7 +691,5 @@ async def to_code(config):
         cg.add(var.set_default_font(parent))
     if CONF_TABVIEW in config:
         cg.add(var.set_tabview(config[CONF_TABVIEW]))
-    if CONF_STYLE in config:
-        await setup_style(var, config[CONF_STYLE])
     if CONF_THEMA in config:
         await setup_thema(var, config[CONF_THEMA])
