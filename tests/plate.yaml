@@ -63,8 +63,8 @@ color:
     blue: 0%
     green: 100%
   - id: my_yellow
-    red: 50%
-    green: 50%
+    red: 75%
+    green: 75%
   - id: my_light_blue
     red_int: 96
     green_int: 96
@@ -130,10 +130,15 @@ switchplate:
       selectable: true # can be opened with next and previous page selectors
       widgets:
         - type: image
-          image_color: my_light_blue
           image_id: my_image0
+          image_color: my_light_blue
+          border_radius: 4
           pressed:
             image_color: my_blue
+            border_color: my_blue
+          selected:
+            image_color: my_yellow
+            border_color: my_yellow
 
           selectable: true
           clickable: true
@@ -145,10 +150,17 @@ switchplate:
         - type: image
           image_id: my_image1
           image_color: my_light_blue
+          border_radius: 4
+
           pressed:
             image_color: my_blue
+            border_color: my_blue
+          selected:
+            image_color: my_yellow
+            border_color: my_yellow
           selectable: true
           clickable: true
+          is_disabled: true
           dimension:
             x: 112
             y: 30
@@ -157,10 +169,16 @@ switchplate:
         - type: image
           image_id: my_image2
           image_color: my_light_blue
+          border_radius: 4
           pressed:
             image_color: my_blue
+            border_color: my_blue
+          selected:
+            image_color: my_yellow
+            border_color: my_yellow
           selectable: true
           clickable: true
+          is_pressed: true
           dimension:
             x: 220
             y: 30
@@ -170,10 +188,16 @@ switchplate:
         - type: image
           image_id: my_image3
           image_color: my_light_blue
+          border_radius: 4
           pressed:
             image_color: my_blue
+            border_color: my_blue
+          selected:
+            image_color: my_yellow
+            border_color: my_yellow
           selectable: true
           clickable: true
+          is_selected: true
           dimension:
             x: 5
             y: 138
@@ -182,10 +206,16 @@ switchplate:
         - type: image
           image_id: my_image4
           image_color: my_light_blue
+          border_radius: 4
           pressed:
             image_color: my_blue
+            border_color: my_blue
+          selected:
+            image_color: my_yellow
+            border_color: my_yellow
           selectable: true
           clickable: true
+          is_visible: false
           dimension:
             x: 112
             y: 138
@@ -194,10 +224,13 @@ switchplate:
         - type: image
           image_id: my_image5
           image_color: my_light_blue
+          border_radius: 4
           pressed:
             image_color: my_blue
-          selectable: true
+            border_color: my_blue
+          selectable: false
           clickable: true
+          action: next
           dimension:
             x: 220
             y: 138
@@ -225,6 +258,8 @@ switchplate:
             height: 40
           border_color: my_yellow
           content: "Click me"
+          action: home
+
         - type: image
           image_id: my_image
           image_color: my_green
