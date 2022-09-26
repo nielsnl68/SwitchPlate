@@ -137,12 +137,13 @@ some test sources and work in progress.
 | `slowdown-stratch` | slow down and stretch
 
 | Directions  | Description  
-| `down` | down
-| `up` | up
-| `left` | left
-| `right` | right
-| `CW` | Clockwise
-| `CCW` | counter-clockwise
+| `down`      | down
+| `up`        | up
+| `left`      | left
+| `right`     | right
+| `CW`        | Clockwise
+| `CCW`       | counter-clockwise
+
 _Note:_ up and down are superseeded by the screen size.
 
 | Alignments | Description
