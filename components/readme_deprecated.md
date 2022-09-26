@@ -137,6 +137,7 @@ some test sources and work in progress.
 | `slowdown-stratch` | slow down and stretch
 
 | Directions  | Description  
+|-------------|------------------------
 | `down`      | down
 | `up`        | up
 | `left`      | left
