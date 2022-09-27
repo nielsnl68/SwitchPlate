@@ -25,21 +25,6 @@ void SwitchPlate::call_setup() {
 }
 
 void SwitchPlate::dump_config() {
-#ifdef USE_SENSOR
-  for (auto *sensor : this->sensors_) {
-    LOG_SENSOR("  ", "Sensor", sensor);
-  }
-#endif
-#ifdef USE_BINARY_SENSOR
-  for (auto *text_sensor : this->text_sensors_) {
-    LOG_TEXT_SENSOR("  ", "Text sensor", text_sensor);
-  }
-#endif
-#ifdef USE_TEXT_SENSOR
-  for (auto *binary_sensor : this->binary_sensors_) {
-    LOG_BINARY_SENSOR("  ", "Binary sensor", binary_sensor);
-  }
-#endif
   // for (auto [key, value] : this->vars_) {
   //     ESP_LOGCONFIG(" ", "  Variable %s(%s): %d", key, value.t, value.u);
   // }
@@ -106,7 +91,7 @@ void SwitchPlate::add_page(SwitchPlatePage *page) {
     this->previous_page_->set_next(page);
   }
   this->previous_page_ = page;
-  if ((this->first_page_ == nullptr) && page->get_selectable()) {
+  if ((this->first_page_ == nullptr) && page->is_selectable()) {
     this->first_page_ = page;
   }
 }
@@ -132,7 +117,7 @@ SwitchPlatePage *SwitchPlate::get_next() {
     page = this->first_page_;
   } else {
     page = this->current_page_->get_next();
-    while ((page != nullptr) && !page->get_selectable()) {
+    while ((page != nullptr) && !page->is_selectable()) {
       page = page->get_next();
     }
   }
@@ -145,34 +130,34 @@ bool SwitchPlate::can_next() { return this->get_next() != nullptr; }
 void SwitchPlate::touch(TouchPoint tpoint) {
   ESP_LOGV("SwitchPlate","=====> A (%3d, %3d) %3d", tpoint.x, tpoint.y, (uint8_t)this->touch_info_.state);
   if (tpoint.x == 32666) {
-    if ((this->touch_info_.state != SwitchPlateTouchState::Released) && (this->touch_info_.origin != nullptr)) {
-      if ((this->touch_info_.state != SwitchPlateTouchState::Dragging) &&(this->touch_info_.destiny != nullptr)) {
+    if ((this->touch_info_.state != TouchState::Released) && (this->touch_info_.origin != nullptr)) {
+      if ((this->touch_info_.state != TouchState::Dragging) &&(this->touch_info_.destiny != nullptr)) {
         ESP_LOGD("SwitchPlate","=====> B");
-        this->touch_info_.state = SwitchPlateTouchState::Dropping;
+        this->touch_info_.state = TouchState::Dropping;
         this->touch_info_.destiny->check_touch(this->touch_info_, Rect(0, 0, this->screen_width(), this->screen_height()));
         this->touch_info_.destiny = nullptr;
       }
-      this->touch_info_.state = SwitchPlateTouchState::Released;
+      this->touch_info_.state = TouchState::Released;
 
       this->touch_info_.origin->check_touch(this->touch_info_, Rect(0, 0, this->screen_width(), this->screen_height()));
     } else {
-      this->touch_info_.state = SwitchPlateTouchState::Released;
+      this->touch_info_.state = TouchState::Released;
       ESP_LOGV("SwitchPlate","=====> C");
     }
     this->touch_info_.origin = nullptr;
-  } else if ((this->touch_info_.state == SwitchPlateTouchState::Released)) {
+  } else if ((this->touch_info_.state == TouchState::Released)) {
     this->touch_info_.x = tpoint.x;
     this->touch_info_.y = tpoint.y;
     this->touch_info_.origin_x = tpoint.x;
     this->touch_info_.origin_y = tpoint.y;
     this->touch_info_.start_now = millis();
     if (this->current_page_ != nullptr) {
-      this->touch_info_.state = SwitchPlateTouchState::Pressed;
+      this->touch_info_.state = TouchState::Pressed;
       ESP_LOGV("SwitchPlate","=====> D");
       this->touch_info_.origin =
           this->current_page_->check_touch(this->touch_info_, Rect(0, 0, this->screen_width(), this->screen_height()));
       if (this->touch_info_.origin == nullptr) {
-        this->touch_info_.state = SwitchPlateTouchState::Ignore;
+        this->touch_info_.state = TouchState::Ignore;
         ESP_LOGV("SwitchPlate","=====> E");
       } else {
         ESP_LOGV("SwitchPlate","=====> F");
@@ -180,14 +165,14 @@ void SwitchPlate::touch(TouchPoint tpoint) {
     } else {
         ESP_LOGW("SwitchPlate","=====> I");
     }
-  } else if (this->touch_info_.state != SwitchPlateTouchState::Ignore) {
+  } else if (this->touch_info_.state != TouchState::Ignore) {
     this->touch_info_.x = tpoint.x;
     this->touch_info_.y = tpoint.y;
 
     if (((abs(this->touch_info_.origin_x - tpoint.x) >= CONST_TOUCH_TO_MOVE) ||
         (abs(this->touch_info_.origin_y - tpoint.y) >= CONST_TOUCH_TO_MOVE)) &&
-        (this->touch_info_.state == SwitchPlateTouchState::Ignore)) {
-      this->touch_info_.state = SwitchPlateTouchState::Moving;
+        (this->touch_info_.state == TouchState::Ignore)) {
+      this->touch_info_.state = TouchState::Moving;
       ESP_LOGV("SwitchPlate","=====> G");
     } else {
       ESP_LOGV("SwitchPlate","=====> H");
@@ -203,7 +188,7 @@ SwitchPlatePage *SwitchPlate::get_prev() {
     page = this->first_page_;
   } else {
     page = this->current_page_->get_prev();
-    while ((page != nullptr) && !page->get_selectable()) {
+    while ((page != nullptr) && !page->is_selectable()) {
       page = page->get_prev();
     }
   }

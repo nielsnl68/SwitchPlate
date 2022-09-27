@@ -1,6 +1,14 @@
+substitutions:
+  device: lum-iot40
+  comment: display TFT 2.4
+
 esphome:
-  name: lum-iot34
+  name: ${device}
   comment: switchplate test yaml
+  on_boot:
+    priority: 10
+    then:
+      - script.execute: my_script
 
 esp32:
   board: firebeetle32
@@ -9,23 +17,25 @@ esp32:
     version: 2.0.3
     platform_version: 4.4.0
 
+ota:
 
 external_components:
   # use rtttl and dfplayer from ESPHome's dev branch in GitHub
   # equivalent shorthand for GitHub
-    - source: github://pr#3796
-      components: [display, animation]
-      refresh: 10s
-    - source: github://pr#3793
-      components: [xpt2046]
-      refresh: 10s
-    - source:
-       type: local
-       path: C:\development\projects\switchplate\components
-      components: [switchplate, ili9xxx]
-      refresh: 10s
+  - source: github://pr#3796
+    components: [display, animation]
+    refresh: 10s
+  - source: github://pr#3793
+    components: [xpt2046]
+    refresh: 10s
+  - source:
+      type: local
+      path: C:\development\projects\switchplate\components
+    components: [switchplate, ili9xxx]
+    refresh: 10s
 
-wifi: 
+wifi:
+  use_address: 192.168.178.66
   networks:
     - ssid: !secret wifi_ssid
       password: !secret wifi_password
@@ -36,7 +46,6 @@ time:
   - platform: homeassistant
     id: the_time
 
-
 api:
 
 color:
@@ -44,11 +53,11 @@ color:
     red: 100%
   - id: my_black
     blue: 0%
-    green: 0%  
+    green: 0%
     red: 0%
   - id: my_red
     red: 100%
-  - id: color_blue 
+  - id: color_blue
     blue: 86%
   - id: my_white
     red: 100%
@@ -57,7 +66,7 @@ color:
   - id: my_blue
     red: 0%
     blue: 100%
-    green: 0%    
+    green: 0%
   - id: my_green
     red: 0%
     blue: 0%
@@ -94,22 +103,25 @@ touchscreen:
     id: my_toucher
     cs_pin: 14
     #irq_pin: 16
-    setup_priority: 400
+    setup_priority: 10
     report_interval: 50ms
-    threshold: 400
+    threshold: 300
     calibration_x_min: 3860
     calibration_x_max: 340
     calibration_y_min: 3860
     calibration_y_max: 340
     swap_x_y: false
+    on_touch:
+      then:
+        - script.execute: my_script
 
 switchplate:
   id: my_plate
-  display_id: my_display # Req 
+  display_id: my_display # Req
   touchscreen_id: my_toucher
   default_font: my_font
   header:
-    - type: pagetitle 
+    - type: pagetitle
       dimension:
         x: 2
         y: 0
@@ -121,7 +133,7 @@ switchplate:
       dimension:
         x: 240
         y: 0
-        width: 120 
+        width: 120
         height: 20
 
   pages:
@@ -130,9 +142,10 @@ switchplate:
       selectable: true # can be opened with next and previous page selectors
       widgets:
         - type: image
+          id: rgbLamp
           image_id: my_image0
           image_color: my_light_blue
-          border_radius: 4
+          border_radius: 8
           pressed:
             image_color: my_blue
             border_color: my_blue
@@ -148,10 +161,10 @@ switchplate:
             width: 96
             height: 96
         - type: image
+          id: zithoek
           image_id: my_image1
           image_color: my_light_blue
-          border_radius: 4
-
+          border_radius: 8
           pressed:
             image_color: my_blue
             border_color: my_blue
@@ -160,16 +173,16 @@ switchplate:
             border_color: my_yellow
           selectable: true
           clickable: true
-          is_disabled: true
           dimension:
             x: 112
             y: 30
             width: 96
             height: 96
         - type: image
+          id: Eethoek
           image_id: my_image2
           image_color: my_light_blue
-          border_radius: 4
+          border_radius: 8
           pressed:
             image_color: my_blue
             border_color: my_blue
@@ -178,7 +191,6 @@ switchplate:
             border_color: my_yellow
           selectable: true
           clickable: true
-          is_pressed: true
           dimension:
             x: 220
             y: 30
@@ -186,9 +198,10 @@ switchplate:
             height: 96
 
         - type: image
-          image_id: my_image3
+          id: banklamp
+          image_id: my_image4        
           image_color: my_light_blue
-          border_radius: 4
+          border_radius: 8
           pressed:
             image_color: my_blue
             border_color: my_blue
@@ -197,25 +210,24 @@ switchplate:
             border_color: my_yellow
           selectable: true
           clickable: true
-          is_selected: true
           dimension:
             x: 5
             y: 138
             width: 96
             height: 96
         - type: image
-          image_id: my_image4
+          id: resthuis
+          image_id: my_image3
           image_color: my_light_blue
-          border_radius: 4
+          border_radius: 8
           pressed:
             image_color: my_blue
             border_color: my_blue
           selected:
             image_color: my_yellow
             border_color: my_yellow
-          selectable: true
+          selectable: false
           clickable: true
-          is_visible: false
           dimension:
             x: 112
             y: 138
@@ -224,7 +236,7 @@ switchplate:
         - type: image
           image_id: my_image5
           image_color: my_light_blue
-          border_radius: 4
+          border_radius: 8
           pressed:
             image_color: my_blue
             border_color: my_blue
@@ -246,7 +258,7 @@ switchplate:
           dimension:
             x: 10
             y: 30
-            width: 300 
+            width: 300
             height: 20
           content: "I am your SwitchPlate"
         - type: button
@@ -284,22 +296,22 @@ image:
     type: TRANSPARENT_BINARY
   - file: "images/icons8-book-shelf-96.png"
     id: my_image0
-    type : TRANSPARENT_BINARY  
+    type: TRANSPARENT_BINARY
   - file: "images/icons8-sofa-96.png"
     id: my_image1
-    type : TRANSPARENT_BINARY    
+    type: TRANSPARENT_BINARY
   - file: "images/icons8-table-96.png"
     id: my_image2
-    type : TRANSPARENT_BINARY    
+    type: TRANSPARENT_BINARY
   - file: "images/icons8-floor-plan-96.png"
     id: my_image3
-    type : TRANSPARENT_BINARY    
+    type: TRANSPARENT_BINARY
   - file: "images/icons8-light-off-96.png"
     id: my_image4
-    type : TRANSPARENT_BINARY
+    type: TRANSPARENT_BINARY
   - file: "images/icons8-chevron-right-96.png"
     id: my_image5
-    type : TRANSPARENT_BINARY
+    type: TRANSPARENT_BINARY
 
 animation:
   - file: "images/writingpen.gif"
@@ -313,3 +325,42 @@ interval:
       lambda: |-
         id(my_animation).next_frame();
         id(my_display).call_update();
+
+switch:
+  - platform: switchplate
+    widget_id: rgbLamp
+    name: ${device} RGB lightball
+  - platform: switchplate
+    widget_id: zithoek
+    name: ${device} zithoek lamp
+  - platform: switchplate
+    widget_id: Eethoek
+    name: ${device} eethoek lamp
+  - platform: switchplate
+    widget_id: resthuis
+    name: ${device} rest woning
+  - platform: switchplate
+    widget_id: banklamp
+    name: ${device} banklamp lampen
+
+ # Define a PWM output on the ESP32
+output:
+  - platform: ledc
+    pin: 17
+    id: gpio_17_backlight_pwm
+
+# Define a monochromatic, dimmable light for the backlight
+light:
+  - platform: monochromatic
+    output: gpio_17_backlight_pwm
+    name: ${device} Display Backlight
+    id: back_light
+    restore_mode: ALWAYS_ON
+
+script:
+  - id: my_script
+    mode: restart
+    then:
+      - light.turn_on: back_light
+      - delay: 10min
+      - light.turn_off: back_light

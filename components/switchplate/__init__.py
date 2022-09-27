@@ -14,7 +14,6 @@ from esphome.const import (
     CONF_PAGE_ID,
     CONF_PAGES,
     CONF_TIME_ID,
-  
 )
 from esphome.core import coroutine_with_priority, HexInt
 
@@ -36,6 +35,8 @@ DEPENDENCIES = ["display", "touchscreen", "font", "color"]
 
 MULTI_CONF = True
 
+CONF_SWITCHPLATE = "switchplate"
+WIDGET_PAGE = "page"
 WIDGET_LINE = "line"  # Visual	Line
 WIDGET_IMAGE = "image"  # Visual	Image
 WIDGET_SPINNER = "spinner"  # Visual	Spinner
@@ -66,7 +67,7 @@ CONF_ON_PAGE_CHANGE = "on_page_change"
 
 CONF_TITLE = "title"
 CONF_WIDGET_ID = "widget_id"
-CONF_DISPLAY_DEFINE = "display_id"
+CONF_DISPLAY_ID = "display_id"
 CONF_HEADER = "header"
 CONF_HEADER_HEIGHT = "header_height"
 CONF_FOOTER = "footer"
@@ -186,7 +187,8 @@ ENUM_STYLE_ARTIFACT = {
     "border_color": Style_.BORDER | Style_.COLOR,
     "border_color_from": Style_.BORDER | Style_.COLOR | Style_.FROM,
     "border_color_to": Style_.BORDER | Style_.COLOR | Style_.TO,
-    "border_direction": Style_.BORDER | Style_.COLOR | Style_.DIRECTION,
+    "border_color_direction": Style_.BORDER | Style_.COLOR | Style_.DIRECTION,
+    "border_radius": Style_.BORDER | Style_.RADIUS,
     "text_font": Style_.TEXT | Style_.FONT,
     "text_align": Style_.TEXT | Style_.ALIGN,
     "text_mode": Style_.TEXT | Style_.MODE,
@@ -216,11 +218,11 @@ ENUM_STYLE_STATUS = {
 }
 
 ENUM_STYLE_WIDGETS = {
-    "switchplate": Style_.BASE_SWITCHPLATE,
+    CONF_SWITCHPLATE: Style_.BASE_SWITCHPLATE,
     WIDGET_LABEL: Style_.WIDGET_LABEL,
     WIDGET_DATETIME: Style_.WIDGET_DATETIME,
     WIDGET_BUTTON: Style_.WIDGET_BUTTON,
-    "page": Style_.WIDGET_PAGE,
+    WIDGET_PAGE: Style_.WIDGET_PAGE,
     WIDGET_PAGETITLE: Style_.WIDGET_PAGETITLE,
     WIDGET_PANEL: Style_.WIDGET_PANEL,
     WIDGET_IMAGE: Style_.WIDGET_IMAGE,
@@ -353,24 +355,26 @@ def style_color_schema(key=""):
         cv.Optional(key + "color"): valid_color,
         cv.Optional(key + "color_from"): valid_color,
         cv.Optional(key + "color_to"): valid_color,
-        cv.Optional(key + "color_direction"): cv.enum(CONF_GRANDIENT_DIRECTIONS, upper=True, space="_"),
+        cv.Optional(key + "color_direction"): cv.enum(
+            CONF_GRANDIENT_DIRECTIONS, upper=True, space="_"
+        ),
     }
 
 
 def style_text_schema(key=""):
-    return style_color_schema(key + "text_") | {
+    return {
         cv.Optional(key + "text_font"): cv.use_id(font.Font),
         cv.Optional(key + "text_align"): cv.enum(ENUM_ALIGN, upper=True, space="_"),
         cv.Optional(key + "text_mode"): cv.enum(ENUM_MODES, upper=True, space="_"),
-    }
+    } | style_color_schema(key + "text_")
 
 
 def style_image_schema(key=""):
-    return style_color_schema(key + "image_") | {
+    return {
         cv.Optional(key + CONF_IMAGE_ID): cv.use_id(image.Image_),
         cv.Optional(key + "image_shift_x"): cv.int_range(-1024, 1024),
         cv.Optional(key + "image_shift_y"): cv.int_range(-1024, 1024),
-    }
+    } | style_color_schema(key + "image_")
 
 
 def style_background_schema(key=""):
@@ -378,21 +382,21 @@ def style_background_schema(key=""):
 
 
 def style_border_schema(key=""):
-    return style_color_schema(key + "border_") | {
+    return {
         cv.Optional(key + "border_radius"): cv.int_range(-1024, 1024),
-    }
+    } | style_color_schema(key + "border_")
 
 
 def widget_switchplate_schema():
     # print("=> SWITCHPLATE:")
     return (
-        style_color_schema("header_")
-        | style_color_schema("footer_")
-        | {
+        {
             cv.Required("default_font"): cv.use_id(font.Font),
             cv.Optional("header_height"): cv.uint8_t,
             cv.Optional("footer_height"): cv.uint8_t,
         }
+        | style_color_schema("header_")
+        | style_color_schema("footer_")
     )
 
 
@@ -447,35 +451,15 @@ def widget_image_schema():
 
 def style_thema_schema():
     return {
-        cv.Optional("switchplate"): widget_switchplate_schema(),
+        cv.Optional(CONF_SWITCHPLATE): widget_switchplate_schema(),
         cv.Optional(WIDGET_LABEL): widget_label_schema(),
         cv.Optional(WIDGET_DATETIME): widget_datetime_schema(),
         cv.Optional(WIDGET_BUTTON): widget_button_schema(),
-        cv.Optional("page"): widget_page_schema(),
+        cv.Optional(WIDGET_PAGE): widget_page_schema(),
         cv.Optional(WIDGET_PAGETITLE): widget_pagetittle_schema(),
         cv.Optional(WIDGET_PANEL): widget_panel_schema(),
         cv.Optional(WIDGET_IMAGE): widget_image_schema(),
     }
-
-
-async def setup_style(var, config, style=Style_.NONE):
-    for key, value in config.items():
-        if key in ENUM_STYLE_STATUS.keys():
-            await setup_style(var, value, style | ENUM_STYLE_STATUS[key])
-        elif key in ENUM_STYLE_ARTIFACT.keys():
-            if isinstance(value, core.ID):
-                value = await cg.get_variable(value)
-            cg.add(var.set_style(style | ENUM_STYLE_ARTIFACT[key], StyleStruct(value)))
-        else:
-            pass
-
-
-async def setup_thema(var, config):
-    for key, value in config.items():
-        if key in ENUM_STYLE_WIDGETS.keys():
-            await setup_style(var, value, ENUM_STYLE_WIDGETS[key])
-        else:
-            pass
 
 
 def validate_min_max(config):
@@ -593,7 +577,7 @@ CONFIG_SCHEMA = (
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(SwitchPlate),
-            cv.Optional(CONF_DISPLAY_DEFINE): cv.use_id(display.DisplayBuffer),
+            cv.Optional(CONF_DISPLAY_ID): cv.use_id(display.DisplayBuffer),
             cv.Optional(touchscreen.CONF_TOUCHSCREEN_ID): cv.use_id(
                 touchscreen.Touchscreen
             ),
@@ -630,16 +614,47 @@ CONFIG_SCHEMA = (
         widget_switchplate_schema(),
     )
 )
-# .add_extra(cv.has_exactly_one_key([CONF_DISPLAY_DEFINE, touchscreen.CONF_TOUCHSCREEN_ID]))
-
+# .add_extra(cv.has_exactly_one_key([CONF_DISPLAY_ID, touchscreen.CONF_TOUCHSCREEN_ID]))
+Status_ = openHASP_ns.enum("Status", is_class=True)
 WIDGET_STATUS_OPTIONS = {
-    CONF_PRESSED: 0,
-    CONF_SELECT: 1,
-    CONF_DISABLE: 2,
-    CONF_VISIBLE: 8,
-    CONF_CLICKABLE: 9,
-    CONF_SELECTABLE: 10,
+    CONF_PRESSED: Status_.PRESSED_,
+    CONF_SELECT: Status_.SELECTED_,
+    CONF_DISABLE: Status_.DISABLED_,
+    CONF_VISIBLE: Status_.VISIBLE_,
+    CONF_CLICKABLE: Status_.CLICKABLE_,
+    CONF_SELECTABLE: Status_.SELECTABLE_,
 }
+
+
+async def setup_style(var, config, style=None):
+    #style = kwargs.get('style', None)
+    
+    for key, value in config.items():
+        if key in ENUM_STYLE_STATUS.keys():
+            if (style is None):
+                await setup_style(var, value, style=ENUM_STYLE_STATUS[key])
+            else:
+                await setup_style(var, value, style=(style | ENUM_STYLE_STATUS[key]))
+
+        elif key in ENUM_STYLE_ARTIFACT.keys():
+            if isinstance(value, core.ID):
+                value = await cg.get_variable(value)
+            if (style is None):
+                cg.add(var.set_style(ENUM_STYLE_ARTIFACT[key], StyleStruct(value)))
+            else:
+                cg.add(
+                    var.set_style(style | ENUM_STYLE_ARTIFACT[key], StyleStruct(value))
+                )
+        else:
+            pass
+
+
+async def setup_thema(var, config):
+    for key, value in config.items():
+        if key in ENUM_STYLE_WIDGETS.keys():
+            await setup_style(var, value, ENUM_STYLE_WIDGETS[key])
+        else:
+            pass
 
 
 async def item_to_code(config):
@@ -683,7 +698,7 @@ async def item_to_code(config):
         cg.add(item.set_time(time_))
     for key in WIDGET_STATUS_OPTIONS.keys():
         if key in config:
-            cg.add(item.set_widget_status(WIDGET_STATUS_OPTIONS[key], config[key]))
+            cg.add(item.set_status(WIDGET_STATUS_OPTIONS[key], config[key]))
     for c in config.get(CONF_WIDGETS, []):
         sub = await item_to_code(c)
         cg.add(item.add_widget(sub))
@@ -695,26 +710,14 @@ async def item_to_code(config):
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
-    await setup_style(var, config)
+    setup_style(var, config)
 
-    if CONF_DISPLAY_DEFINE in config:
-        parent = await cg.get_variable(config[CONF_DISPLAY_DEFINE])
+    if CONF_DISPLAY_ID in config:
+        parent = await cg.get_variable(config[CONF_DISPLAY_ID])
         cg.add(var.set_display(parent))
     if touchscreen.CONF_TOUCHSCREEN_ID in config:
         parent = await cg.get_variable(config[touchscreen.CONF_TOUCHSCREEN_ID])
         cg.add(var.set_touchscreen(parent))
-    if CONF_PAGES in config:
-        for c in config[CONF_PAGES]:
-            item = await item_to_code(c)
-            cg.add(var.add_page(item))
-    if CONF_HEADER in config:
-        for c in config[CONF_HEADER]:
-            item = await item_to_code(c)
-            cg.add(var.add_header_widget(item))
-    if CONF_FOOTER in config:
-        for c in config[CONF_FOOTER]:
-            item = await item_to_code(c)
-            cg.add(var.add_footer_widget(item))
     if CONF_DEFAULT_FONT in config:
         parent = await cg.get_variable(config[CONF_DEFAULT_FONT])
         cg.add(var.set_default_font(parent))
@@ -722,3 +725,13 @@ async def to_code(config):
         cg.add(var.set_tabview(config[CONF_TABVIEW]))
     if CONF_THEMA in config:
         await setup_thema(var, config[CONF_THEMA])
+
+    for c in config.get(CONF_PAGES, []):
+        item = await item_to_code(c)
+        cg.add(var.add_page(item))
+    for c in config.get(CONF_HEADER, []):
+        item = await item_to_code(c)
+        cg.add(var.add_header_widget(item))
+    for c in config.get(CONF_FOOTER, []):
+        item = await item_to_code(c)
+        cg.add(var.add_footer_widget(item))
