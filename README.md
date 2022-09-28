@@ -1,12 +1,209 @@
-# SwitchPlate
+# SwitchPlate for esphome
+
 This component allows a similar method of creating complex displays for espHome, as done in the openHASP project
+It allows you to add buttons on the screen hook them up with esphome's switches and control them in you HA installation.
 
-# Discussions
- * [ESPHome-Switchplate channel](https://discord.com/channels/538814618106331137/981129448394993664) in the openHASP Discord
- * [Display architecture Changes needed? Thread](https://discord.com/channels/429907082951524364/960438726067114024) in the ESPHome Discord
- * [Show-off thread](https://discord.com/channels/429907082951524364/1019881727159697418) in the ESPHome Discord
+The best way to import this switchplate component is using the `external_components:` class:
 
-# Example Relevant YAML
+Enjou playing with the current version
+
+## How to start using the switchplate
+
+First of all make sure that you testing this out on the DEV version of esphome.
+As you can see there are a couple of PR's needed to have a good experience with the switchplate component. And the switchplate has only been tested with the ili9341 which is now part as a model of the ili9xxx family and the changed xpt2046 touchscreen driver.
+
+**NOTE:** Also make sure you use the arduino version `2.0.3` and and platform version `4.4.0`. I make use of code that os only supported with this version combination.
+
+```yaml
+esp32:
+  board: firebeetle32
+  framework:
+    type: arduino
+    version: 2.0.3
+    platform_version: 4.4.0
+
+external_components:
+  - source: github://pr#3796
+    components: [display, animation]
+    refresh: 10s
+  - source: github://pr#3793
+    components: [xpt2046]
+    refresh: 10s
+  - source: github://nielsnl68/Switchplate
+    components: [switchplate, ili9xxx]
+    refresh: 10s
+ ```
+
+## config the switchplate
+
+Currently the SwitchPlate supports the `Label`, `Button`, `Image`, `switch`, `checkbox` and `panel` widgets and has also 2 special use case widgets to show the page title and one for showing the current time or date.
+This is just a start in the upcoming releases different widget's will be added. Which ones that will be is also depending on you asking for them.
+
+With the following properties you can now setup the switchplate in the YAML config files:
+
+```yaml
+switchplate:
+  id: my_plate
+  display_id: my_display # Req 
+  touchscreen_id: my_toucher
+  default_font: my_font
+  tabview: true/false
+  thema:
+     ... 
+  pages:
+    - id: myButtons
+      title: Main buttons
+      is_visible: true/false
+      is_disabled: true/false
+      selectable: true 
+      widgets: 
+          ...
+  header_color: my_color
+  header_height: 25
+  header:
+    - type: pagetitle 
+      dimension:
+        x: 2
+        y: 0
+        width: 198
+        height: 20
+    - type: datetime
+      id: theTime
+      time_id: the_time
+      format: "%X"
+      dimension:
+        x: 240
+        y: 0
+        width: 120 
+        height: 20
+  footer_color: my_color
+  footer_height: 25
+  footer:
+     ....
+```
+
+### the label widget
+
+the following widgets can be set at the current time.
+The below settings are for `label`, `pagetitle` and `datetime`.
+
+```yaml
+        - type: label
+          id: txtHello
+          content: "I am your SwitchPlate"
+          is_pressed: true/false
+          is_visible: true/false
+          is_disabled: true/false
+          is_selected: true/false
+          clickable: true/false 
+          selectable: true
+          action: noting/home/prev/next
+
+          background_color: my_color
+          background_color_from: my_color
+          background_color_to: my_color
+          background_color_direction: horizontal/vertical
+
+          border_color: my_color
+          border_color_from: my_color
+          border_color_to: my_color
+          border_color_direction: horizontal/vertical
+
+          text_fond: my_font
+          text_align: top left
+          text_mode: crop
+          text_color_from: my_color
+          text_color_to: my_color
+          text_color_direction: horizontal/vertical
+
+          dimension:
+            x: 10
+            y: 30
+            width: 300 
+            height: 20
+```
+
+### The button widget
+
+Basicly every label or image component can be made `clickable` to become a button widget by it self.
+The difference is that the button component is already setup to show the button on the screen.
+You can use all the settings as shown with the label component.
+
+When you want to use a image as button then use the image widget instead and make it `clickable`.
+
+### The image widget
+
+The following properties are for the `image` widget:
+
+```yaml
+        - type: image
+          id: my_image_widget
+          is_pressed: true/false
+          is_visible: true/false
+          is_disabled: true/false
+          is_selected: true/false
+          clickable: true/false 
+          selectable: true/false
+          action: noting/home/prev/next
+          background_color: my_color
+          background_color_from: my_color
+          background_color_to: my_color
+          background_color_direction: horizontal/vertical
+
+          border_color: my_color
+          border_color_from: my_color
+          border_color_to: my_color
+          border_color_direction: horizontal/vertical
+
+          image_id: my_image
+          image_shift_x: 0
+          image_shift_y: 0
+          image_color: my_color
+          image_color_from: my_color
+          image_color_to: my_color
+          image_color_direction: horizontal/vertical
+          dimension:
+            x: 10
+            y: 30
+            width: 300 
+            height: 20
+```
+
+### The switch widget
+
+The switch widget is basicly an extended version of the button component with the extra options
+how to show the switch. it can be shown horisontal and vertical based on the dimentsions set for the switch.
+Making the width and heidth the same will show the switch as checkbox or radiobox.
+Future more you can define of it is an rounded or a rectangled switch.
+
+```yaml
+        - type: switch
+          ...
+          switch_mode: rounded_mode/rect_mode
+          foreground_color: my_color
+          foreground_color_from: my_color
+          foreground_color_to: my_color
+          foreground_color_direction: horizontal/vertical
+
+```
+
+The `foreground` color is used to display the switch dot.
+
+
+## Theming your whole switchplate
+
+When you want to do styling central at on place then you can use the `thema:` property like:
+
+```yaml
+     thema:
+        label: 
+           ...
+        button:
+          ...
+        etc.
+```
+
+## Example Relevant YAML
 
 ```yaml
 # to run everything you need to use a resent version of the arduino platform and ioplatform
@@ -216,6 +413,16 @@ switch:
     name: ${device} my_sw_image
  
 ```
-# More Examples
 
-~~For further examples of what this component can do, check out the [documentation here](https://github.com/nielsnl68/SwitchPlate/blob/main/components/readme.md)~~
+## Discussions
+
+I love to hear from you when you have testing it. You can post your finding here or ping me on discord at:
+
+* [ESPHome-Switchplate channel](https://discord.com/channels/538814618106331137/981129448394993664) in the openHASP Discord
+* [Display architecture Changes needed? Thread](https://discord.com/channels/429907082951524364/960438726067114024) in the ESPHome Discord
+* [Show-off thread](https://discord.com/channels/429907082951524364/1019881727159697418) in the ESPHome Discord
+
+## Contributors
+
+* @cpyarger made their first contribution in https://github.com/nielsnl68/SwitchPlate/pull/4
+**I like to thank @fvanroie for helping me where he could. Without his work i never started this endeavour. Also i want to thank everyone that helped me while i was stuck with parts of the development. Without them i would ended where i am now.**
