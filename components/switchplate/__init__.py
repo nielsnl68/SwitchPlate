@@ -149,6 +149,10 @@ CONF_SPINNER_MODES = {
     "slowdown_stratch": WidgetMode_.SLOWSTRATCH,
 }
 
+CONF_SWITCH_MODES = {
+    "ROUND_MODE": WidgetMode_.ROUND_MODE,
+    "RECT_MODE": WidgetMode_.RECT_MODE,
+}
 
 Direction_ = openHASP_ns.enum("Direction", is_class=True)
 CONF_DROPDOWN_DIRECTIONS = {
@@ -164,10 +168,15 @@ CONF_SPINNER_DIRECTIONS = {
 
 DoAction_ = openHASP_ns.enum("DoAction", is_class=True)
 ENUM_ACTION = {
-    "do_notting": DoAction_.DO_NOTTING,
+    "DO_NOTTING": DoAction_.DO_NOTTING,
     "HOME": DoAction_.SHOW_HOME,
     "PREV": DoAction_.SHOW_PREV,
+    "PREVIOUS": DoAction_.SHOW_PREV,
     "NEXT": DoAction_.SHOW_NEXT,
+    "HOME_PAGE": DoAction_.SHOW_HOME,
+    "PREV_PAGE": DoAction_.SHOW_PREV,
+    "PREVIOUS_PAGE": DoAction_.SHOW_PREV,
+    "NEXT_PAGE": DoAction_.SHOW_NEXT,
 }
 
 
@@ -177,6 +186,10 @@ ENUM_STYLE_ARTIFACT = {
     "background_color_from": Style_.BACKGROUND | Style_.COLOR | Style_.FROM,
     "background_color_to": Style_.BACKGROUND | Style_.COLOR | Style_.TO,
     "background_color_direction": Style_.BACKGROUND | Style_.COLOR | Style_.DIRECTION,
+    "foreground_color": Style_.BACKGROUND | Style_.COLOR,
+    "foreground_color_from": Style_.BACKGROUND | Style_.COLOR | Style_.FROM,
+    "foreground_color_to": Style_.BACKGROUND | Style_.COLOR | Style_.TO,
+    "foreground_color_direction": Style_.BACKGROUND | Style_.COLOR | Style_.DIRECTION,
     "image_id": Style_.IMAGE | Style_.ID,
     "image_shift_x": Style_.IMAGE | Style_.SHIFT_X,
     "image_shift_y": Style_.IMAGE | Style_.SHIFT_Y,
@@ -207,6 +220,8 @@ ENUM_STYLE_ARTIFACT = {
     "footer_color_to": Style_.FOOTER | Style_.COLOR | Style_.TO,
     "footer_color_direction": Style_.FOOTER | Style_.COLOR | Style_.DIRECTION,
     "default_font": Style_.FONT,
+    "switch_mode": Style_.SWITCH | Style_.MODE,
+    "checkbox_mode": Style_.CHECKBOX | Style_.MODE,
 }
 
 ENUM_STYLE_STATUS = {
@@ -226,6 +241,8 @@ ENUM_STYLE_WIDGETS = {
     WIDGET_PAGETITLE: Style_.WIDGET_PAGETITLE,
     WIDGET_PANEL: Style_.WIDGET_PANEL,
     WIDGET_IMAGE: Style_.WIDGET_IMAGE,
+    WIDGET_SWITCH: Style_.WIDGET_SWITCH,
+    WIDGET_CHECKBOX: Style_.WIDGET_CHECKBOX,
 }
 
 WidgetMode_ = openHASP_ns.enum("Mode", is_class=True)
@@ -449,6 +466,26 @@ def widget_image_schema():
     )
 
 
+def widget_switch_schema():
+    return add_style_statuses(
+        {cv.Optional("switch_mode"): cv.enum(CONF_SWITCH_MODES, upper=True, space="_")}
+        | style_image_schema()
+        | style_background_schema()
+        | style_border_schema()
+        | style_color_schema("foreground_")
+    )
+
+
+def widget_checkbox_schema():
+    return add_style_statuses(
+        {cv.Optional("checkbox_mode"): cv.enum(CONF_SWITCH_MODES, upper=True, space="_")}
+        | style_image_schema()
+        | style_background_schema()
+        | style_border_schema()
+        | style_color_schema("foreground_")
+    )
+
+
 def style_thema_schema():
     return {
         cv.Optional(CONF_SWITCHPLATE): widget_switchplate_schema(),
@@ -459,6 +496,8 @@ def style_thema_schema():
         cv.Optional(WIDGET_PAGETITLE): widget_pagetittle_schema(),
         cv.Optional(WIDGET_PANEL): widget_panel_schema(),
         cv.Optional(WIDGET_IMAGE): widget_image_schema(),
+        cv.Optional(WIDGET_SWITCH): widget_switch_schema(),
+        cv.Optional(WIDGET_IMAGE): widget_checkbox_schema(),
     }
 
 
@@ -567,6 +606,20 @@ SWITCHPLATE_ITEM_SCHEMA = cv.All(
                     ),
                 }
             ).extend(widget_image_schema()),
+            WIDGET_SWITCH: SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
+                {
+                    cv.GenerateID(CONF_ID): cv.declare_id(
+                        CONF_WIDGET_CLASSES[WIDGET_SWITCH]
+                    ),
+                }
+            ).extend(widget_switch_schema()),
+            WIDGET_CHECKBOX: SWITCHPLATE_ITEM_COMMON_SCHEMA.extend(
+                {
+                    cv.GenerateID(CONF_ID): cv.declare_id(
+                        CONF_WIDGET_CLASSES[WIDGET_CHECKBOX]
+                    ),
+                }
+            ).extend(widget_checkbox_schema()),
         },
         default_type="label",
         lower=True,
@@ -627,11 +680,11 @@ WIDGET_STATUS_OPTIONS = {
 
 
 async def setup_style(var, config, style=None):
-    #style = kwargs.get('style', None)
-    
+    # style = kwargs.get('style', None)
+
     for key, value in config.items():
         if key in ENUM_STYLE_STATUS.keys():
-            if (style is None):
+            if style is None:
                 await setup_style(var, value, style=ENUM_STYLE_STATUS[key])
             else:
                 await setup_style(var, value, style=(style | ENUM_STYLE_STATUS[key]))
@@ -639,7 +692,7 @@ async def setup_style(var, config, style=None):
         elif key in ENUM_STYLE_ARTIFACT.keys():
             if isinstance(value, core.ID):
                 value = await cg.get_variable(value)
-            if (style is None):
+            if style is None:
                 cg.add(var.set_style(ENUM_STYLE_ARTIFACT[key], StyleStruct(value)))
             else:
                 cg.add(

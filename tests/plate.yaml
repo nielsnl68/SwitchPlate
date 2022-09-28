@@ -199,7 +199,7 @@ switchplate:
 
         - type: image
           id: banklamp
-          image_id: my_image4        
+          image_id: my_image4
           image_color: my_light_blue
           border_radius: 8
           pressed:
@@ -249,6 +249,114 @@ switchplate:
             width: 96
             height: 96
 
+    - id: mySwitchPage # Opt.
+      title: Switches and Checkboxes
+      selectable: true # can be opened with next and previous page selectors
+      widgets:
+        - type: switch
+          dimension:
+            x: 10
+            y: 40
+            width: 20
+            height: 100
+          switch_mode: round mode
+        - type: switch
+          dimension:
+            x: 100
+            y: 40
+            width: 100
+            height: 20
+          switch_mode: round mode
+        - type: switch
+          dimension:
+            x: 190
+            y: 40
+            width: 20
+            height: 20
+          switch_mode: round mode
+
+        - type: switch
+          dimension:
+            x: 10
+            y: 100
+            width: 20
+            height: 100
+          switch_mode: round mode
+          is_selected: true
+        - type: switch
+          dimension:
+            x: 100
+            y: 100
+            width: 100
+            height: 20
+          switch_mode: round mode
+          is_selected: true
+        - type: switch
+          dimension:
+            x: 190
+            y: 100
+            width: 20
+            height: 20
+          is_selected: true
+          switch_mode: round mode
+
+        - type: switch
+          dimension:
+            x: 10
+            y: 150
+            width: 100
+            height: 20
+          switch_mode: rect mode
+        - type: switch
+          dimension:
+            x: 100
+            y: 150
+            width: 100
+            height: 20
+          switch_mode: rect mode
+        - type: switch
+          dimension:
+            x: 190
+            y: 150
+            width: 20
+            height: 20
+          switch_mode: rect mode
+
+        - type: switch
+          dimension:
+            x: 10
+            y: 200
+            width: 100
+            height: 20
+          is_selected: true
+          switch_mode: rect mode
+        - type: switch
+          dimension:
+            x: 100
+            y: 200
+            width: 100
+            height: 20
+          is_selected: true
+          switch_mode: rect mode
+        - type: switch
+          dimension:
+            x: 190
+            y: 200
+            width: 20
+            height: 20
+          is_selected: true
+          switch_mode: rect mode
+
+        - type: button
+          dimension:
+            x: 220
+            y: 190
+            width: 100
+            height: 40
+
+          content: "Next"
+          action: next
+
     - id: myMainPage # Opt.
       title: Basic widgets
       selectable: true # can be opened with next and previous page selectors
@@ -264,13 +372,24 @@ switchplate:
         - type: button
           id: btnClick
           dimension:
-            x: 60
-            y: 180
-            width: 200
+            x: 20
+            y: 190
+            width: 100
             height: 40
           border_color: my_yellow
           content: "Click me"
           action: home
+
+        - type: button
+          id: btnNext
+          dimension:
+            x: 220
+            y: 190
+            width: 100
+            height: 40
+          border_color: my_yellow
+          content: "Next"
+          action: next
 
         - type: image
           image_id: my_image
@@ -343,7 +462,7 @@ switch:
     widget_id: banklamp
     name: ${device} banklamp lampen
 
- # Define a PWM output on the ESP32
+  # Define a PWM output on the ESP32
 output:
   - platform: ledc
     pin: 17

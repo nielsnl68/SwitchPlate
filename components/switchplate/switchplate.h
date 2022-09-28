@@ -83,6 +83,9 @@ enum class Mode : uint8_t {
   CONSTANT = 10,
   SLOWDOWNUP = 11,
   SLOWSTRATCH = 12,
+
+  ROUND_MODE= 20,
+  RECT_MODE = 21
 };
 
 enum class Direction : uint8_t {
@@ -119,6 +122,8 @@ struct Style {
   static constexpr uint32_t HEADER = 0x0004;
   static constexpr uint32_t FOOTER = 0x0005;
   static constexpr uint32_t FOREGROUND = 0x0006;
+  static constexpr uint32_t SWITCH = 0x0007;
+  static constexpr uint32_t CHECKBOX = 0x0008;
 
   static constexpr uint32_t COLOR = 0x0080;
   static constexpr uint32_t IMAGE = 0x00A0;
@@ -150,6 +155,9 @@ struct Style {
   static constexpr uint32_t WIDGET_PAGETITLE = 0x600000;
   static constexpr uint32_t WIDGET_PANEL = 0x700000;
   static constexpr uint32_t WIDGET_IMAGE = 0x800000;
+  static constexpr uint32_t WIDGET_STATIC = 0x900000;
+  static constexpr uint32_t WIDGET_CHECKBOX = 0xA00000;
+
 
   static constexpr uint32_t BACKGROUND_COLOR = BACKGROUND | COLOR;
   static constexpr uint32_t BACKGROUND_COLOR_TO = BACKGROUND | COLOR | TO;
@@ -763,39 +771,38 @@ SwitchPlateBase *check_touch(TouchInfo tp, Rect parent) {
 };
 virtual void handle_touch(TouchInfo tp) {}
 
-void set_disable_style() {
-  this->set_style(Style::BORDER_COLOR | Style::DISABLE, Color(0x000000), true);
-  this->set_style(Style::IMAGE | Style::COLOR | Style::DISABLE, Color(0x777777), true);
-  this->set_style(Style::TEXT_COLOR | Style::DISABLE, Color(0x777777), true);
-  this->set_style(Style::BACKGROUND_COLOR | Style::DISABLE, Color(0x000000), true);
+void set_disable_style();
+
+bool get_color_definition(uint32_t style, Color & from, Color & to, GradientDirection & dir) {
+  if (this->has_style(style | Style::COLOR, this->status_)) {
+    from = this->get_style(style | Style::COLOR, this->status_).color_;
+    to = from;
+    dir = GradientDirection::GRADIENT_NONE;
+    if (this->has_style(style | Style::COLOR | Style::TO, this->status_)) {
+      to = this->get_style(style | Style::COLOR | Style::TO, this->status_).color_;
+      dir = (GradientDirection) this->get_style(style | Style::COLOR | Style::DIRECTION, this->status_).direction_;
+    }
+    return true;
+  }
+  return false;
 }
 
 void show_background() {
   uint8_t radius = get_style(Style::BORDER_RADIUS, this->status_).uint32_;
   Rect r = this->get_boundry();
-  Color from, to;
+  show_background(r.x, r.y, r.w, r.h, radius);
+}
 
+void show_background(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t radius) {
+  Color from, to;
   GradientDirection dir = GradientDirection::GRADIENT_NONE;
-  if (this->has_style(Style::BACKGROUND_COLOR, this->status_)) {
-    from = this->get_style(Style::BACKGROUND_COLOR, this->status_).color_;
-    to = from;
-    dir = GradientDirection::GRADIENT_NONE;
-    if (this->has_style(Style::BACKGROUND_COLOR_TO, this->status_)) {
-      to = this->get_style(Style::BACKGROUND_COLOR_TO, this->status_).color_;
-      dir = (GradientDirection) this->get_style(Style::BACKGROUND_COLOR_DIRECTION, this->status_).direction_;
-    }
-    display()->filled_rectangle(r.x, r.y, r.w, r.h, radius, from, to, dir);
+
+  if (this->get_color_definition(Style::BACKGROUND, from, to, dir)) {
+    display()->filled_rectangle(x, y, width, height, radius, from, to, dir);
   }
 
-  if (this->has_style(Style::BORDER_COLOR, this->status_)) {
-    from = this->get_style(Style::BORDER_COLOR, this->status_).color_;
-    to = from;
-    dir = GradientDirection::GRADIENT_NONE;
-    if (this->has_style(Style::BORDER_COLOR_TO, this->status_)) {
-      to = this->get_style(Style::BORDER_COLOR_TO, this->status_).color_;
-      dir = (GradientDirection) this->get_style(Style::BORDER_COLOR_DIRECTION, this->status_).direction_;
-    }
-    display()->rectangle(r.x, r.y, r.w, r.h, radius, from, to, dir);
+  if (this->get_color_definition(Style::BORDER_COLOR, from, to, dir)) {
+    display()->rectangle(x, y, width, height, radius, from, to, dir);
   }
 }
 
@@ -965,9 +972,11 @@ class SwitchPlatePage : public SwitchPlateGroup {
 
   void set_next(SwitchPlatePage *next);
   SwitchPlatePage *get_next() { return this->next_; }
+  bool can_next() { return  this->next_ != nullptr; }
 
   void set_prev(SwitchPlatePage *prev);
   SwitchPlatePage *get_prev() { return this->prev_; }
+  bool can_prev() { return  this->prev_ != nullptr; }
 
   void select() { ((SwitchPlate *) this->parent_)->show_page(this); }
 
@@ -1003,14 +1012,14 @@ class SwitchPlateLabel : public SwitchPlateItem {
   void show() override {
     int16_t x, y;
     Align align = this->get_style(Style::TEXT_ALIGN).align_;
-    Color color = this->get_style(Style::TEXT_COLOR).color_;
     Font *font = this->get_style(Style::TEXT_FONT).font_;
-    // int x, int y, Font *font, Color color, TextAlign align, const char *text
-    // ESP_LOGD(TAG, "show: '%s'", this->old_text_.c_str());
+    Color from, to;
+    GradientDirection dir = GradientDirection::GRADIENT_NONE;
 
+    this->get_color_definition(Style::TEXT, from, to, dir);
     show_background();
     calc_text_alignment(font, align, x, y);
-    display()->print(x, y, font, color, (TextAlign) align, text().c_str());
+    display()->print(x, y, font, from, (TextAlign) align, text().c_str());
   };
 
   void set_mode(Mode mode) {
@@ -1085,11 +1094,11 @@ class SwitchPlateButton : public SwitchPlateLabel {
     SwitchPlateLabel::setup();
     this->set_style(Style::BORDER_RADIUS, 10, true);
 
-    this->set_style(Style::BORDER_COLOR, Color(0xDD0000), true);
-    this->set_style(Style::BACKGROUND_COLOR, Color(0x660000), true);
+    this->set_style(Style::BORDER_COLOR, Color(0xDDDDDD), true);
+    this->set_style(Style::BACKGROUND_COLOR, Color(0x999999), true);
 
-    this->set_style(Style::BORDER_COLOR | Style::PRESS, Color(0x00DD00), true);
-    this->set_style(Style::BACKGROUND_COLOR | Style::PRESS, Color(0x006600), true);
+    this->set_style(Style::BORDER_COLOR | Style::PRESS, Color(0xEEEEEE), true);
+    this->set_style(Style::BACKGROUND_COLOR | Style::PRESS, Color(0xAAAAAA), true);
 
     this->status_.clickable = 1;
   };
@@ -1131,61 +1140,89 @@ class SwitchPlatePanel : public SwitchPlateGroup {
   void show() override { show_background(); };
 };
 
-// ================================================================================================================================
-// ==================================================================================================================
-// Actions =====
-// ================================================================================================================================
+// ================================================================================================================
+// SwitchPlateSwitch
 
-template<typename... Ts> class SwitchPlateShowAction : public Action<Ts...> {
+
+class SwitchPlateSwitch : public SwitchPlateButton {
  public:
-  TEMPLATABLE_VALUE(SwitchPlatePage *, page)
+  void setup() override {
+    this->set_style(Style::TEXT_ALIGN, Align::CENTER, true);
 
-  void play(Ts... x) override {
-    auto *page = this->page_.value(x...);
-    if (page != nullptr) {
-      page->select();
+    this->set_style(Style::BORDER_RADIUS, 10, true);
+
+    this->set_style(Style::BORDER_COLOR, Color(0xDD0000), true);
+    this->set_style(Style::BACKGROUND_COLOR, Color(0x660000), true);
+    this->set_style(Style::FOREGROUND | Style::COLOR, Color(0xDD0000), true);
+
+    this->set_style(Style::BORDER_COLOR | Style::SELECT, Color(0x00DD00), true);
+    this->set_style(Style::BACKGROUND_COLOR | Style::SELECT, Color(0x006600), true);
+    this->set_style(Style::FOREGROUND | Style::COLOR | Style::SELECT, Color(0x00DD00), true);
+
+    this->set_style(Style::BORDER_COLOR | Style::PRESS, Color(0xEE0000), true);
+    this->set_style(Style::BACKGROUND_COLOR | Style::PRESS, Color(0x770000), true);
+    this->set_style(Style::FOREGROUND | Style::COLOR | Style::PRESS, Color(0xEE0000), true);
+    
+    this->set_style(Style::BORDER_COLOR | Style::PRESS | Style::SELECT, Color(0xEE0000), true);
+    this->set_style(Style::BACKGROUND_COLOR | Style::PRESS | Style::SELECT, Color(0x770000), true);
+    this->set_style(Style::FOREGROUND | Style::COLOR | Style::PRESS | Style::SELECT, Color(0xEE0000), true);
+
+    SwitchPlateButton::setup();
+  };
+
+  void show() override { 
+    uint16_t width = this->width(), x_off = x()+ 2;
+    uint16_t height = this->height(), y_off = y()+ 2;
+    uint16_t radius = 3; uint16_t ribben = this->width()-5;
+    Mode mode = get_style(Style::SWITCH | Style::MODE).mode_;
+    if (width == height) {
+      if (mode != Mode::RECT_MODE) {
+        radius = width/2;
+      }
+
+    } else if (width < height) {
+        // horizontal switch
+        if (width*2 < height) {
+          height = width*2;
+        } else {
+          width = height /2;
+        }
+        ribben = width - 5;
+        y_off = (y() + height) - (width-2);
+        if (mode != Mode::RECT_MODE) {
+          radius = width/2;
+        }
+    } else {
+        // vertical switch
+        if (height*2 < width ) {
+          width = height*2;
+        } else {
+          height = width /2;
+        }
+        ribben = height - 5;
+        x_off = (x() + width) - (height-2) ;
+        if (mode != Mode::RECT_MODE) {
+          radius = height/2;
+        }
     }
-  }
+    show_background(this->x(), this->y(), width, height, radius);
+    Color from, to;
+    GradientDirection dir = GradientDirection::GRADIENT_NONE;
+
+    this->get_color_definition(Style::FOREGROUND, from, to, dir);
+    if (status_.selected==0 ) {
+      x_off = x()+ 2;
+      y_off = y()+ 2;
+    }
+    if (mode != Mode::RECT_MODE) {
+      radius = radius -2;
+    }
+
+    display()->filled_rectangle(x_off, y_off, ribben, ribben, radius, from, to, dir);
+
+  };
 };
 
-template<typename... Ts> class SwitchPlateShowNextAction : public Action<Ts...> {
- public:
-  SwitchPlateShowNextAction(SwitchPlate *plate) : plate_(plate) {}
-
-  void play(Ts... x) override { this->plate_->show_next(); }
-
-  SwitchPlate *plate_;
-};
-
-template<typename... Ts> class SwitchPlateShowHomeAction : public Action<Ts...> {
- public:
-  SwitchPlateShowHomeAction(SwitchPlate *plate) : plate_(plate) {}
-
-  void play(Ts... x) override { this->plate_->show_home(); }
-
-  SwitchPlate *plate_;
-};
-
-template<typename... Ts> class SwitchPlateShowPrevAction : public Action<Ts...> {
- public:
-  SwitchPlateShowPrevAction(SwitchPlate *plate) : plate_(plate) {}
-
-  void play(Ts... x) override { this->plate_->show_prev(); }
-
-  SwitchPlate *plate_;
-};
-
-template<typename... Ts> class SwitchPlateIsPageCondition : public Condition<Ts...> {
- public:
-  SwitchPlateIsPageCondition(SwitchPlate *plate) : plate_(plate) {}
-
-  void set_page(SwitchPlatePage *page) { this->page_ = page; }
-  bool check(Ts... x) override { return this->plate_->current_page() == this->page_; }
-
- protected:
-  SwitchPlate *plate_;
-  SwitchPlatePage *page_;
-};
 
 }  // namespace switch_plate
 }  // namespace esphome

@@ -111,6 +111,25 @@ void SwitchPlate::add_footer_widget(SwitchPlateItem *item) {
   this->footer_.push_back(item);
 }
 
+void SwitchPlate::show_prev() { this->show_page(this->get_prev()); }
+bool SwitchPlate::can_prev() { return this->get_prev() != nullptr; }
+
+SwitchPlatePage *SwitchPlate::get_prev() {
+  SwitchPlatePage *page;
+  if (this->current_page_ == nullptr) {
+    page = this->first_page_;
+  } else {
+    page = this->current_page_->get_prev();
+    while ((page != nullptr) && !page->is_selectable()) {
+      page = page->get_prev();
+    }
+  }
+  return page;
+}
+
+void SwitchPlate::show_next() { this->show_page(this->get_next()); }
+bool SwitchPlate::can_next() { return this->get_next() != nullptr; }
+
 SwitchPlatePage *SwitchPlate::get_next() {
   SwitchPlatePage *page;
   if (this->current_page_ == nullptr) {
@@ -124,8 +143,6 @@ SwitchPlatePage *SwitchPlate::get_next() {
   return page;
 }
 
-void SwitchPlate::show_next() { this->show_page(this->get_next()); }
-bool SwitchPlate::can_next() { return this->get_next() != nullptr; }
 
 void SwitchPlate::touch(TouchPoint tpoint) {
   ESP_LOGV("SwitchPlate","=====> A (%3d, %3d) %3d", tpoint.x, tpoint.y, (uint8_t)this->touch_info_.state);
@@ -181,22 +198,6 @@ void SwitchPlate::touch(TouchPoint tpoint) {
       this->current_page_->check_touch(this->touch_info_, Rect(0, 0, this->screen_width(), this->screen_height()));
   }
 };
-
-SwitchPlatePage *SwitchPlate::get_prev() {
-  SwitchPlatePage *page;
-  if (this->current_page_ == nullptr) {
-    page = this->first_page_;
-  } else {
-    page = this->current_page_->get_prev();
-    while ((page != nullptr) && !page->is_selectable()) {
-      page = page->get_prev();
-    }
-  }
-  return page;
-}
-
-void SwitchPlate::show_prev() { this->show_page(this->get_prev()); }
-bool SwitchPlate::can_prev() { return this->get_prev() != nullptr; }
 
 void SwitchPlatePage::set_prev(SwitchPlatePage *prev) { this->prev_ = prev; }
 void SwitchPlatePage::set_next(SwitchPlatePage *next) { this->next_ = next; }
@@ -256,6 +257,17 @@ void SwitchPlateItem::show_image(int16_t x, int16_t y, Image *image, Color color
     App.feed_wdt();
   }
 }
+
+void SwitchPlateItem::set_disable_style() {
+  this->set_style(Style::BORDER_COLOR | Style::DISABLE, Color(0x000000), true);
+  this->set_style(Style::IMAGE | Style::COLOR | Style::DISABLE, Color(0x777777), true);
+  this->set_style(Style::TEXT_COLOR | Style::DISABLE, Color(0x777777), true);
+  this->set_style(Style::BACKGROUND_COLOR | Style::DISABLE, Color(0x000000), true);
+  if ((action_ == DoAction::SHOW_NEXT)) status_.disabled = this.plate()->current_page()->can_next()?0:1;
+  if ((action_ == DoAction::SHOW_PREV)) status_.disabled = this.plate()->current_page()->can_prev()?0:1;
+}
+
+
 
 }  // namespace switch_plate
 }  // namespace esphome
