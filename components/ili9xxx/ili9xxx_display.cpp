@@ -34,7 +34,7 @@ void ILI9XXXDisplay::setup_pins_() {
 }
 
 void ILI9XXXDisplay::dump_config() {
-  LOG_DISPLAY("", "ili9XXX", this);
+  LOG_DISPLAY("", "ili9xxx", this);
   LOG_PIN("  Reset Pin: ", this->reset_pin_);
   LOG_PIN("  DC Pin: ", this->dc_pin_);
   LOG_PIN("  Busy Pin: ", this->busy_pin_);
@@ -63,7 +63,7 @@ void ILI9XXXDisplay::display() {
 
   set_addr_window_(this->x_low_, this->y_low_, w, h);
 
-  ESP_LOGVV(TAG, "Start ILI9XXXDisplay::display(xlow:%d, ylow:%d, xhigh:%d, yhigh:%d, width:%d, heigth:%d, start_pos:%d)",
+  ESP_LOGVV(TAG, "Start display(xlow:%d, ylow:%d, xhigh:%d, yhigh:%d, width:%d, heigth:%d, start_pos:%d)",
             this->x_low_, this->y_low_, this->x_high_, this->y_high_, w, h, start_pos);
 
   this->start_data_();
