@@ -145,23 +145,23 @@ The following properties are for the `image` widget:
           clickable: true/false 
           selectable: true/false
           action: noting/home/prev/next
-          background_color: my_color
-          background_color_from: my_color
-          background_color_to: my_color
-          background_color_direction: horizontal/vertical
+          background_color: my_color  #styleable
+          background_color_from: my_color #styleable
+          background_color_to: my_color #styleable
+          background_color_direction: horizontal/vertical #styleable
 
-          border_color: my_color
-          border_color_from: my_color
-          border_color_to: my_color
-          border_color_direction: horizontal/vertical
+          border_color: my_color #styleable
+          border_color_from: my_color #styleable
+          border_color_to: my_color #styleable
+          border_color_direction: horizontal/vertical #styleable
 
           image_id: my_image
           image_shift_x: 0
           image_shift_y: 0
-          image_color: my_color
-          image_color_from: my_color
-          image_color_to: my_color
-          image_color_direction: horizontal/vertical
+          image_color: my_color #styleable
+          image_color_from: my_color #styleable
+          image_color_to: my_color #styleable
+          image_color_direction: horizontal/vertical #styleable
           dimension:
             x: 10
             y: 30
@@ -171,28 +171,55 @@ The following properties are for the `image` widget:
 
 ### The switch widget
 
-The switch widget is basicly an extended version of the button component with the extra options
-how to show the switch. it can be shown horisontal and vertical based on the dimentsions set for the switch.
+The switch widget is basicly an extended version of the button component with the extra options how to show the switch. it can be shown horisontal and vertical based on the dimentsions set for the switch.
 Making the width and heidth the same will show the switch as checkbox or radiobox.
 Future more you can define of it is an rounded or a rectangled switch.
 
 ```yaml
         - type: switch
           ...
-          switch_mode: rounded_mode/rect_mode
-          foreground_color: my_color
-          foreground_color_from: my_color
-          foreground_color_to: my_color
-          foreground_color_direction: horizontal/vertical
+          switch_mode: rounded_mode/rect_mode #styleable
+          foreground_color: my_color #styleable
+          foreground_color_from: my_color #styleable
+          foreground_color_to: my_color #styleable
+          foreground_color_direction: horizontal/vertical #styleable
 
 ```
 
 The `foreground` color is used to display the switch dot.
 
+## using styling properties
+
+With the styleing properties you can define how the widget lookslike per widget status.
+There are 5 different statuses, the default one, when pressed, when selected, when disabled, a combination of selected and pressed or disabled.
+Per widget status you can use the properies that are marked `# styleable`.
+To setup the styling for the different statussen just put the name of the status and added the style propety below it with the changed value.
+
+```yanl
+        - type: image
+          id: banklamp
+          image_id: my_image4
+          image_color: my_light_blue
+          border_radius: 8
+          pressed:
+            image_color: my_blue
+            border_color: my_blue
+          selected:
+            image_color: my_yellow
+            border_color: my_yellow
+          pressed_selected:
+            border_color: my_red
+
+          selectable: true
+          clickable: true
+```
+
+When there is no style property set for a special status then it will find the nearest status for pressed, selected, disabled it will check the default status. for the combi statuses first it checks the individual status before the default status.
+When you use the `thema property` then that will be check first as well, see below.
 
 ## Theming your whole switchplate
 
-When you want to do styling central at on place then you can use the `thema:` property like:
+When you want to do styling central at on place then you can use the `thema:` property. Per widget type you can exactly set how the display should be shown. How every you can still override this setting with the styling options in the widget it self.
 
 ```yaml
      thema:
