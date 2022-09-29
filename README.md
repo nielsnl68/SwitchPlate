@@ -156,8 +156,8 @@ The following properties are for the `image` widget:
           border_color_direction: horizontal/vertical #styleable
 
           image_id: my_image
-          image_shift_x: 0
-          image_shift_y: 0
+          image_offset_x: 0
+          image_offset_y: 0
           image_color: my_color #styleable
           image_color_from: my_color #styleable
           image_color_to: my_color #styleable
@@ -195,7 +195,7 @@ There are 5 different statuses, the default one, when pressed, when selected, wh
 Per widget status you can use the properies that are marked `# styleable`.
 To setup the styling for the different statussen just put the name of the status and added the style propety below it with the changed value.
 
-```yanl
+```yaml
         - type: image
           id: banklamp
           image_id: my_image4

@@ -223,6 +223,9 @@ switchplate:
           pressed:
             image_color: my_blue
             border_color: my_blue
+          selected:
+            image_color: my_yellow
+            border_color: my_yellow
           selectable: false
           clickable: true
           dimension:
