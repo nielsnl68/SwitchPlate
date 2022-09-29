@@ -7,7 +7,7 @@
 
 namespace esphome {
 namespace switch_plate {
-
+/*
 
 template<typename... Ts> class SwitchPlateShowAction : public Action<Ts...> {
  public:
@@ -59,6 +59,7 @@ template<typename... Ts> class SwitchPlateIsPageCondition : public Condition<Ts.
   SwitchPlate *plate_;
   SwitchPlatePage *page_;
 };
+*/
 
 }  // namespace switch_plate
 }  // namespace esphome

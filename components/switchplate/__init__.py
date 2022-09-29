@@ -110,8 +110,8 @@ CONF_DEFAULT_FONT = "default_font"
 CONF_SPIN_SPEED = "spin_speed"
 
 CONF_IMAGE_ID = "image_id"
-CONF_SHIFT_X = "shift_x"
-CONF_SHIFT_Y = "shift_y"
+CONF_OFFSET_X = "offset_x"
+CONF_OFFSET_Y = "offset_y"
 
 CONF_THEMA = "thema"
 CONF_STYLE = "style"
@@ -191,8 +191,8 @@ ENUM_STYLE_ARTIFACT = {
     "foreground_color_to": Style_.BACKGROUND | Style_.COLOR | Style_.TO,
     "foreground_color_direction": Style_.BACKGROUND | Style_.COLOR | Style_.DIRECTION,
     "image_id": Style_.IMAGE | Style_.ID,
-    "image_shift_x": Style_.IMAGE | Style_.SHIFT_X,
-    "image_shift_y": Style_.IMAGE | Style_.SHIFT_Y,
+    "image_offset_x": Style_.IMAGE | Style_.OFFSET_X,
+    "image_offset_y": Style_.IMAGE | Style_.OFFSET_Y,
     "image_color": Style_.IMAGE | Style_.COLOR,
     "image_color_from": Style_.IMAGE | Style_.COLOR | Style_.FROM,
     "image_color_to": Style_.IMAGE | Style_.COLOR | Style_.TO,
@@ -389,8 +389,8 @@ def style_text_schema(key=""):
 def style_image_schema(key=""):
     return {
         cv.Optional(key + CONF_IMAGE_ID): cv.use_id(image.Image_),
-        cv.Optional(key + "image_shift_x"): cv.int_range(-1024, 1024),
-        cv.Optional(key + "image_shift_y"): cv.int_range(-1024, 1024),
+        cv.Optional(key + "image_offset_x"): cv.int_range(-1024, 1024),
+        cv.Optional(key + "image_offset_y"): cv.int_range(-1024, 1024),
     } | style_color_schema(key + "image_")
 
 

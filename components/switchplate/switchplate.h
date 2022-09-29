@@ -137,8 +137,8 @@ struct Style {
   static constexpr uint32_t ALIGN = 0x0600;
   static constexpr uint32_t MODE = 0x0700;
   static constexpr uint32_t RADIUS = 0X0800;
-  static constexpr uint32_t SHIFT_X = 0x0A00;
-  static constexpr uint32_t SHIFT_Y = 0x0B00;
+  static constexpr uint32_t OFFSET_X = 0x0A00;
+  static constexpr uint32_t OFFSET_Y = 0x0B00;
   static constexpr uint32_t HEIGTH = 0x0C00;
   static constexpr uint32_t WIDTH = 0x0D00;
 
@@ -806,7 +806,7 @@ void show_background(uint16_t x, uint16_t y, uint16_t width, uint16_t height, ui
   }
 }
 
-void show_image(int16_t x, int16_t y, Image *image, Color color_on, Color color_off);
+void show_image(int16_t offset_x, int16_t offset_y, Image *image, Color color_on, Color color_off);
 
 bool has_border() { return (this->has_style(Style::BORDER_COLOR, this->status_)); }
 
@@ -1122,9 +1122,9 @@ class SwitchPlateImage : public SwitchPlateItem {
     auto *image = this->get_style(Style::IMAGE | Style::ID, this->status_).image_;
     Color bg_color = this->get_style(Style::BACKGROUND_COLOR, this->status_).color_;
     Color fg_color = this->get_style(Style::IMAGE | Style::COLOR, this->status_).color_;
-    int16_t shift_x = this->get_style(Style::IMAGE | Style::SHIFT_X, this->status_).uint32_;
-    int16_t shift_y = this->get_style(Style::IMAGE | Style::SHIFT_Y, this->status_).uint32_;
-    show_image(shift_x, shift_y, image, fg_color, bg_color);
+    int16_t offset_x = this->get_style(Style::IMAGE | Style::OFFSET_X, this->status_).uint32_;
+    int16_t offset_y = this->get_style(Style::IMAGE | Style::OFFSET_Y, this->status_).uint32_;
+    show_image(offset_x, offset_y, image, fg_color, bg_color);
   };
 };
 

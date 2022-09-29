@@ -202,37 +202,38 @@ void SwitchPlate::touch(TouchPoint tpoint) {
 void SwitchPlatePage::set_prev(SwitchPlatePage *prev) { this->prev_ = prev; }
 void SwitchPlatePage::set_next(SwitchPlatePage *next) { this->next_ = next; }
 
-void SwitchPlateItem::show_image(int16_t x, int16_t y, Image *image, Color color_on, Color color_off) {
+void SwitchPlateItem::show_image(int16_t offset_x, int16_t offset_y, Image *image, Color color_on, Color color_off) {
   Color color;
   int16_t width = image->get_width(), height = image->get_height();   // NOLINT
   Rect r = this->get_boundry();  // NOLINT
-  //  r.info();
+  //r.info("widget");
   int16_t x_org = r.x, y_org = r.y;
-  //  ESP_LOGI(TAG,"x_org %d - y_org: %d ", x_org, y_org);
   Rect clip = display()->get_clipping();
-  //  clip.info();
+  //clip.info("clip");
   r.substract(clip);
-  //  r.info();
+  r.info("Cliped widget");
+  //ESP_LOGI(TAG,"x_org:%d , y_org:%d | offset_x:%d, offset_x:%d | width:%d, height:%d ",offset_x, offset_y, x_org, y_org, height, width);
   x_org = x_org - r.x;
   y_org = y_org - r.y;
-  //  ESP_LOGI(TAG,"x_org %d - y_org: %d ", x_org, y_org);
-  x =- x_org; x =+ x_org;
-  if (width > r.w) { width = r.w; }
-  if (height > r.h) { height = r.y; }
-  //  ESP_LOGI(TAG,"%d - %d - %d - %d  - %d ", x, y, width, height, image->get_width(),image->get_height());
-  for (int16_t img_x = x; img_x < width; img_x++) {
+  //ESP_LOGI(TAG,"new x_org: %d, new y_org: %d ", x_org, y_org);
+  offset_x = offset_x - x_org; offset_y = offset_y - y_org;
+  if (width- offset_x > r.w) { width = r.w; }
+  if (height- offset_y > r.h) { height = r.h; }
+  //ESP_LOGI(TAG,"offset_x:%d, offset_y:%d | width:%d, height:%d ", offset_x, offset_y, width, height);
+
+  for (int16_t img_x = 0; img_x < width; img_x++) {
     if ((img_x < 0) || (img_x >= image->get_width())) {
-      ESP_LOGI(TAG,"img_x:%d - %d - %d", x, img_x, image->get_width());
-      continue;
+      ESP_LOGE(TAG,"SKIP img_x:%d * %d * %d", offset_x, img_x, image->get_width());
+      break;
     }
-    for (int16_t img_y = y; img_y < height; img_y++) {
+    for (int16_t img_y = 0; img_y < height; img_y++) {
       if ((img_y < 0) || (img_y >= image->get_height())) {
-        ESP_LOGI(TAG,"img_y: %d - %d - %d", y, img_y, image->get_height());
-        continue;
+        ESP_LOGE(TAG,"SKIP img_y: %d * %d * %d", offset_y, img_y, image->get_height());
+        break;
       }
       switch (image->get_type()) {
         case display::IMAGE_TYPE_BINARY:
-          color = image->get_pixel(img_x, img_y) ? color_on : color_off;
+          color = image->get_pixel(offset_x+ img_x, offset_y+ img_y) ? color_on : color_off;
           break;
         case display::IMAGE_TYPE_TRANSPARENT_BINARY:
           if (image->get_pixel(img_x, img_y)){
@@ -242,17 +243,17 @@ void SwitchPlateItem::show_image(int16_t x, int16_t y, Image *image, Color color
           }
           break;
         case display::IMAGE_TYPE_GRAYSCALE:
-          color = image->get_grayscale_pixel(img_x, img_y);
+          color = image->get_grayscale_pixel(offset_x+ img_x,offset_y+  img_y);
           break;
         case display::IMAGE_TYPE_RGB24:
-          color = image->get_color_pixel(img_x, img_y);
+          color = image->get_color_pixel(offset_x+ img_x, offset_y+ img_y);
           break;
         case display::IMAGE_TYPE_RGB565:
-          color = image->get_rgb565_pixel(img_x, img_y);
+          color = image->get_rgb565_pixel(offset_x+ img_x,offset_y+  img_y);
           break;
       }
       //ESP_LOGI(TAG,"x:%d y:%d ",r.x + (img_x -x), r.y + (img_y-y));
-      display()->draw_pixel_at(r.x + (img_x -x), r.y + (img_y-y), color);
+      display()->draw_pixel_at(r.x + (img_x), r.y + (img_y), color);
     }
     App.feed_wdt();
   }
@@ -263,8 +264,8 @@ void SwitchPlateItem::set_disable_style() {
   this->set_style(Style::IMAGE | Style::COLOR | Style::DISABLE, Color(0x777777), true);
   this->set_style(Style::TEXT_COLOR | Style::DISABLE, Color(0x777777), true);
   this->set_style(Style::BACKGROUND_COLOR | Style::DISABLE, Color(0x000000), true);
-  if ((action_ == DoAction::SHOW_NEXT)) status_.disabled = this.plate()->current_page()->can_next()?0:1;
-  if ((action_ == DoAction::SHOW_PREV)) status_.disabled = this.plate()->current_page()->can_prev()?0:1;
+ // if ((action_ == DoAction::SHOW_NEXT)) status_.disabled = this.plate()->current_page()->can_next()?0:1;
+ //if ((action_ == DoAction::SHOW_PREV)) status_.disabled = this.plate()->current_page()->can_prev()?0:1;
 }
 
 
