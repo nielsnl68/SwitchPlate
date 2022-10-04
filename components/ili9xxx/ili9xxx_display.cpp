@@ -326,6 +326,12 @@ void ILI9XXX_ILI9488::initialize() {
   this->width_ = 320;
   this->height_ = 480;
 }
+//    40_TFT display
+void ILI9XXX_ST7796::initialize() {
+  this->init_lcd_(INITCMD_ST7796);
+  this->width_ = 320;
+  this->height_ = 480;
+}
 
 
 }  // namespace ili9xxx

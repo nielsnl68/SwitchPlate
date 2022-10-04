@@ -123,5 +123,11 @@ class ILI9XXX_ILI9488 : public ILI9XXXDisplay {
   void initialize() override;
 };
 
+//-----------   ILI9XXX_35_TFT rotated display --------------
+class ILI9XXX_ST7796 : public ILI9XXXDisplay {
+ protected:
+  void initialize() override;
+};
+
 }  // namespace ili9xxx
 }  // namespace esphome

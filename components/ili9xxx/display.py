@@ -33,6 +33,7 @@ MODELS = {
     "ILI9481": ili9XXX_ns.class_("ILI9XXX_ILI9481", ili9XXXSPI),
     "ILI9486": ili9XXX_ns.class_("ILI9XXX_ILI9486", ili9XXXSPI),
     "ILI9488": ili9XXX_ns.class_("ILI9XXX_ILI9488", ili9XXXSPI),
+    "ST7796": ili9XXX_ns.class_("ILI9XXX_ST7796", ili9XXXSPI),
 }
 
 ILI9XXX_MODEL = cv.enum(MODELS, upper=True, space="_")

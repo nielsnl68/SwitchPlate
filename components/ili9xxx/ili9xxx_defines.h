@@ -52,6 +52,7 @@ static const uint8_t ILI9XXX_WRDISBV = 0x51;
 static const uint8_t ILI9XXX_RDDISBV = 0x52;
 static const uint8_t ILI9XXX_WRCTRLD = 0x53;
 
+static const uint8_t ILI9XXX_IFMODE = 0xB0;
 static const uint8_t ILI9XXX_FRMCTR1 = 0xB1;
 static const uint8_t ILI9XXX_FRMCTR2 = 0xB2;
 static const uint8_t ILI9XXX_FRMCTR3 = 0xB3;
@@ -82,6 +83,7 @@ static const uint8_t ILI9XXX_RDIDX = 0xDD;  // TBC
 static const uint8_t ILI9XXX_GMCTRP1 = 0xE0;
 static const uint8_t ILI9XXX_GMCTRN1 = 0xE1;
 
+static const uint8_t ILI9XXX_CSCON = 0xF0;
 static const uint8_t ILI9XXX_ADJCTL3 = 0xF7;
 
 }  // namespace ili9xxx
