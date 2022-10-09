@@ -390,10 +390,17 @@ switchplate:
           border_color: my_yellow
           content: "Next"
           action: next
-
         - type: image
           image_id: my_image
-          image_color: my_green
+          image_color: my_light_blue
+          dimension:
+            x: 10
+            y: 160
+            width: 100
+            height: 20
+        - type: image
+          image_id: my_image
+          image_color: my_light_blue
           dimension:
             x: 10
             y: 70
@@ -407,15 +414,77 @@ switchplate:
             y: 70
             width: 100
             height: 100
+    - id: myNextion
+      title: nextrion demo
+      selectable: true # can be opened with next and previous page selectors
+      widgets:
+        - type: image
+          image_id: main_page_off
+
+          dimension:
+            x: 0
+            y: 0
+            height: 240
+            width: 320
+
+        - type: image
+          id: rgbLamp2
+          image_id: main_page_off
+          image_offset_x: 43
+          image_offset_y: 44
+          border_color: my_white
+          selected:
+            image_id: main_page_on
+          selectable: true
+          clickable: true
+          dimension:
+            x: 43
+            y: 44
+            width: 40
+            height: 25
+        - type: image
+          id: zithoek2
+          image_id: main_page_off
+          image_offset_x: 43
+          image_offset_y: 159
+          border_color: my_white
+          selected:
+            image_id: main_page_on
+          selectable: true
+          clickable: true
+          dimension:
+            x: 43
+            y: 159
+            width: 40
+            height: 25
+
+        - type: image
+          id: gohome2
+          image_id: main_page_off
+          image_offset_x: 0
+          image_offset_y: 190
+          border_color: my_white
+          selected:
+            image_id: main_page_on
+          action: home
+          clickable: true
+          dimension:
+            x: 0
+            y: 190
+            width: 320
+            height: 40
 
 image:
   - file: "images/logo.png"
     id: my_image
     resize: 100x100
     type: TRANSPARENT_BINARY
+  - file: "images/battery.png"
+    id: battery
   - file: "images/icons8-book-shelf-96.png"
     id: my_image0
     type: TRANSPARENT_BINARY
+
   - file: "images/icons8-sofa-96.png"
     id: my_image1
     type: TRANSPARENT_BINARY
@@ -431,6 +500,17 @@ image:
   - file: "images/icons8-chevron-right-96.png"
     id: my_image5
     type: TRANSPARENT_BINARY
+
+  - file: "images/main-page-off.png"
+    id: main_page_off
+    resize: 320x240
+    type: RGB24
+  - file: "images/main-page-on.png"
+    id: main_page_on
+    resize: 320x240
+    type: RGB24
+
+
 
 animation:
   - file: "images/writingpen.gif"

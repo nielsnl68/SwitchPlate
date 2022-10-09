@@ -84,7 +84,7 @@ enum class Mode : uint8_t {
   SLOWDOWNUP = 11,
   SLOWSTRATCH = 12,
 
-  ROUND_MODE= 20,
+  ROUND_MODE = 20,
   RECT_MODE = 21
 };
 
@@ -157,7 +157,6 @@ struct Style {
   static constexpr uint32_t WIDGET_IMAGE = 0x800000;
   static constexpr uint32_t WIDGET_STATIC = 0x900000;
   static constexpr uint32_t WIDGET_CHECKBOX = 0xA00000;
-
 
   static constexpr uint32_t BACKGROUND_COLOR = BACKGROUND | COLOR;
   static constexpr uint32_t BACKGROUND_COLOR_TO = BACKGROUND | COLOR | TO;
@@ -569,317 +568,318 @@ class SwitchPlateItem : public SwitchPlateBase {
     for (auto *t : switches_)
       t->publish_state(state);
 #endif
-} 
-
-void set_status(uint32_t bit_no, bool state) {
-  int old_status = this->status_.raw;
-  if (state) {
-    this->status_.raw |= bit_no;
-  } else {
-    this->status_.raw &= ~(bit_no);
-  }
-  ESP_LOGVV(TAG,
-            "    =====> old: " BYTE_TO_BINARY_PATTERN BYTE_TO_BINARY_PATTERN
-            ", new: " BYTE_TO_BINARY_PATTERN BYTE_TO_BINARY_PATTERN
-            ", set: " BYTE_TO_BINARY_PATTERN BYTE_TO_BINARY_PATTERN " %s",
-            WORD_TO_BINARY(old_status), WORD_TO_BINARY(this->status_.raw), WORD_TO_BINARY(bit_no), YESNO(state));
-  if (old_status != this->status_.raw) {
-    set_redraw();
-  }
-}
-void set_pressed(bool value) { set_status(Status::PRESSED_, value); }
-void set_selected(bool value) { set_status(Status::SELECTED_, value); }
-void set_enabled(bool value) { set_status(Status::DISABLED_, !value); }
-bool is_enabled() override {
-  if ((this->parent_ != nullptr) && !this->parent_->is_enabled()) {
-    return false;
-  }
-  return !this->status_.disabled;
-}
-void set_visible(bool value) { set_status(Status::VISIBLE_, value); }
-bool is_visible() override {
-  if ((this->parent_ != nullptr) && !this->parent_->is_visible()) {
-    return false;
-  }
-  return this->status_.visible == 1;
-}
-
-void set_clickable(bool value) { set_status(Status::CLICKABLE_, value); }
-bool is_clickable() { return this->status_.clickable; }
-void set_selectable(bool value) { set_status(Status::SELECTABLE_, value); }
-bool is_selectable() { return this->status_.selectable; }
-
-template<typename V> void set_text(V val) { this->text_ = val; }
-std::string text() const { return this->old_text_; }
-
-template<typename V> void set_state(V val) { this->state_ = val; }
-int state() const { return const_cast<SwitchPlateItem *>(this)->state_.value(this); }
-
-void set_redraw() {
-  bool old = this->status_.invalidate;
-  this->status_.invalidate = 1;
-  if ((not old) && (display() != nullptr) && (plate() != nullptr)) {
-    plate()->redraw();
-  }
-}
-
-void clear_redraw() { this->status_.invalidate = 0; }
-virtual bool need_redrawing() {
-  std::string txt = this->get_text_();
-  int state = this->get_state_();
-
-  if (state != this->old_state_) {
-    this->old_state_ = state;
-    this->set_redraw();
   }
 
-  if (txt != this->old_text_) {
-    this->old_text_ = txt;
-    this->set_redraw();
-  }
-  return this->status_.invalidate == 1;
-}
-
-void set_x(int16_t value) { this->dimension_.x = value; }
-void set_y(int16_t value) { this->dimension_.y = value; }
-void set_width(int16_t value) { this->dimension_.w = value; }
-void set_height(int16_t value) { this->dimension_.h = value; }
-void set_dimension(int16_t x, int16_t y, int16_t width, int16_t height) {
-  this->dimension_ = Rect(x, y, width, height);
-}
-int16_t x() override { return this->dimension_.x; }
-int16_t y() override { return this->dimension_.y; }
-int16_t width() override { return this->dimension_.w; }
-int16_t height() override { return this->dimension_.h; }
-
-int16_t screen_width() override {
-  if ((this->parent_ != nullptr)) {
-    return this->parent_->screen_width();
-  }
-  return 32666;
-}
-
-int16_t screen_height() override {
-  if ((this->parent_ != nullptr)) {
-    return this->parent_->screen_height();
-  }
-  return 32666;
-}
-
-int16_t absolute_x() override {
-  int x = 0;
-  if ((this->parent_ != nullptr)) {
-    x = this->parent_->absolute_x();
-  }
-  return x + this->x();
-}
-
-int16_t absolute_y() override {
-  int y = 0;
-  if ((this->parent_ != nullptr)) {
-    y = this->parent_->absolute_y();
-  }
-  return y + this->y();
-}
-
-virtual Rect calc_child_clipping() { return Rect(); }
-
-virtual Rect calc_clipping() {
-  Rect result = Rect();
-  if (this->is_visible()) {
-    if (this->need_redrawing()) {
-      result = this->get_boundry();
+  void set_status(uint32_t bit_no, bool state) {
+    int old_status = this->status_.raw;
+    if (state) {
+      this->status_.raw |= bit_no;
     } else {
-      result = calc_child_clipping();
-      if (result.is_set()) {
-        result.substract(this->get_boundry());
-      }
+      this->status_.raw &= ~(bit_no);
+    }
+    ESP_LOGVV(TAG,
+              "    =====> old: " BYTE_TO_BINARY_PATTERN BYTE_TO_BINARY_PATTERN
+              ", new: " BYTE_TO_BINARY_PATTERN BYTE_TO_BINARY_PATTERN
+              ", set: " BYTE_TO_BINARY_PATTERN BYTE_TO_BINARY_PATTERN " %s",
+              WORD_TO_BINARY(old_status), WORD_TO_BINARY(this->status_.raw), WORD_TO_BINARY(bit_no), YESNO(state));
+    if (old_status != this->status_.raw) {
+      set_redraw();
     }
   }
-  return result;
-}
+  void set_pressed(bool value) { set_status(Status::PRESSED_, value); }
+  void set_selected(bool value) { set_status(Status::SELECTED_, value); }
+  void set_enabled(bool value) { set_status(Status::DISABLED_, !value); }
+  bool is_enabled() override {
+    if ((this->parent_ != nullptr) && !this->parent_->is_enabled()) {
+      return false;
+    }
+    return !this->status_.disabled;
+  }
+  void set_visible(bool value) { set_status(Status::VISIBLE_, value); }
+  bool is_visible() override {
+    if ((this->parent_ != nullptr) && !this->parent_->is_visible()) {
+      return false;
+    }
+    return this->status_.visible == 1;
+  }
 
-SwitchPlateBase *check_touch(TouchInfo tp, Rect parent) {
-  if (this->status_.visible && !this->status_.disabled) {
+  void set_clickable(bool value) { set_status(Status::CLICKABLE_, value); }
+  bool is_clickable() { return this->status_.clickable; }
+  void set_selectable(bool value) { set_status(Status::SELECTABLE_, value); }
+  bool is_selectable() { return this->status_.selectable; }
+
+  template<typename V> void set_text(V val) { this->text_ = val; }
+  std::string text() const { return this->old_text_; }
+
+  template<typename V> void set_state(V val) { this->state_ = val; }
+  int state() const { return const_cast<SwitchPlateItem *>(this)->state_.value(this); }
+
+  void set_redraw() {
+    bool old = this->status_.invalidate;
+    this->status_.invalidate = 1;
+    if ((not old) && (display() != nullptr) && (plate() != nullptr)) {
+      plate()->redraw();
+    }
+  }
+
+  void clear_redraw() { this->status_.invalidate = 0; }
+  virtual bool need_redrawing() {
+    std::string txt = this->get_text_();
+    int state = this->get_state_();
+
+    if (state != this->old_state_) {
+      this->old_state_ = state;
+      this->set_redraw();
+    }
+
+    if (txt != this->old_text_) {
+      this->old_text_ = txt;
+      this->set_redraw();
+    }
+    return this->status_.invalidate == 1;
+  }
+
+  void set_x(int16_t value) { this->dimension_.x = value; }
+  void set_y(int16_t value) { this->dimension_.y = value; }
+  void set_width(int16_t value) { this->dimension_.w = value; }
+  void set_height(int16_t value) { this->dimension_.h = value; }
+  void set_dimension(int16_t x, int16_t y, int16_t width, int16_t height) {
+    this->dimension_ = Rect(x, y, width, height);
+  }
+  int16_t x() override { return this->dimension_.x; }
+  int16_t y() override { return this->dimension_.y; }
+  int16_t width() override { return this->dimension_.w; }
+  int16_t height() override { return this->dimension_.h; }
+
+  int16_t screen_width() override {
+    if ((this->parent_ != nullptr)) {
+      return this->parent_->screen_width();
+    }
+    return 32666;
+  }
+
+  int16_t screen_height() override {
+    if ((this->parent_ != nullptr)) {
+      return this->parent_->screen_height();
+    }
+    return 32666;
+  }
+
+  int16_t absolute_x() override {
+    int x = 0;
+    if ((this->parent_ != nullptr)) {
+      x = this->parent_->absolute_x();
+    }
+    return x + this->x();
+  }
+
+  int16_t absolute_y() override {
+    int y = 0;
+    if ((this->parent_ != nullptr)) {
+      y = this->parent_->absolute_y();
+    }
+    return y + this->y();
+  }
+
+  virtual Rect calc_child_clipping() { return Rect(); }
+
+  virtual Rect calc_clipping() {
+    Rect result = Rect();
+    if (this->is_visible()) {
+      if (this->need_redrawing()) {
+        result = this->get_boundry();
+      } else {
+        result = calc_child_clipping();
+        if (result.is_set()) {
+          result.substract(this->get_boundry());
+        }
+      }
+    }
+    return result;
+  }
+
+  SwitchPlateBase *check_touch(TouchInfo tp, Rect parent) {
+    if (this->status_.visible && !this->status_.disabled) {
+      Rect r = this->get_boundry();
+      r.substract(parent);
+      bool touched = r.inside(tp.x, tp.y);
+      ESP_LOGV("SwitchPlate", "    =====> L touched: %s, clickable: %s", YESNO(touched),
+               YESNO(this->status_.clickable));
+      if ((tp.state == TouchState::Released)) {
+        if (this->status_.pressed) {
+          set_pressed(false);
+          if (this->status_.droppable && (tp.origin != this) && touched) {
+            ESP_LOGW("SwitchPlate", "    =====> N");
+            return this;
+          }
+          if ((this->status_.selectable == 0) && (this->action_ != DoAction::DO_NOTTING)) {
+            switch (this->action_) {
+              case DoAction::SHOW_HOME:
+                plate()->show_home();
+                /* code */
+                break;
+              case DoAction::SHOW_PREV:
+                plate()->show_prev();
+                /* code */
+                break;
+              case DoAction::SHOW_NEXT:
+                plate()->show_next();
+                /* code */
+                break;
+              default:
+                break;
+            }
+          } else {
+            if (this->status_.selectable == 0) {
+              update_switches(false);
+            }
+            handle_touch(tp);
+          }
+        }
+
+      } else if (this->status_.clickable && (tp.state == TouchState::Pressed) && touched) {
+        if (this->status_.pressed == 0) {
+          set_pressed(true);
+          if (this->status_.selectable) {
+            set_selected(this->status_.selected == 0);
+            update_switches(this->status_.selected);
+          } else {
+            update_switches(true);
+          }
+          ESP_LOGV("SwitchPlate", "    =====> O");
+        } else {
+          ESP_LOGV("SwitchPlate", "    =====> Q");
+        }
+        handle_touch(tp);
+        return this;
+      } else if (tp.state == TouchState::Moving) {
+        if (!touched && this->status_.draggable) {
+          ESP_LOGD("SwitchPlate", "    =====> W");
+          return nullptr;
+        } else {
+          ESP_LOGV("SwitchPlate", "    =====> R");
+        }
+        handle_touch(tp);
+        return this;
+      } else if (this->status_.droppable && (tp.state == TouchState::Dragging) && touched) {
+        ESP_LOGW("SwitchPlate", "    =====> P");
+        return this;
+      }
+    }
+    ESP_LOGV("SwitchPlate", "    =====> M");
+    return nullptr;
+  };
+  virtual void handle_touch(TouchInfo tp) {}
+
+  void set_disable_style();
+
+  bool get_color_definition(uint32_t style, Color &from, Color &to, GradientDirection &dir) {
+    if (this->has_style(style | Style::COLOR, this->status_)) {
+      from = this->get_style(style | Style::COLOR, this->status_).color_;
+      to = from;
+      dir = GradientDirection::GRADIENT_NONE;
+      if (this->has_style(style | Style::COLOR | Style::TO, this->status_)) {
+        to = this->get_style(style | Style::COLOR | Style::TO, this->status_).color_;
+        dir = (GradientDirection) this->get_style(style | Style::COLOR | Style::DIRECTION, this->status_).direction_;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  void show_background() {
+    uint8_t radius = get_style(Style::BORDER_RADIUS, this->status_).uint32_;
     Rect r = this->get_boundry();
-    r.substract(parent);
-    bool touched = r.inside(tp.x, tp.y);
-    ESP_LOGV("SwitchPlate", "    =====> L touched: %s, clickable: %s", YESNO(touched), YESNO(this->status_.clickable));
-    if ((tp.state == TouchState::Released)) {
-      if (this->status_.pressed) {
-        set_pressed(false);
-        if (this->status_.droppable && (tp.origin != this) && touched) {
-          ESP_LOGW("SwitchPlate", "    =====> N");
-          return this;
-        }
-        if ((this->status_.selectable == 0) && (this->action_ != DoAction::DO_NOTTING)) {
-          switch (this->action_) {
-            case DoAction::SHOW_HOME:
-              plate()->show_home();
-              /* code */
-              break;
-            case DoAction::SHOW_PREV:
-              plate()->show_prev();
-              /* code */
-              break;
-            case DoAction::SHOW_NEXT:
-              plate()->show_next();
-              /* code */
-              break;
-            default:
-              break;
-          }
-        } else {
-          if (this->status_.selectable == 0) {
-            update_switches(false);
-          }
-          handle_touch(tp);
-        }
-      }
+    show_background(r.x, r.y, r.w, r.h, radius);
+  }
 
-    } else if (this->status_.clickable && (tp.state == TouchState::Pressed) && touched) {
-      if (this->status_.pressed == 0) {
-        set_pressed(true);
-        if (this->status_.selectable) {
-          set_selected(this->status_.selected == 0);
-          update_switches(this->status_.selected);
-        } else {
-          update_switches(true);
-        }
-        ESP_LOGV("SwitchPlate", "    =====> O");
-      } else {
-        ESP_LOGV("SwitchPlate", "    =====> Q");
-      }
-      handle_touch(tp);
-      return this;
-    } else if (tp.state == TouchState::Moving) {
-      if (!touched && this->status_.draggable) {
-        ESP_LOGD("SwitchPlate", "    =====> W");
-        return nullptr;
-      } else {
-        ESP_LOGV("SwitchPlate", "    =====> R");
-      }
-      handle_touch(tp);
-      return this;
-    } else if (this->status_.droppable && (tp.state == TouchState::Dragging) && touched) {
-      ESP_LOGW("SwitchPlate", "    =====> P");
-      return this;
+  void show_background(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t radius) {
+    Color from, to;
+    GradientDirection dir = GradientDirection::GRADIENT_NONE;
+
+    if (this->get_color_definition(Style::BACKGROUND, from, to, dir)) {
+      display()->filled_rectangle(x, y, width, height, radius, from, to, dir);
+    }
+
+    if (this->get_color_definition(Style::BORDER_COLOR, from, to, dir)) {
+      display()->rectangle(x, y, width, height, radius, from, to, dir);
     }
   }
-  ESP_LOGV("SwitchPlate", "    =====> M");
-  return nullptr;
-};
-virtual void handle_touch(TouchInfo tp) {}
 
-void set_disable_style();
+  void show_image(int16_t offset_x, int16_t offset_y, Image *image, Color color_on, Color color_off);
 
-bool get_color_definition(uint32_t style, Color & from, Color & to, GradientDirection & dir) {
-  if (this->has_style(style | Style::COLOR, this->status_)) {
-    from = this->get_style(style | Style::COLOR, this->status_).color_;
-    to = from;
-    dir = GradientDirection::GRADIENT_NONE;
-    if (this->has_style(style | Style::COLOR | Style::TO, this->status_)) {
-      to = this->get_style(style | Style::COLOR | Style::TO, this->status_).color_;
-      dir = (GradientDirection) this->get_style(style | Style::COLOR | Style::DIRECTION, this->status_).direction_;
+  bool has_border() { return (this->has_style(Style::BORDER_COLOR, this->status_)); }
+
+  void calc_text_alignment(Font *font, Align align, int16_t &x, int16_t &y) {
+    Rect r = get_boundry();
+    if (this->has_border()) {
+      r.expand(-1, -1);
     }
-    return true;
+
+    auto x_align = TextAlign(int(align) & 0x18);
+    auto y_align = TextAlign(int(align) & 0x07);
+
+    switch (x_align) {
+      case TextAlign::RIGHT:
+        x = r.x2();
+        break;
+      case TextAlign::CENTER_HORIZONTAL:
+        x = r.x + (r.w / 2);
+        break;
+      case TextAlign::LEFT:
+      default:
+        // LEFT
+        x = r.x;
+        break;
+    }
+    switch (y_align) {
+      case TextAlign::BOTTOM:
+        y = r.y2();
+        break;
+      case TextAlign::BASELINE:
+        y = r.y + font->get_baseline();
+        break;
+      case TextAlign::CENTER_VERTICAL:
+        y = r.y + (r.h / 2);
+        break;
+      case TextAlign::TOP:
+      default:
+        y = r.y;
+        break;
+    }
   }
-  return false;
-}
 
-void show_background() {
-  uint8_t radius = get_style(Style::BORDER_RADIUS, this->status_).uint32_;
-  Rect r = this->get_boundry();
-  show_background(r.x, r.y, r.w, r.h, radius);
-}
+  void call_show() override {
+    Rect r = this->get_boundry();
 
-void show_background(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t radius) {
-  Color from, to;
-  GradientDirection dir = GradientDirection::GRADIENT_NONE;
-
-  if (this->get_color_definition(Style::BACKGROUND, from, to, dir)) {
-    display()->filled_rectangle(x, y, width, height, radius, from, to, dir);
+    if (this->is_visible() && display()->get_clipping().inside(r)) {
+      display()->push_clipping(r);
+      this->show();
+      display()->pop_clipping();
+    }
+    clear_redraw();
   }
 
-  if (this->get_color_definition(Style::BORDER_COLOR, from, to, dir)) {
-    display()->rectangle(x, y, width, height, radius, from, to, dir);
-  }
-}
+  void set_action(DoAction action) { this->action_ = action; }
 
-void show_image(int16_t offset_x, int16_t offset_y, Image *image, Color color_on, Color color_off);
+ protected:
+  std::string get_text_() const { return const_cast<SwitchPlateItem *>(this)->text_.value(this); }
+  int get_state_() const { return const_cast<SwitchPlateItem *>(this)->state_.value(this); }
+  bool ENABLED_ = true;
 
-bool has_border() { return (this->has_style(Style::BORDER_COLOR, this->status_)); }
+  TemplatableValue<int, const SwitchPlateItem *> state_;
+  int old_state_{0};
 
-void calc_text_alignment(Font *font, Align align, int16_t &x, int16_t &y) {
-  Rect r = get_boundry();
-  if (this->has_border()) {
-    r.expand(-1, -1);
-  }
+  TemplatableValue<std::string, const SwitchPlateItem *> text_;
+  std::string old_text_{""};
 
-  auto x_align = TextAlign(int(align) & 0x18);
-  auto y_align = TextAlign(int(align) & 0x07);
+  Rect dimension_;
+  Status status_{};
 
-  switch (x_align) {
-    case TextAlign::RIGHT:
-      x = r.x2();
-      break;
-    case TextAlign::CENTER_HORIZONTAL:
-      x = r.x + (r.w / 2);
-      break;
-    case TextAlign::LEFT:
-    default:
-      // LEFT
-      x = r.x;
-      break;
-  }
-  switch (y_align) {
-    case TextAlign::BOTTOM:
-      y = r.y2();
-      break;
-    case TextAlign::BASELINE:
-      y = r.y + font->get_baseline();
-      break;
-    case TextAlign::CENTER_VERTICAL:
-      y = r.y + (r.h / 2);
-      break;
-    case TextAlign::TOP:
-    default:
-      y = r.y;
-      break;
-  }
-}
-
-void call_show() override {
-  Rect r = this->get_boundry();
-
-  if (this->is_visible() && display()->get_clipping().inside(r)) {
-    display()->push_clipping(r);
-    this->show();
-    display()->pop_clipping();
-  }
-  clear_redraw();
-}
-
-void set_action(DoAction action) { this->action_ = action; }
-
-protected:
-std::string get_text_() const { return const_cast<SwitchPlateItem *>(this)->text_.value(this); }
-int get_state_() const { return const_cast<SwitchPlateItem *>(this)->state_.value(this); }
-bool ENABLED_ = true;
-
-TemplatableValue<int, const SwitchPlateItem *> state_;
-int old_state_{0};
-
-TemplatableValue<std::string, const SwitchPlateItem *> text_;
-std::string old_text_{""};
-
-Rect dimension_;
-Status status_{};
-
-DoAction action_{DoAction::DO_NOTTING};
+  DoAction action_{DoAction::DO_NOTTING};
 
 #ifdef USE_SWITCH
-std::vector<switch_::Switch *> switches_;
+  std::vector<switch_::Switch *> switches_;
 #endif
 };
 
@@ -972,11 +972,11 @@ class SwitchPlatePage : public SwitchPlateGroup {
 
   void set_next(SwitchPlatePage *next);
   SwitchPlatePage *get_next() { return this->next_; }
-  bool can_next() { return  this->next_ != nullptr; }
+  bool can_next() { return this->next_ != nullptr; }
 
   void set_prev(SwitchPlatePage *prev);
   SwitchPlatePage *get_prev() { return this->prev_; }
-  bool can_prev() { return  this->prev_ != nullptr; }
+  bool can_prev() { return this->prev_ != nullptr; }
 
   void select() { ((SwitchPlate *) this->parent_)->show_page(this); }
 
@@ -1143,7 +1143,6 @@ class SwitchPlatePanel : public SwitchPlateGroup {
 // ================================================================================================================
 // SwitchPlateSwitch
 
-
 class SwitchPlateSwitch : public SwitchPlateButton {
  public:
   void setup() override {
@@ -1151,78 +1150,79 @@ class SwitchPlateSwitch : public SwitchPlateButton {
 
     this->set_style(Style::BORDER_RADIUS, 10, true);
 
-    this->set_style(Style::BORDER_COLOR, Color(0xDD0000), true);
+    this->set_style(Style::BORDER_COLOR, Color(0x999999), true);
     this->set_style(Style::BACKGROUND_COLOR, Color(0x660000), true);
     this->set_style(Style::FOREGROUND | Style::COLOR, Color(0xDD0000), true);
 
-    this->set_style(Style::BORDER_COLOR | Style::SELECT, Color(0x00DD00), true);
+    this->set_style(Style::BORDER_COLOR | Style::SELECT, Color(0x999999), true);
     this->set_style(Style::BACKGROUND_COLOR | Style::SELECT, Color(0x006600), true);
     this->set_style(Style::FOREGROUND | Style::COLOR | Style::SELECT, Color(0x00DD00), true);
 
-    this->set_style(Style::BORDER_COLOR | Style::PRESS, Color(0xEE0000), true);
+    this->set_style(Style::BORDER_COLOR | Style::PRESS, Color(0xEEEEEE), true);
     this->set_style(Style::BACKGROUND_COLOR | Style::PRESS, Color(0x770000), true);
     this->set_style(Style::FOREGROUND | Style::COLOR | Style::PRESS, Color(0xEE0000), true);
-    
-    this->set_style(Style::BORDER_COLOR | Style::PRESS | Style::SELECT, Color(0xEE0000), true);
-    this->set_style(Style::BACKGROUND_COLOR | Style::PRESS | Style::SELECT, Color(0x770000), true);
-    this->set_style(Style::FOREGROUND | Style::COLOR | Style::PRESS | Style::SELECT, Color(0xEE0000), true);
+
+    this->set_style(Style::BORDER_COLOR | Style::PRESS | Style::SELECT, Color(0xEEEEEE), true);
+    this->set_style(Style::BACKGROUND_COLOR | Style::PRESS | Style::SELECT, Color(0x007700), true);
+    this->set_style(Style::FOREGROUND | Style::COLOR | Style::PRESS | Style::SELECT, Color(0x00EE00), true);
 
     SwitchPlateButton::setup();
+    this->status_.selectable = 1;
+
   };
 
-  void show() override { 
-    uint16_t width = this->width(), x_off = x()+ 2;
-    uint16_t height = this->height(), y_off = y()+ 2;
-    uint16_t radius = 3; uint16_t ribben = this->width()-5;
+  void show() override {
+    uint16_t width = this->width(), x_off = x() + 2;
+    uint16_t height = this->height(), y_off = y() + 2;
+    uint16_t radius = 3;
+    uint16_t ribben = this->width() - 5;
     Mode mode = get_style(Style::SWITCH | Style::MODE).mode_;
     if (width == height) {
       if (mode != Mode::RECT_MODE) {
-        radius = width/2;
+        radius = width / 2;
       }
 
     } else if (width < height) {
-        // horizontal switch
-        if (width*2 < height) {
-          height = width*2;
-        } else {
-          width = height /2;
-        }
-        ribben = width - 5;
-        y_off = (y() + height) - (width-2);
-        if (mode != Mode::RECT_MODE) {
-          radius = width/2;
-        }
+      // horizontal switch
+      if (width * 2 < height) {
+        height = width * 2;
+      } else {
+        width = height / 2;
+      }
+      ribben = width - 5;
+      y_off = (y() + height) - (width - 2);
+      if (mode != Mode::RECT_MODE) {
+        radius = width / 2;
+      }
     } else {
-        // vertical switch
-        if (height*2 < width ) {
-          width = height*2;
-        } else {
-          height = width /2;
-        }
-        ribben = height - 5;
-        x_off = (x() + width) - (height-2) ;
-        if (mode != Mode::RECT_MODE) {
-          radius = height/2;
-        }
+      // vertical switch
+      if (height * 2 < width) {
+        width = height * 2;
+      } else {
+        height = width / 2;
+      }
+      ribben = height - 5;
+      x_off = (x() + width) - (height - 2);
+      if (mode != Mode::RECT_MODE) {
+        radius = height / 2;
+      }
     }
     show_background(this->x(), this->y(), width, height, radius);
     Color from, to;
     GradientDirection dir = GradientDirection::GRADIENT_NONE;
 
     this->get_color_definition(Style::FOREGROUND, from, to, dir);
-    if (status_.selected==0 ) {
-      x_off = x()+ 2;
-      y_off = y()+ 2;
+    if (status_.selected == 0) {
+      x_off = x() + 2;
+      y_off = y() + 2;
     }
     if (mode != Mode::RECT_MODE) {
-      radius = radius -2;
+      radius = radius - 2;
     }
 
     display()->filled_rectangle(x_off, y_off, ribben, ribben, radius, from, to, dir);
-
   };
 };
-
 
 }  // namespace switch_plate
 }  // namespace esphome

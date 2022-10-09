@@ -373,7 +373,7 @@ def style_color_schema(key=""):
         cv.Optional(key + "color_from"): valid_color,
         cv.Optional(key + "color_to"): valid_color,
         cv.Optional(key + "color_direction"): cv.enum(
-            CONF_GRANDIENT_DIRECTIONS, upper=True, space="_"
+            CONF_GRANDIENT_DIRECTIONS, upper=False, space="_"
         ),
     }
 
@@ -381,8 +381,8 @@ def style_color_schema(key=""):
 def style_text_schema(key=""):
     return {
         cv.Optional(key + "text_font"): cv.use_id(font.Font),
-        cv.Optional(key + "text_align"): cv.enum(ENUM_ALIGN, upper=True, space="_"),
-        cv.Optional(key + "text_mode"): cv.enum(ENUM_MODES, upper=True, space="_"),
+        cv.Optional(key + "text_align"): cv.enum(ENUM_ALIGN, upper=False, space="_"),
+        cv.Optional(key + "text_mode"): cv.enum(ENUM_MODES, upper=False, space="_"),
     } | style_color_schema(key + "text_")
 
 
