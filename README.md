@@ -178,6 +178,7 @@ Future more you can define of it is an rounded or a rectangled switch.
 ```yaml
         - type: switch
           ...
+          id: my_switch
           switch_mode: rounded_mode/rect_mode #styleable
           foreground_color: my_color #styleable
           foreground_color_from: my_color #styleable
@@ -187,6 +188,20 @@ Future more you can define of it is an rounded or a rectangled switch.
 ```
 
 The `foreground` color is used to display the switch dot.
+
+## Access buttons and Switches.
+
+To control the buttons and switches you can do that with the `switch:` component. This will act as a bridge between ESPHone, Home-Assistant and the switchplate.
+Where ever you set the (select) state of the switch's switchplate platform you will see that on the switchplate and in Home-Assistant.
+
+```yaml
+switch:
+   - platform: switchplate
+     widget_id: my_switch
+     name: access my switch button
+```
+
+All other properties of the `switch:` are valid as well. 
 
 ## using styling properties
 
