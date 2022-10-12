@@ -1,5 +1,4 @@
 from colorsys import hls_to_rgb
-from tkinter import TRUE
 
 import esphome.codegen as cg
 import esphome.config_validation as cv
@@ -652,7 +651,7 @@ CONFIG_SCHEMA = (
                                 cv.Length(min=1),
                             ),
                             cv.Optional(CONF_TITLE): cv.string,
-                            cv.Optional(CONF_SELECTABLE, default=TRUE): cv.boolean,
+                            cv.Optional(CONF_SELECTABLE, default=True): cv.boolean,
                             cv.Optional(CONF_VISIBLE): cv.boolean,
                             cv.Optional(CONF_DISABLE): cv.boolean,
                         }
