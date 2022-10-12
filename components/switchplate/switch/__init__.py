@@ -17,6 +17,7 @@ RESTORE_MODES = {
     "RESTORE_INVERTED_DEFAULT_ON": WidgetSwitchRestoreMode.WIDGET_SWITCH_RESTORE_INVERTED_DEFAULT_ON,
 }
 
+
 CONFIG_SCHEMA = (
     switch.switch_schema(WidgetSwitch, icon="mdi:tablet-dashboard")
     .extend(
@@ -31,12 +32,15 @@ CONFIG_SCHEMA = (
     .extend(cv.COMPONENT_SCHEMA)
 )
 
+
+BridgeClasses = openHASP_ns.enum("BridgeClasses")
+
 async def to_code(config):
     var = await switch.new_switch(config)
     await cg.register_component(var, config)
 
     widget_ = await cg.get_variable(config[CONF_WIDGET_ID])
-    cg.add(var.set_widget(widget_))
+    cg.add(var.set_widget(widget_, BridgeClasses.BRIDGE_SWITCH))
 
     cg.add(var.set_restore_mode(config[CONF_RESTORE_MODE]))
     cg.add(var.set_duration(config.get(CONF_DURATION,0)))

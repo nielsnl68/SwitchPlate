@@ -19,8 +19,6 @@ enum WidgetSwitchRestoreMode {
 
 class WidgetSwitch : public WidgetBridge, public switch_::Switch, public Component {
  public:
-  WidgetSwitch() bridge_(WidgetSwitch::IS_SWITCH) {}
-
   void setup() override;
   void dump_config() override;
   float get_setup_priority() const override { return setup_priority::HARDWARE - 1.0f; }

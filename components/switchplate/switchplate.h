@@ -12,12 +12,6 @@
 #ifdef USE_TIME
 #include "esphome/components/time/real_time_clock.h"
 #endif
-#ifdef USE_SWITCH
-#include "esphome/components/switch/switch.h"
-#endif
-#ifdef USE_BINARY_SENSOR
-#include "esphome/components/binary_sensor/binary_sensor.h"
-#endif
 namespace esphome {
 using display::DisplayBuffer;
 using display::Rect;
@@ -41,6 +35,14 @@ using touchscreen::TouchListener;
 namespace switch_plate {
 
 const static char *TAG = "SwitchPlate";
+
+enum BridgeClasses {
+  BRIDGE_UNKNOWN = 0,
+  BRIDGE_SWITCH = 1,
+  BRIDGE_BINARY = 2,
+  BRIDGE_NUMBER = 3,
+};
+
 
 enum class Align : uint8_t {
   TOP = 0x00,
@@ -112,6 +114,8 @@ class SwitchPlate;
 class SwitchPlateStyle;
 class SwitchPlateItem;
 class SwitchPlateStyle;
+class WidgetBridge;
+
 
 class DisplayOnPageChangeTrigger;
 
@@ -288,23 +292,6 @@ struct TouchInfo {
 
 enum class DoAction : uint8_t { DO_NOTTING, SHOW_HOME, SHOW_PREV, SHOW_NEXT };
 
-// ============================================================================== WidgetBridge
-enum class BridgeClasses : uint8_t {
-  IS_UNKNOWN = 0,
-  IS_SWITCH = 1,
-  IS_BINARY = 2,
-  IS_NUMBER = 3,
-};
-
-class WidgetBridge {
-  void set_widget(SwitchPlateItem * widget) {
-    widget_ = widget;
-    widget->register_bridge(this);
-  }
- protected:
-  BridgeClasses bridge_{BridgeClasses::IS_SWITCH};
-  SwitchPlateItem *widget_{nullptr};
-}
 
 // ============================================================================== SwitchPlateStyle
 
@@ -582,23 +569,7 @@ class SwitchPlateItem : public SwitchPlateBase {
   SwitchPlateItem(){};
   void register_bridge(WidgetBridge *obj) { this->bridges_.push_back(obj); }
 
-  void update_switches(bool state) {
-
-    for (auto *t : bridges_) {
-      switch (t->bridgeclass ) {
-#ifdef USE_SWITCH
-        case BridgeClasses::IS_SWITCH:
-          ((switch_::Switch) t)->publish_state(state);
-          break;
-#endif
-#ifdef USE_BINARY_SENSOR
-        case BridgeClasses::IS_BINARY:
-          ((binary_sensor::BinarySensor) t)->publish_state(state);
-          break;
-#endif
-      }
-    }
-  }
+  void update_switches(bool state);
 
   void set_status(uint32_t bit_no, bool state) {
     int old_status = this->status_.raw;
@@ -742,7 +713,10 @@ class SwitchPlateItem : public SwitchPlateBase {
             ESP_LOGW("SwitchPlate", "    =====> N");
             return this;
           }
-          if ((this->status_.selectable == 0) && (this->action_ != DoAction::DO_NOTTING)) {
+          if (this->status_.selectable == 0) {
+
+            update_switches(false);
+
             switch (this->action_) {
               case DoAction::SHOW_HOME:
                 plate()->show_home();
@@ -757,13 +731,9 @@ class SwitchPlateItem : public SwitchPlateBase {
                 /* code */
                 break;
               default:
+                handle_touch(tp);
                 break;
             }
-          } else {
-            if (this->status_.selectable == 0) {
-              update_switches(false);
-            }
-            handle_touch(tp);
           }
         }
 
@@ -1251,6 +1221,25 @@ class SwitchPlateSwitch : public SwitchPlateButton {
     display()->filled_rectangle(x_off, y_off, ribben, ribben, radius, from, to, dir);
   };
 };
+
+
+// ============================================================================== WidgetBridge
+
+
+class WidgetBridge {
+ public:
+  void set_widget(SwitchPlateItem * widget, BridgeClasses bridge) {
+    this->bridge_ = bridge;
+    this->widget_ = widget;
+    widget->register_bridge(this);
+  }
+  void set_bridge_class(BridgeClasses bridge) { this->bridge_ = bridge; }
+  BridgeClasses get_bridge() { return  bridge_; }
+ protected:
+  BridgeClasses bridge_{BRIDGE_UNKNOWN};
+  SwitchPlateItem *widget_{nullptr};
+};
+
 
 }  // namespace switch_plate
 }  // namespace esphome

@@ -240,7 +240,7 @@ switchplate:
             border_color: my_blue
           selectable: false
           clickable: true
-          action: next
+          # action: next
           dimension:
             x: 220
             y: 138

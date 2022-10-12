@@ -1,6 +1,8 @@
 #include "switchplate.h"
 #include "esphome/core/log.h"
 #include "esphome/core/application.h"
+#include "switch/widget_switch.h"
+#include "binary_sensor/widget_binary_sensor.h"
 
 namespace esphome {
 namespace switch_plate {
@@ -267,6 +269,25 @@ void SwitchPlateItem::set_disable_style() {
  // if ((action_ == DoAction::SHOW_NEXT)) status_.disabled = this.plate()->current_page()->can_next()?0:1;
  //if ((action_ == DoAction::SHOW_PREV)) status_.disabled = this.plate()->current_page()->can_prev()?0:1;
 }
+
+void SwitchPlateItem::update_switches(bool state) {
+
+  for (auto *t : bridges_) {
+    switch (t->get_bridge() ) {
+#ifdef USE_SWITCH
+      case BRIDGE_SWITCH:
+        ((WidgetSwitch *) t)->publish_state(state);
+        break;
+#endif
+#ifdef USE_BINARY_SENSOR
+      case BRIDGE_BINARY:
+        ((WidgetBinarySensor *) t)->publish_state(state);
+        break;
+#endif
+    }
+  }
+}
+
 
 
 

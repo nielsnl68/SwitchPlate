@@ -17,10 +17,11 @@ CONFIG_SCHEMA = (
     .extend(cv.COMPONENT_SCHEMA)
 )
 
+BridgeClasses = openHASP_ns.enum("BridgeClasses")
 
 async def to_code(config):
     var = await binary_sensor.new_binary_sensor(config)
     await cg.register_component(var, config)
 
     widget_ = await cg.get_variable(config[CONF_WIDGET_ID])
-    cg.add(var.set_widget(widget_))
+    cg.add(var.set_widget(widget_, BridgeClasses.BRIDGE_BINARY))
