@@ -34,7 +34,7 @@ external_components:
     refresh: 10s
  ```
 
-## config the switchplate
+## Config the switchplate
 
 Currently the SwitchPlate supports the `Label`, `Button`, `Image`, `switch`, `checkbox` and `panel` widgets and has also 2 special use case widgets to show the page title and one for showing the current time or date.
 This is just a start in the upcoming releases different widget's will be added. Which ones that will be is also depending on you asking for them.
@@ -82,7 +82,7 @@ switchplate:
      ....
 ```
 
-### the label widget
+### The label widget
 
 the following widgets can be set at the current time.
 The below settings are for `label`, `pagetitle` and `datetime`.
@@ -213,7 +213,7 @@ binary_sensor:
 ```
 And all the properies avialable from the `binary_sensor` component. 
 
-## using styling properties
+## Using styling properties
 
 With the styleing properties you can define how the widget lookslike per widget status.
 There are 5 different statuses, the default one, when pressed, when selected, when disabled, a combination of selected and pressed or disabled.
@@ -242,7 +242,7 @@ To setup the styling for the different statussen just put the name of the status
 When there is no style property set for a special status then it will find the nearest status for pressed, selected, disabled it will check the default status. for the combi statuses first it checks the individual status before the default status.
 When you use the `thema property` then that will be check first as well, see below.
 
-## Theming your whole switchplate
+### Theming your whole switchplate
 
 When you want to do styling central at on place then you can use the `thema:` property. Per widget type you can exactly set how the display should be shown. How every you can still override this setting with the styling options in the widget it self.
 
