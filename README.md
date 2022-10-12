@@ -191,17 +191,27 @@ The `foreground` color is used to display the switch dot.
 
 ## Access buttons and Switches.
 
-To control the buttons and switches you can do that with the `switch:` component. This will act as a bridge between ESPHone, Home-Assistant and the switchplate.
-Where ever you set the (select) state of the switch's switchplate platform you will see that on the switchplate and in Home-Assistant.
+To control the buttons and switches you can use the `switch:` or the `binary_sensor` component. Those will act as a bridge between ESPHone, Home-Assistant and the switchplate. 
+Using the `switch:` you can set the (select) state of the switch's switchplate platform where ever you you want and the change will be visable on the switchplate and in Home-Assistant.
 
 ```yaml
 switch:
    - platform: switchplate
      widget_id: my_switch
      name: access my switch button
+     restore_mode: RESTORE_FROM_SERVER | RESTORE_DEFAULT_OFF | RESTORE_DEFAULT_ON | ALWAYS_OFF | ALWAYS_ON | RESTORE_INVERTED_DEFAULT_OFF | RESTORE_INVERTED_DEFAULT_ON
+     duration: 1s
 ```
-
 All other properties of the `switch:` are valid as well. 
+
+The other way is using the `binary_sensor` component:
+```yaml
+binary_sensor:
+   - platform: switchplate
+     widget_id: my_switch
+     name: access my switch button
+```
+And all the properies avialable from the `binary_sensor` component. 
 
 ## using styling properties
 
