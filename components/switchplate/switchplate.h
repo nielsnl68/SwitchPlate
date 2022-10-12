@@ -15,7 +15,9 @@
 #ifdef USE_SWITCH
 #include "esphome/components/switch/switch.h"
 #endif
-
+#ifdef USE_BINARY_SENSOR
+#include "esphome/components/binary_sensor/binary_sensor.h"
+#endif
 namespace esphome {
 using display::DisplayBuffer;
 using display::Rect;
@@ -285,6 +287,24 @@ struct TouchInfo {
 };
 
 enum class DoAction : uint8_t { DO_NOTTING, SHOW_HOME, SHOW_PREV, SHOW_NEXT };
+
+// ============================================================================== WidgetBridge
+enum class BridgeClasses : uint8_t {
+  IS_UNKNOWN = 0,
+  IS_SWITCH = 1,
+  IS_BINARY = 2,
+  IS_NUMBER = 3,
+};
+
+class WidgetBridge {
+  void set_widget(SwitchPlateItem * widget) {
+    widget_ = widget;
+    widget->register_bridge(this);
+  }
+ protected:
+  BridgeClasses bridge_{BridgeClasses::IS_SWITCH};
+  SwitchPlateItem *widget_{nullptr};
+}
 
 // ============================================================================== SwitchPlateStyle
 
@@ -560,14 +580,24 @@ class SwitchPlate : public Component, public SwitchPlateBase, public TouchListen
 class SwitchPlateItem : public SwitchPlateBase {
  public:
   SwitchPlateItem(){};
-#ifdef USE_SWITCH
-  void register_switch(switch_::Switch *obj) { this->switches_.push_back(obj); }
-#endif
+  void register_bridge(WidgetBridge *obj) { this->bridges_.push_back(obj); }
+
   void update_switches(bool state) {
+
+    for (auto *t : bridges_) {
+      switch (t->bridgeclass ) {
 #ifdef USE_SWITCH
-    for (auto *t : switches_)
-      t->publish_state(state);
+        case BridgeClasses::IS_SWITCH:
+          ((switch_::Switch) t)->publish_state(state);
+          break;
 #endif
+#ifdef USE_BINARY_SENSOR
+        case BridgeClasses::IS_BINARY:
+          ((binary_sensor::BinarySensor) t)->publish_state(state);
+          break;
+#endif
+      }
+    }
   }
 
   void set_status(uint32_t bit_no, bool state) {
@@ -878,9 +908,7 @@ class SwitchPlateItem : public SwitchPlateBase {
 
   DoAction action_{DoAction::DO_NOTTING};
 
-#ifdef USE_SWITCH
-  std::vector<switch_::Switch *> switches_;
-#endif
+  std::vector<WidgetBridge *> bridges_;
 };
 
 //  ===============================================================================================================

@@ -8,6 +8,7 @@ WidgetSwitch = openHASP_ns.class_("WidgetSwitch", switch.Switch, cg.Component)
 
 WidgetSwitchRestoreMode = openHASP_ns.enum("WidgetSwitchRestoreMode")
 RESTORE_MODES = {
+    "RESTORE_FROM_SERVER": WidgetSwitchRestoreMode.WIDGET_SWITCH_RESTORE_FROM_SERVER,
     "RESTORE_DEFAULT_OFF": WidgetSwitchRestoreMode.WIDGET_SWITCH_RESTORE_DEFAULT_OFF,
     "RESTORE_DEFAULT_ON": WidgetSwitchRestoreMode.WIDGET_SWITCH_RESTORE_DEFAULT_ON,
     "ALWAYS_OFF": WidgetSwitchRestoreMode.WIDGET_SWITCH_ALWAYS_OFF,
@@ -21,7 +22,7 @@ CONFIG_SCHEMA = (
     .extend(
         {
             cv.Required(CONF_WIDGET_ID): cv.use_id(SwitchPlateItem),
-            cv.Optional(CONF_RESTORE_MODE, default="RESTORE_DEFAULT_OFF"): cv.enum(
+            cv.Optional(CONF_RESTORE_MODE, default="RESTORE_FROM_SERVER"): cv.enum(
                 RESTORE_MODES, upper=True, space="_"
             ),
             cv.Optional(CONF_DURATION): cv.positive_time_period_milliseconds,

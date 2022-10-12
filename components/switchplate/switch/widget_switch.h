@@ -14,25 +14,24 @@ enum WidgetSwitchRestoreMode {
   WIDGET_SWITCH_ALWAYS_ON,
   WIDGET_SWITCH_RESTORE_INVERTED_DEFAULT_OFF,
   WIDGET_SWITCH_RESTORE_INVERTED_DEFAULT_ON,
+  WIDGET_SWITCH_RESTORE_FROM_SERVER,
 };
 
-class WidgetSwitch : public switch_::Switch, public Component {
+class WidgetSwitch : public WidgetBridge, public switch_::Switch, public Component {
  public:
+  WidgetSwitch() bridge_(WidgetSwitch::IS_SWITCH) {}
+
   void setup() override;
   void dump_config() override;
   float get_setup_priority() const override { return setup_priority::HARDWARE - 1.0f; }
 
-  void set_widget(SwitchPlateItem * widget) { 
-    widget_ = widget;
-    widget->register_switch(this); 
-  }
   void set_restore_mode(WidgetSwitchRestoreMode restore_mode) { restore_mode_ = restore_mode; }
   void set_duration(uint32_t duration) { duration_ = duration; }
 
  protected:
   void write_state(bool state) override;
-  WidgetSwitchRestoreMode restore_mode_{WIDGET_SWITCH_RESTORE_DEFAULT_OFF};
-  SwitchPlateItem *widget_{nullptr};
+  WidgetSwitchRestoreMode restore_mode_{WIDGET_SWITCH_RESTORE_FROM_SERVER};
+
   uint32_t duration_{0};
 };
 

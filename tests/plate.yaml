@@ -25,10 +25,7 @@ external_components:
   - source: github://pr#3796
     components: [display, animation]
     refresh: 10s
-  - source: github://pr#3793
-    components: [xpt2046]
-    refresh: 10s
-  - source:
+  - source: # github://nielsnl68/SwitchPlate@main
       type: local
       path: C:\development\projects\switchplate\components
     components: [switchplate, ili9xxx]
@@ -234,6 +231,7 @@ switchplate:
             width: 96
             height: 96
         - type: image
+          id: next_page
           image_id: my_image5
           image_color: my_light_blue
           border_radius: 8
@@ -541,6 +539,11 @@ switch:
   - platform: switchplate
     widget_id: banklamp
     name: ${device} banklamp lampen
+
+binary_sensor:
+  - platform: switchplate
+    widget_id: next_page
+    name: ${device} next page button
 
   # Define a PWM output on the ESP32
 output:

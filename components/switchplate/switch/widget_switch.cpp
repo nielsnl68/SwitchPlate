@@ -32,6 +32,8 @@ void WidgetSwitch::setup() {
     case WIDGET_SWITCH_ALWAYS_ON:
       initial_state = true;
       break;
+    default:
+      return;
   }
 
   if (initial_state) {
