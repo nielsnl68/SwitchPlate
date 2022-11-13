@@ -762,7 +762,7 @@ async def item_to_code(config):
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
-    setup_style(var, config)
+    await setup_style(var, config)
 
     if CONF_DISPLAY_ID in config:
         parent = await cg.get_variable(config[CONF_DISPLAY_ID])
