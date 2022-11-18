@@ -23,7 +23,7 @@ external_components:
   # use rtttl and dfplayer from ESPHome's dev branch in GitHub
   # equivalent shorthand for GitHub
   - source: github://pr#3796
-    components: [display, animation]
+    components: [display, image]
     refresh: 10s
   - source: # github://nielsnl68/SwitchPlate@main
       type: local

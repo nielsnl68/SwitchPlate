@@ -1,0 +1,279 @@
+substitutions:
+  device: lum-iot41
+  comment: display TFT 35
+
+esphome:
+  name: ${device}
+  comment: switchplate test yaml
+  on_boot:
+    priority: 10
+    then:
+      - script.execute: my_script
+
+esp32:
+  board: esp-wrover-kit
+  framework:
+    type: arduino
+    version: 2.0.4
+    platform_version: 4.4.0
+
+ota:
+
+external_components:
+  - source: github://pr#3796
+    components: [display, image]
+    refresh: 10s
+  - source: github://pr#3795
+    components: [ili9xxx]
+    refresh: 10s
+
+  - source: # github://nielsnl68/SwitchPlate@main
+      type: local
+      path: C:\development\projects\switchplate\components
+    components: [switchplate]
+    refresh: 10s
+
+wifi:
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+
+logger:
+
+time:
+  - platform: homeassistant
+    id: the_time
+
+api:
+
+color:
+  - id: my_yellow
+    red: 75%
+    green: 75%
+  - id: my_blue
+    red: 0%
+    blue: 100%
+    green: 0%
+  - id: my_light_blue
+    red_int: 96
+    green_int: 96
+    blue_int: 255
+
+spi:
+  mosi_pin: 13
+  miso_pin: 12
+  clk_pin: 14
+
+font:
+  - file: "gfonts://Roboto"
+    id: my_font
+    size: 20
+
+display:
+  - id: my_display
+    platform: ili9xxx
+    model: ST7796
+    cs_pin: 15
+    dc_pin: 21
+    reset_pin: 22
+    #rotation: 90
+    auto_clear_enabled: false
+
+
+switchplate:
+  id: my_plate
+  display_id: my_display # Req
+  default_font: my_font
+  header:
+    - type: pagetitle
+      dimension:
+        x: 2
+        y: 0
+        width: 198
+        height: 20
+    - type: datetime
+      id: theTime
+      time_id: the_time
+      dimension:
+        x: 240
+        y: 0
+        width: 120
+        height: 20
+
+  pages:
+    - id: myButtons
+      title: Woonkamer lampen
+      selectable: true # can be opened with next and previous page selectors
+      widgets:
+        - type: image
+          id: rgbLamp
+          image_id: my_image0
+          image_color: my_light_blue
+          border_radius: 8
+          pressed:
+            image_color: my_blue
+            border_color: my_blue
+          selected:
+            image_color: my_yellow
+            border_color: my_yellow
+
+          selectable: true
+          clickable: true
+          dimension:
+            x: 5
+            y: 30
+            width: 96
+            height: 96
+        - type: image
+          id: zithoek
+          image_id: my_image1
+          image_color: my_light_blue
+          border_radius: 8
+          pressed:
+            image_color: my_blue
+            border_color: my_blue
+          selected:
+            image_color: my_yellow
+            border_color: my_yellow
+          selectable: true
+          clickable: true
+          dimension:
+            x: 112
+            y: 30
+            width: 96
+            height: 96
+        - type: image
+          id: Eethoek
+          image_id: my_image2
+          image_color: my_light_blue
+          border_radius: 8
+          pressed:
+            image_color: my_blue
+            border_color: my_blue
+          selected:
+            image_color: my_yellow
+            border_color: my_yellow
+          selectable: true
+          clickable: true
+          dimension:
+            x: 220
+            y: 30
+            width: 96
+            height: 96
+
+        - type: image
+          id: banklamp
+          image_id: my_image4
+          image_color: my_light_blue
+          border_radius: 8
+          pressed:
+            image_color: my_blue
+            border_color: my_blue
+          selected:
+            image_color: my_yellow
+            border_color: my_yellow
+          selectable: true
+          clickable: true
+          dimension:
+            x: 5
+            y: 138
+            width: 96
+            height: 96
+        - type: image
+          id: resthuis
+          image_id: my_image3
+          image_color: my_light_blue
+          border_radius: 8
+          pressed:
+            image_color: my_blue
+            border_color: my_blue
+          selected:
+            image_color: my_yellow
+            border_color: my_yellow
+          selectable: false
+          clickable: true
+          dimension:
+            x: 112
+            y: 138
+            width: 96
+            height: 96
+        - type: image
+          id: next_page
+          image_id: my_image5
+          image_color: my_light_blue
+          border_radius: 8
+          pressed:
+            image_color: my_blue
+            border_color: my_blue
+          selectable: false
+          clickable: true
+          action: next
+          dimension:
+            x: 220
+            y: 138
+            width: 96
+            height: 96
+
+image:
+  - file: "images/icons8-book-shelf-96.png"
+    id: my_image0
+    type: TRANSPARENT_IMAGE
+  - file: "images/icons8-sofa-96.png"
+    id: my_image1
+    type: TRANSPARENT_IMAGE
+  - file: "images/icons8-table-96.png"
+    id: my_image2
+    type: TRANSPARENT_IMAGE
+  - file: "images/icons8-floor-plan-96.png"
+    id: my_image3
+    type: TRANSPARENT_IMAGE
+  - file: "images/icons8-light-off-96.png"
+    id: my_image4
+    type: TRANSPARENT_IMAGE
+  - file: "images/icons8-chevron-right-96.png"
+    id: my_image5
+    type: TRANSPARENT_IMAGE
+
+switch:
+  - platform: switchplate
+    widget_id: rgbLamp
+    name: ${device} RGB lightball
+  - platform: switchplate
+    widget_id: zithoek
+    name: ${device} zithoek lamp
+  - platform: switchplate
+    widget_id: Eethoek
+    name: ${device} eethoek lamp
+  - platform: switchplate
+    widget_id: resthuis
+    name: ${device} rest woning
+  - platform: switchplate
+    widget_id: banklamp
+    name: ${device} banklamp lampen
+
+binary_sensor:
+  - platform: switchplate
+    widget_id: next_page
+    name: ${device} next page button
+
+  # Define a PWM output on the ESP32
+output:
+  - platform: ledc
+    pin: 17
+    id: gpio_17_backlight_pwm
+
+# Define a monochromatic, dimmable light for the backlight
+light:
+  - platform: monochromatic
+    output: gpio_17_backlight_pwm
+    name: ${device} Display Backlight
+    id: back_light
+    restore_mode: ALWAYS_ON
+
+script:
+  - id: my_script
+    mode: restart
+    then:
+      - light.turn_on: back_light
+      - delay: 10min
+      - light.turn_off: back_light

@@ -94,8 +94,8 @@ switchplate:
   touchscreen_id: my_toucher
   default_font: my_font
   pages:
-    - id: myButtons
-      title: Woonkamer lampen
+    - id: myNextion
+      title: nextrion demo
       selectable: true # can be opened with next and previous page selectors
       widgets:
         - type: image
